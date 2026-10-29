@@ -30,6 +30,15 @@ export function generateSeedData(): {
       },
       // Mark some budgets as sorted with ticks for demonstration
       sortedCategories: ["cat-subscriptions", "cat-airtime-data", "cat-clothing"],
+      recurringCategories: [
+        "cat-subscriptions",
+        "cat-debt",
+        "cat-airtime-data",
+        "cat-groceries",
+        "cat-transport",
+        "cat-personal-care",
+        "cat-clothing",
+      ],
       isTotalSorted: false,
     },
     {

@@ -6,8 +6,8 @@ import {
   PiggyBank,
   AlertTriangle,
   Check,
-  TrendingUp,
-  Percent,
+  Repeat,
+  Sparkles,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, formatMonthYear, getBudgetStatus } from "@/lib/utils";
@@ -20,36 +20,51 @@ export function BudgetModal() {
     setBudgetModalOpen,
     selectedMonth,
     budgets,
+    recurringBudgets,
     categories,
     currency,
     getCategorySpending,
     setBudget,
   } = useExpenseStore();
 
-  const currentCurrency = CURRENCIES[currency] || CURRENCIES.INR;
+  const currentCurrency = CURRENCIES[currency] || CURRENCIES.ZAR;
   const currentBudget = budgets.find((b) => b.month === selectedMonth);
   const categoryStats = getCategorySpending(selectedMonth);
 
   const [totalBudget, setTotalBudget] = useState<string>("");
   const [catLimits, setCatLimits] = useState<Record<string, string>>({});
+  const [recurringCatIds, setRecurringCatIds] = useState<string[]>([]);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   useEffect(() => {
     if (budgetModalOpen) {
-      if (currentBudget) {
-        setTotalBudget(currentBudget.total > 0 ? currentBudget.total.toString() : "");
-        const limits: Record<string, string> = {};
-        for (const [catId, amt] of Object.entries(currentBudget.categories || {})) {
-          if (amt > 0) limits[catId] = amt.toString();
-        }
-        setCatLimits(limits);
-      } else {
-        setTotalBudget("");
-        setCatLimits({});
+      const mergedLimits: Record<string, string> = {};
+      const activeRecurring = new Set<string>(
+        currentBudget?.recurringCategories || Object.keys(recurringBudgets || {})
+      );
+
+      // Populate from recurringBudgets and currentBudget
+      for (const [catId, amt] of Object.entries(recurringBudgets || {})) {
+        if (amt > 0) mergedLimits[catId] = amt.toString();
       }
+
+      if (currentBudget?.categories) {
+        for (const [catId, amt] of Object.entries(currentBudget.categories)) {
+          if (amt > 0) mergedLimits[catId] = amt.toString();
+        }
+      }
+
+      const totalVal =
+        currentBudget?.total && currentBudget.total > 0
+          ? currentBudget.total.toString()
+          : "";
+
+      setTotalBudget(totalVal);
+      setCatLimits(mergedLimits);
+      setRecurringCatIds(Array.from(activeRecurring));
       setSavedSuccess(false);
     }
-  }, [budgetModalOpen, currentBudget]);
+  }, [budgetModalOpen, currentBudget, recurringBudgets]);
 
   if (!budgetModalOpen) return null;
 
@@ -62,6 +77,19 @@ export function BudgetModal() {
       ...prev,
       [catId]: value,
     }));
+  };
+
+  const handleToggleRecurring = (catId: string) => {
+    setRecurringCatIds((prev) =>
+      prev.includes(catId) ? prev.filter((id) => id !== catId) : [...prev, catId]
+    );
+  };
+
+  const handleMakeAllRecurring = () => {
+    const allCatIdsWithLimits = Object.keys(catLimits).filter(
+      (k) => (parseFloat(catLimits[k]) || 0) > 0
+    );
+    setRecurringCatIds(allCatIdsWithLimits);
   };
 
   const handleSave = (e: React.FormEvent) => {
@@ -83,6 +111,7 @@ export function BudgetModal() {
       categories: parsedCats,
       sortedCategories: currentBudget?.sortedCategories || [],
       isTotalSorted: currentBudget?.isTotalSorted || false,
+      recurringCategories: recurringCatIds,
     });
 
     setSavedSuccess(true);
@@ -118,7 +147,7 @@ export function BudgetModal() {
                 Monthly Budget Limits
               </h2>
               <p className="text-xs text-muted-foreground">
-                Set total and category targets for {formatMonthYear(selectedMonth)}
+                Set monthly caps and choose items that appear in every month's budget
               </p>
             </div>
           </div>
@@ -135,17 +164,34 @@ export function BudgetModal() {
           {savedSuccess && (
             <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2">
               <Check className="w-4 h-4" />
-              Budget limits saved successfully!
+              Budget limits saved and recurring preferences updated!
             </div>
           )}
+
+          {/* Quick Notice about Every-Month Repeat */}
+          <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-300">
+              <Repeat className="w-4 h-4 shrink-0 text-indigo-500" />
+              <span>
+                <strong>Every-Month Option:</strong> Toggle the 🔁 button on any category to make it automatically appear in all months.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleMakeAllRecurring}
+              className="px-2.5 py-1 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-700 dark:text-indigo-200 font-bold shrink-0 transition-colors"
+            >
+              Repeat All
+            </button>
+          </div>
 
           {/* Total Monthly Budget Field */}
           <div className="p-4 rounded-2xl bg-muted/30 border border-border/60">
             <label className="block text-xs font-semibold text-foreground mb-1 uppercase tracking-wider">
-              Total Monthly Budget Cap
+              Total Monthly Budget Cap (Optional)
             </label>
             <p className="text-xs text-muted-foreground mb-3">
-              Overall spending ceiling across all categories for this month.
+              Leave blank to automatically sum your active category budgets.
             </p>
             <div className="relative flex items-center">
               <span className="absolute left-3.5 text-lg font-bold font-mono text-muted-foreground">
@@ -155,7 +201,7 @@ export function BudgetModal() {
                 type="number"
                 step="any"
                 min="0"
-                placeholder="e.g. 50000"
+                placeholder={sumCategoryLimits > 0 ? sumCategoryLimits.toString() : "e.g. 15000"}
                 value={totalBudget}
                 onChange={(e) => setTotalBudget(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 text-lg font-bold font-mono rounded-xl bg-card border border-border focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-foreground"
@@ -172,11 +218,11 @@ export function BudgetModal() {
             )}
           </div>
 
-          {/* Category-wise Budgets */}
+          {/* Category-wise Budgets with Every-Month Options */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Category Limits & Progress
+                Category Limits & Every-Month Options
               </h3>
               <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                 <span className="flex items-center gap-1">
@@ -198,11 +244,16 @@ export function BudgetModal() {
                 const limitVal = catLimits[cat.id] || "";
                 const limitNum = parseFloat(limitVal) || 0;
                 const progressStatus = getBudgetStatus(spent, limitNum);
+                const isRecurring = recurringCatIds.includes(cat.id);
 
                 return (
                   <div
                     key={cat.id}
-                    className="p-3.5 rounded-2xl bg-card border border-border/60 hover:border-border transition-colors space-y-2"
+                    className={`p-3.5 rounded-2xl bg-card border transition-colors space-y-2 ${
+                      isRecurring
+                        ? "border-indigo-500/40 bg-indigo-500/[0.02]"
+                        : "border-border/60 hover:border-border"
+                    }`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -222,21 +273,44 @@ export function BudgetModal() {
                         </div>
                       </div>
 
-                      <div className="relative w-36 shrink-0">
-                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold font-mono text-muted-foreground">
-                          {currentCurrency.symbol}
-                        </span>
-                        <input
-                          type="number"
-                          step="any"
-                          min="0"
-                          placeholder="No limit"
-                          value={limitVal}
-                          onChange={(e) =>
-                            handleCategoryLimitChange(cat.id, e.target.value)
+                      {/* Right: Repeat Option Toggle + Amount Input */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleRecurring(cat.id)}
+                          className={`flex items-center gap-1 px-2 py-1.5 rounded-xl text-[10.5px] font-semibold border transition-all ${
+                            isRecurring
+                              ? "bg-indigo-500 text-white border-indigo-500 shadow-sm"
+                              : "bg-muted/50 text-muted-foreground hover:bg-muted border-border/50"
+                          }`}
+                          title={
+                            isRecurring
+                              ? "This budget appears in every month (click to make one-off)"
+                              : "Click to make this appear in every month's budget"
                           }
-                          className="w-full pl-7 pr-2.5 py-1.5 text-xs font-mono font-medium rounded-xl bg-muted/40 border border-border focus:outline-none focus:border-blue-500 text-foreground text-right"
-                        />
+                        >
+                          <Repeat className="w-3 h-3" />
+                          <span className="hidden sm:inline">
+                            {isRecurring ? "Every Month" : "One-off"}
+                          </span>
+                        </button>
+
+                        <div className="relative w-32 shrink-0">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold font-mono text-muted-foreground">
+                            {currentCurrency.symbol}
+                          </span>
+                          <input
+                            type="number"
+                            step="any"
+                            min="0"
+                            placeholder="No limit"
+                            value={limitVal}
+                            onChange={(e) =>
+                              handleCategoryLimitChange(cat.id, e.target.value)
+                            }
+                            className="w-full pl-7 pr-2.5 py-1.5 text-xs font-mono font-medium rounded-xl bg-muted/40 border border-border focus:outline-none focus:border-blue-500 text-foreground text-right"
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -296,4 +370,3 @@ export function BudgetModal() {
     </div>
   );
 }
-

@@ -11,6 +11,7 @@ interface ExpenseStore {
   expenses: Expense[];
   categories: Category[];
   budgets: Budget[];
+  recurringBudgets: Record<string, number>; // Category limits that automatically repeat every month
   isLoaded: boolean;
 
   // Modals & transient UI
@@ -43,6 +44,11 @@ interface ExpenseStore {
   toggleTotalSorted: (month: string) => void;
   isCategorySorted: (month: string, categoryId: string) => boolean;
 
+  // Options to make budget items appear in every month's budget
+  toggleCategoryRecurring: (month: string, categoryId: string, amount?: number) => void;
+  applyCurrentMonthBudgetsToAllMonths: (sourceMonth: string) => void;
+  isCategoryRecurring: (month: string, categoryId: string) => boolean;
+
   resetToDefaults: () => void;
   exportDataJSON: () => string;
   exportDataCSV: () => string;
@@ -58,6 +64,7 @@ interface ExpenseStore {
     percentage: number;
     transactionCount: number;
     isSorted: boolean;
+    isRecurring: boolean;
   }>;
   getDailySpending: (month?: string) => Array<{
     day: number;
@@ -80,6 +87,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   expenses: [],
   categories: DEFAULT_CATEGORIES,
   budgets: [],
+  recurringBudgets: {},
   isLoaded: false,
 
   quickAddOpen: false,
@@ -91,6 +99,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const expenses = storage.getExpenses();
     const categories = storage.getCategories();
     const budgets = storage.getBudgets();
+    const recurringBudgets = storage.getRecurringBudgets();
     const currency = storage.getCurrency() || "ZAR";
 
     // Auto-propagate recurring expenses to selected or future months if needed
@@ -133,6 +142,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       expenses: updatedExpenses,
       categories,
       budgets,
+      recurringBudgets,
       currency,
       isLoaded: true,
     });
@@ -219,8 +229,18 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   setBudget: (budget: Budget) => {
     const existing = get().budgets.filter((b) => b.month !== budget.month);
     const updated = [...existing, budget];
+
+    // If budget has recurring categories, also update master recurringBudgets
+    const recurring = { ...get().recurringBudgets };
+    for (const catId of budget.recurringCategories || []) {
+      if (budget.categories[catId] && budget.categories[catId] > 0) {
+        recurring[catId] = budget.categories[catId];
+      }
+    }
+
+    storage.saveRecurringBudgets(recurring);
     storage.saveBudgets(updated);
-    set({ budgets: updated });
+    set({ budgets: updated, recurringBudgets: recurring });
   },
 
   updateTotalBudget: (month: string, total: number) => {
@@ -233,7 +253,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         b.month === month ? { ...b, total } : b
       );
     } else {
-      updated = [...currentBudgets, { month, total, categories: {}, sortedCategories: [] }];
+      updated = [...currentBudgets, { month, total, categories: {}, sortedCategories: [], recurringCategories: [] }];
     }
 
     storage.saveBudgets(updated);
@@ -266,8 +286,21 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
           total: amount,
           categories: { [categoryId]: amount },
           sortedCategories: [],
+          recurringCategories: [],
         },
       ];
+    }
+
+    // Also update recurring budget if this category is marked recurring
+    if (get().recurringBudgets[categoryId]) {
+      const rec = { ...get().recurringBudgets };
+      if (amount <= 0) {
+        delete rec[categoryId];
+      } else {
+        rec[categoryId] = amount;
+      }
+      storage.saveRecurringBudgets(rec);
+      set({ recurringBudgets: rec });
     }
 
     storage.saveBudgets(updated);
@@ -297,6 +330,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
           total: 0,
           categories: {},
           sortedCategories: [categoryId],
+          recurringCategories: [],
         },
       ];
     }
@@ -322,6 +356,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
           total: 0,
           categories: {},
           sortedCategories: [],
+          recurringCategories: [],
           isTotalSorted: true,
         },
       ];
@@ -334,6 +369,89 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   isCategorySorted: (month: string, categoryId: string) => {
     const budget = get().budgets.find((b) => b.month === month);
     return Boolean(budget?.sortedCategories?.includes(categoryId));
+  },
+
+  // Toggle whether an item / category budget appears in every month's budget
+  toggleCategoryRecurring: (month: string, categoryId: string, amount?: number) => {
+    const currentBudgets = get().budgets;
+    const existing = currentBudgets.find((b) => b.month === month);
+    const recurringBudgets = { ...get().recurringBudgets };
+
+    const targetAmount =
+      amount || existing?.categories[categoryId] || recurringBudgets[categoryId] || 0;
+
+    let updatedBudgets: Budget[];
+
+    if (existing) {
+      const curRecurring = existing.recurringCategories || [];
+      const isCurrentlyRecurring = curRecurring.includes(categoryId) || Boolean(recurringBudgets[categoryId]);
+
+      let newRecurringList: string[];
+      if (isCurrentlyRecurring) {
+        newRecurringList = curRecurring.filter((id) => id !== categoryId);
+        delete recurringBudgets[categoryId];
+      } else {
+        newRecurringList = [...curRecurring, categoryId];
+        if (targetAmount > 0) {
+          recurringBudgets[categoryId] = targetAmount;
+        }
+      }
+
+      updatedBudgets = currentBudgets.map((b) =>
+        b.month === month
+          ? {
+              ...b,
+              recurringCategories: newRecurringList,
+              categories: {
+                ...b.categories,
+                ...(targetAmount > 0 && !isCurrentlyRecurring ? { [categoryId]: targetAmount } : {}),
+              },
+            }
+          : b
+      );
+    } else {
+      recurringBudgets[categoryId] = targetAmount;
+      updatedBudgets = [
+        ...currentBudgets,
+        {
+          month,
+          total: targetAmount,
+          categories: targetAmount > 0 ? { [categoryId]: targetAmount } : {},
+          sortedCategories: [],
+          recurringCategories: [categoryId],
+        },
+      ];
+    }
+
+    storage.saveRecurringBudgets(recurringBudgets);
+    storage.saveBudgets(updatedBudgets);
+    set({ budgets: updatedBudgets, recurringBudgets });
+  },
+
+  applyCurrentMonthBudgetsToAllMonths: (sourceMonth: string) => {
+    const budget = get().budgets.find((b) => b.month === sourceMonth);
+    if (!budget) return;
+
+    const recurringBudgets: Record<string, number> = { ...budget.categories };
+    const recurringCategories = Object.keys(budget.categories).filter((k) => budget.categories[k] > 0);
+
+    const updatedBudgets = get().budgets.map((b) => {
+      if (b.month === sourceMonth) {
+        return { ...b, recurringCategories };
+      }
+      return b;
+    });
+
+    storage.saveRecurringBudgets(recurringBudgets);
+    storage.saveBudgets(updatedBudgets);
+    set({ budgets: updatedBudgets, recurringBudgets });
+  },
+
+  isCategoryRecurring: (month: string, categoryId: string) => {
+    const recurringBudgets = get().recurringBudgets;
+    if (recurringBudgets[categoryId] && recurringBudgets[categoryId] > 0) return true;
+    const budget = get().budgets.find((b) => b.month === month);
+    return Boolean(budget?.recurringCategories?.includes(categoryId));
   },
 
   resetToDefaults: () => {
@@ -349,6 +467,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       categories: get().categories,
       expenses: get().expenses,
       budgets: get().budgets,
+      recurringBudgets: get().recurringBudgets,
     };
     return JSON.stringify(data, null, 2);
   },
@@ -384,6 +503,9 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       if (Array.isArray(data.budgets)) {
         storage.saveBudgets(data.budgets);
       }
+      if (data.recurringBudgets) {
+        storage.saveRecurringBudgets(data.recurringBudgets);
+      }
       if (data.currency) {
         storage.saveCurrency(data.currency);
       }
@@ -418,9 +540,11 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const totalSpent = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
 
     const budget = get().budgets.find((b) => b.month === targetMonth);
+    const catBudgets = { ...(get().recurringBudgets || {}), ...(budget?.categories || {}) };
+
     let totalBudget = budget?.total || 0;
-    if (budget && (!totalBudget || totalBudget <= 0) && budget.categories) {
-      totalBudget = Object.values(budget.categories).reduce((sum, v) => sum + v, 0);
+    if (!totalBudget || totalBudget <= 0) {
+      totalBudget = Object.values(catBudgets).reduce((sum, v) => sum + v, 0);
     }
 
     const { daysInMonth, daysPassed } = getMonthStats(targetMonth);
@@ -428,11 +552,15 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const remaining = totalBudget > 0 ? totalBudget - totalSpent : 0;
     const percentageUsed = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
 
-    const catBudgets = budget?.categories || {};
     const sortedCategories = budget?.sortedCategories || [];
     const budgetCategoryKeys = Object.keys(catBudgets).filter((k) => catBudgets[k] > 0);
     const totalCategoriesWithBudget = budgetCategoryKeys.length;
     const sortedCount = budgetCategoryKeys.filter((k) => sortedCategories.includes(k)).length;
+
+    const recurringCategories = budget?.recurringCategories || Object.keys(get().recurringBudgets || {});
+    const recurringCount = budgetCategoryKeys.filter(
+      (k) => recurringCategories.includes(k) || Boolean(get().recurringBudgets?.[k])
+    ).length;
 
     return {
       month: targetMonth,
@@ -445,6 +573,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       percentageUsed,
       sortedCount,
       totalCategoriesWithBudget,
+      recurringCount,
     };
   },
 
@@ -452,8 +581,9 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const targetMonth = month || get().selectedMonth;
     const monthExpenses = get().expenses.filter((e) => e.date.startsWith(targetMonth));
     const budget = get().budgets.find((b) => b.month === targetMonth);
-    const catBudgets = budget?.categories || {};
+    const catBudgets = { ...(get().recurringBudgets || {}), ...(budget?.categories || {}) };
     const sortedCategories = budget?.sortedCategories || [];
+    const recurringCategories = budget?.recurringCategories || Object.keys(get().recurringBudgets || {});
 
     const spendingMap = new Map<string, { spent: number; count: number }>();
 
@@ -470,6 +600,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       const catBudget = catBudgets[category.id] || 0;
       const percentage = catBudget > 0 ? Math.round((stats.spent / catBudget) * 100) : 0;
       const isSorted = sortedCategories.includes(category.id);
+      const isRecurring =
+        recurringCategories.includes(category.id) || Boolean(get().recurringBudgets?.[category.id]);
 
       return {
         category,
@@ -478,6 +610,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         percentage,
         transactionCount: stats.count,
         isSorted,
+        isRecurring,
       };
     });
   },

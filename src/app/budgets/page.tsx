@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import confetti from "canvas-confetti";
 import {
   PiggyBank,
@@ -10,7 +10,8 @@ import {
   Check,
   ShieldAlert,
   Sparkles,
-  RotateCcw,
+  Repeat,
+  ArrowRight,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, formatMonthYear, getBudgetStatus } from "@/lib/utils";
@@ -24,8 +25,11 @@ export default function BudgetsPage() {
     currency,
     setBudgetModalOpen,
     toggleCategorySorted,
-    toggleTotalSorted,
+    toggleCategoryRecurring,
+    applyCurrentMonthBudgetsToAllMonths,
   } = useExpenseStore();
+
+  const [appliedNotice, setAppliedNotice] = useState(false);
 
   const summary = getMonthSummary(selectedMonth);
   const categoryStats = getCategorySpending(selectedMonth);
@@ -52,6 +56,26 @@ export default function BudgetsPage() {
     }
   };
 
+  const handleToggleRecurring = (catId: string, amount: number) => {
+    toggleCategoryRecurring(selectedMonth, catId, amount);
+  };
+
+  const handleApplyToAllMonths = () => {
+    applyCurrentMonthBudgetsToAllMonths(selectedMonth);
+    setAppliedNotice(true);
+    setTimeout(() => setAppliedNotice(false), 4000);
+    try {
+      confetti({
+        particleCount: 40,
+        spread: 60,
+        origin: { y: 0.6 },
+        colors: ["#6366f1", "#8b5cf6", "#10b981"],
+      });
+    } catch {
+      // ignore
+    }
+  };
+
   const overbudgetCategories = categoryStats.filter(
     (c) => c.budget > 0 && c.spent > c.budget
   );
@@ -72,7 +96,16 @@ export default function BudgetsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleApplyToAllMonths}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 font-semibold text-xs transition-all active:scale-95"
+            title="Make current budget repeat in all future and past months"
+          >
+            <Repeat className="w-3.5 h-3.5" />
+            <span>Apply to Every Month</span>
+          </button>
+
           <button
             onClick={() => setBudgetModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-md active:scale-95 transition-all"
@@ -82,6 +115,13 @@ export default function BudgetsPage() {
           </button>
         </div>
       </div>
+
+      {appliedNotice && (
+        <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200">
+          <Sparkles className="w-4 h-4 text-indigo-500" />
+          <span>Success! Current monthly budgets are now set to automatically appear in every month.</span>
+        </div>
+      )}
 
       {/* Critical Overspending Callout if any */}
       {overbudgetCategories.length > 0 && (
@@ -101,15 +141,20 @@ export default function BudgetsPage() {
         </div>
       )}
 
-      {/* Total Monthly Cap Card + Sorted Counter */}
+      {/* Total Monthly Cap Card + Sorted Counter & Every-Month badge */}
       <div className="p-6 rounded-3xl bg-card border border-border/60 shadow-sm space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <PiggyBank className="w-4 h-4 text-blue-500" />
                 Monthly Budget Cap
               </span>
+              {summary.recurringCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold text-[10.5px] flex items-center gap-1">
+                  <Repeat className="w-3 h-3" /> {summary.recurringCount} Repeat Every Month
+                </span>
+              )}
               {allSorted && (
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1">
                   <Sparkles className="w-3 h-3" /> All Sorted!
@@ -199,11 +244,16 @@ export default function BudgetsPage() {
       {/* Category Wise Budget Breakdown Grid */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-            Category Budgets & Ticks
-          </h3>
-          <span className="text-xs text-muted-foreground font-medium">
-            Tap the tick to mark a budget sorted / paid
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+              Category Budgets, Ticks & Every-Month Options
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Tick when paid / sorted • Toggle 🔁 to make any budget appear every month
+            </p>
+          </div>
+          <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
+            {summary.recurringCount} repeat monthly
           </span>
         </div>
 
@@ -213,6 +263,7 @@ export default function BudgetsPage() {
             const status = getBudgetStatus(item.spent, item.budget);
             const remaining = item.budget - item.spent;
             const isSorted = item.isSorted;
+            const isRecurring = item.isRecurring;
 
             return (
               <div
@@ -220,6 +271,8 @@ export default function BudgetsPage() {
                 className={`p-5 rounded-3xl bg-card border transition-all duration-200 shadow-sm flex flex-col justify-between ${
                   isSorted
                     ? "border-emerald-500/50 bg-emerald-500/[0.03] shadow-glow/10"
+                    : isRecurring
+                    ? "border-indigo-500/30 hover:border-indigo-500/50"
                     : status.isOver
                     ? "border-rose-500/40 bg-rose-500/[0.02]"
                     : "border-border/60 hover:border-border"
@@ -235,7 +288,7 @@ export default function BudgetsPage() {
                         <CategoryIcon name={item.category.icon} className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <h4
                             className={`text-sm font-bold truncate ${
                               isSorted ? "text-foreground line-through opacity-80" : "text-foreground"
@@ -243,6 +296,15 @@ export default function BudgetsPage() {
                           >
                             {item.category.name}
                           </h4>
+                          {isRecurring && (
+                            <span
+                              className="px-1.5 py-0.2 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[9.5px] font-bold flex items-center gap-0.5"
+                              title="Appears in every month's budget"
+                            >
+                              <Repeat className="w-2.5 h-2.5" />
+                              Monthly
+                            </span>
+                          )}
                         </div>
                         <span className="text-[11px] text-muted-foreground">
                           {item.transactionCount} expenses logged
@@ -250,20 +312,41 @@ export default function BudgetsPage() {
                       </div>
                     </div>
 
-                    {/* Tick / Mark Sorted Action Button */}
-                    <button
-                      type="button"
-                      onClick={() => handleToggleSorted(item.category.id, isSorted)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold transition-all active:scale-95 ${
-                        isSorted
-                          ? "bg-emerald-500 text-white shadow-sm ring-2 ring-emerald-500/30"
-                          : "bg-muted/70 text-muted-foreground hover:bg-emerald-500/15 hover:text-emerald-600 dark:hover:text-emerald-400 border border-border/60"
-                      }`}
-                      title={isSorted ? "Mark as unsorted" : "Mark as sorted / paid"}
-                    >
-                      <Check className={`w-3.5 h-3.5 ${isSorted ? "stroke-[3]" : "stroke-[2]"}`} />
-                      <span>{isSorted ? "Sorted ✓" : "Tick"}</span>
-                    </button>
+                    {/* Action Buttons: Tick Sorted + Toggle Every Month */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {/* Repeat / Every Month Toggle Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleRecurring(item.category.id, item.budget)}
+                        className={`p-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                          isRecurring
+                            ? "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/30"
+                            : "bg-muted/40 text-muted-foreground hover:bg-muted border-border/50"
+                        }`}
+                        title={
+                          isRecurring
+                            ? "Appears in every month's budget (Click to make one-off)"
+                            : "Make this appear in every month's budget"
+                        }
+                      >
+                        <Repeat className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Tick / Mark Sorted Action Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSorted(item.category.id, isSorted)}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                          isSorted
+                            ? "bg-emerald-500 text-white shadow-sm ring-2 ring-emerald-500/30"
+                            : "bg-muted/70 text-muted-foreground hover:bg-emerald-500/15 hover:text-emerald-600 dark:hover:text-emerald-400 border border-border/60"
+                        }`}
+                        title={isSorted ? "Mark as unsorted" : "Mark as sorted / paid"}
+                      >
+                        <Check className={`w-3.5 h-3.5 ${isSorted ? "stroke-[3]" : "stroke-[2]"}`} />
+                        <span>{isSorted ? "Sorted" : "Tick"}</span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Amounts */}
