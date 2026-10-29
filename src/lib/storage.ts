@@ -1,37 +1,3 @@
-/**
- * Storage Abstraction Layer
- * MVP uses LocalStorage with a clean interface.
- * When migrating to Supabase / Backend, replace or augment this adapter.
- *
- * Supabase SQL Schema equivalent:
- *
- * CREATE TABLE categories (
- *   id TEXT PRIMARY KEY,
- *   name TEXT NOT NULL,
- *   color TEXT NOT NULL,
- *   icon TEXT NOT NULL,
- *   is_custom BOOLEAN DEFAULT false
- * );
- *
- * CREATE TABLE expenses (
- *   id TEXT PRIMARY KEY,
- *   amount NUMERIC NOT NULL,
- *   category_id TEXT REFERENCES categories(id),
- *   note TEXT,
- *   date DATE NOT NULL,
- *   payment_method TEXT NOT NULL,
- *   is_recurring BOOLEAN DEFAULT false,
- *   created_at TIMESTAMPTZ DEFAULT NOW()
- * );
- *
- * CREATE TABLE budgets (
- *   id TEXT PRIMARY KEY,
- *   month TEXT NOT NULL UNIQUE, -- 'YYYY-MM'
- *   total NUMERIC NOT NULL,
- *   categories JSONB DEFAULT '{}'::jsonb
- * );
- */
-
 import { Expense, Category, Budget } from "@/types";
 import { DEFAULT_CATEGORIES } from "./constants";
 import { generateSeedData } from "./dummy-data";
@@ -40,6 +6,7 @@ const STORAGE_KEYS = {
   EXPENSES: "mint_month_expenses_v2",
   CATEGORIES: "mint_month_categories_v2",
   BUDGETS: "mint_month_budgets_v2",
+  RECURRING_BUDGETS: "mint_month_recurring_budgets_v2",
   CURRENCY: "mint_month_currency_v2",
   INITIALIZED: "mint_month_initialized_v2",
 };
@@ -51,6 +18,8 @@ export interface StorageAdapter {
   saveCategories(categories: Category[]): void;
   getBudgets(): Budget[];
   saveBudgets(budgets: Budget[]): void;
+  getRecurringBudgets(): Record<string, number>;
+  saveRecurringBudgets(recurring: Record<string, number>): void;
   getCurrency(): string;
   saveCurrency(currency: string): void;
   resetAll(): void;
@@ -71,9 +40,20 @@ export class LocalStorageAdapter implements StorageAdapter {
     const initialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
     if (!initialized) {
       const seed = generateSeedData();
+      const defaultRecurring: Record<string, number> = {
+        "cat-subscriptions": 250,
+        "cat-debt": 3500,
+        "cat-airtime-data": 1500,
+        "cat-groceries": 3800,
+        "cat-transport": 2000,
+        "cat-personal-care": 2000,
+        "cat-clothing": 800,
+      };
+
       localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(DEFAULT_CATEGORIES));
       localStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify(seed.expenses));
       localStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(seed.budgets));
+      localStorage.setItem(STORAGE_KEYS.RECURRING_BUDGETS, JSON.stringify(defaultRecurring));
       localStorage.setItem(STORAGE_KEYS.CURRENCY, "ZAR");
       localStorage.setItem(STORAGE_KEYS.INITIALIZED, "true");
     }
@@ -124,6 +104,31 @@ export class LocalStorageAdapter implements StorageAdapter {
     localStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(budgets));
   }
 
+  getRecurringBudgets(): Record<string, number> {
+    if (!this.isClient()) return {};
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.RECURRING_BUDGETS);
+      if (raw) return JSON.parse(raw);
+      // Fallback defaults
+      return {
+        "cat-subscriptions": 250,
+        "cat-debt": 3500,
+        "cat-airtime-data": 1500,
+        "cat-groceries": 3800,
+        "cat-transport": 2000,
+        "cat-personal-care": 2000,
+        "cat-clothing": 800,
+      };
+    } catch {
+      return {};
+    }
+  }
+
+  saveRecurringBudgets(recurring: Record<string, number>): void {
+    if (!this.isClient()) return;
+    localStorage.setItem(STORAGE_KEYS.RECURRING_BUDGETS, JSON.stringify(recurring));
+  }
+
   getCurrency(): string {
     if (!this.isClient()) return "ZAR";
     return localStorage.getItem(STORAGE_KEYS.CURRENCY) || "ZAR";
@@ -140,10 +145,10 @@ export class LocalStorageAdapter implements StorageAdapter {
     localStorage.removeItem(STORAGE_KEYS.EXPENSES);
     localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
     localStorage.removeItem(STORAGE_KEYS.BUDGETS);
+    localStorage.removeItem(STORAGE_KEYS.RECURRING_BUDGETS);
     localStorage.removeItem(STORAGE_KEYS.CURRENCY);
     this.ensureInitialized();
   }
 }
 
 export const storage = new LocalStorageAdapter();
-
