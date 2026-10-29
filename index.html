@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vela — In Your Terms</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+  <style>
+    /* ==========================================================================
+       Vela Hero — In Your Terms
+       Base 1440x960 unit scaling: --u = min(100vw/1440, 100vh/960)
+       ========================================================================== */
+    :root {
+      --u: min(calc(100vw / 1440), calc(100vh / 960));
+      --ink: #0D0D0C;
+      --ink-sec: rgba(13, 13, 12, 0.56);
+      --ink-hint: rgba(13, 13, 12, 0.42);
+      --cream: #FBF6EF;
+      --font: 'Inter Tight', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--cream);
+      color: var(--ink);
+      font-family: var(--font);
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Outer 1440x960 stage container that fills viewport */
+    .viewport {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ==========================================================================
+       Hero Panel (Top 75%)
+       ========================================================================== */
+    .hero-panel {
+      position: relative;
+      width: 100%;
+      height: 75%;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    /* Stacked gradient layers */
+    .gradient-layer-wrap {
+      position: absolute;
+      inset: -5%;
+      width: 110%;
+      height: 110%;
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    .gradient-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 0.05s linear;
+      will-change: opacity;
+    }
+
+    /* 1. Message: lemon cream */
+    .gradient-layer.layer-0 {
+      background:
+        radial-gradient(circle at 86% 76%, rgba(246, 222, 104, 0.95) 0%, rgba(246, 222, 104, 0) 58%),
+        radial-gradient(circle at 32% 105%, rgba(246, 222, 104, 0.55) 0%, rgba(246, 222, 104, 0) 52%),
+        linear-gradient(180deg, #F2ECDF 0%, #F4EBC6 100%);
+    }
+
+    /* 2. Browse: peach & apricot */
+    .gradient-layer.layer-1 {
+      background:
+        radial-gradient(circle at 86% 76%, rgba(249, 150, 84, 0.92) 0%, rgba(249, 150, 84, 0) 58%),
+        radial-gradient(circle at 32% 105%, rgba(249, 150, 84, 0.55) 0%, rgba(249, 150, 84, 0) 52%),
+        linear-gradient(180deg, #F8DCC7 0%, #F9CBA9 100%);
+    }
+
+    /* 3. Transact: warm sage mint */
+    .gradient-layer.layer-2 {
+      background:
+        radial-gradient(circle at 86% 76%, rgba(150, 206, 150, 0.92) 0%, rgba(150, 206, 150, 0) 58%),
+        radial-gradient(circle at 32% 105%, rgba(150, 206, 150, 0.55) 0%, rgba(150, 206, 150, 0) 52%),
+        linear-gradient(180deg, #E9EBE0 0%, #DFE9D4 100%);
+    }
+
+    /* 4. Build web: rose lilac */
+    .gradient-layer.layer-3 {
+      background:
+        radial-gradient(circle at 86% 76%, rgba(222, 150, 200, 0.92) 0%, rgba(222, 150, 200, 0) 58%),
+        radial-gradient(circle at 32% 105%, rgba(222, 150, 200, 0.55) 0%, rgba(222, 150, 200, 0) 52%),
+        linear-gradient(180deg, #F0E4E6 0%, #ECD6E2 100%);
+    }
+
+    /* Fine SVG fractal noise grain overlay at 18% opacity with multiply */
+    .noise-grain {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.18;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 140px 140px;
+      z-index: 2;
+    }
+
+    /* ==========================================================================
+       Navigation (80u tall)
+       ========================================================================== */
+    .nav {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: calc(80 * var(--u));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 calc(112 * var(--u));
+      border-bottom: 1px solid rgba(13, 13, 12, 0.08);
+      z-index: 10;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: calc(11 * var(--u));
+      text-decoration: none;
+      color: var(--ink);
+    }
+
+    .nav-dot {
+      width: calc(13 * var(--u));
+      height: calc(13 * var(--u));
+      background: var(--ink);
+      border-radius: 50%;
+    }
+
+    .nav-logo {
+      font-size: calc(25 * var(--u));
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      line-height: 1;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: calc(42 * var(--u));
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: calc(42 * var(--u));
+      list-style: none;
+    }
+
+    .nav-item {
+      display: inline-flex;
+      align-items: center;
+      gap: calc(6 * var(--u));
+      font-size: calc(17 * var(--u));
+      font-weight: 500;
+      color: var(--ink);
+      text-decoration: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .nav-item:hover {
+      opacity: 0.7;
+    }
+
+    .nav-chevron {
+      width: calc(10 * var(--u));
+      height: calc(10 * var(--u));
+      stroke: var(--ink);
+      stroke-width: 1.8;
+      fill: none;
+      vertical-align: middle;
+      opacity: 0.7;
+    }
+
+    .nav-btn-join {
+      height: calc(48 * var(--u));
+      padding: 0 calc(24 * var(--u));
+      border-radius: calc(7 * var(--u));
+      border: 1.4px solid var(--ink);
+      background: transparent;
+      color: var(--ink);
+      font-family: var(--font);
+      font-size: calc(17 * var(--u));
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.22s cubic-bezier(0.16, 1, 0.3, 1), color 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-btn-join:hover {
+      background: var(--ink);
+      color: var(--cream);
+    }
+
+    /* ==========================================================================
+       Headline (left 112u, top 190u, 172u font size, 0.86 line-height)
+       ========================================================================== */
+    .headline {
+      position: absolute;
+      left: calc(112 * var(--u));
+      top: calc(190 * var(--u));
+      font-size: calc(172 * var(--u));
+      font-weight: 500;
+      line-height: 0.86;
+      letter-spacing: -0.032em;
+      color: var(--ink);
+      z-index: 5;
+    }
+
+    .headline-line-1 {
+      display: flex;
+      align-items: baseline;
+      height: 1em;
+      position: relative;
+    }
+
+    .headline-line-2 {
+      display: block;
+      white-space: nowrap;
+    }
+
+    /* Slot container for the cycling words + icons */
+    .slots-container {
+      position: relative;
+      display: inline-flex;
+      align-items: baseline;
+      height: 1em;
+    }
+
+    .word-slot {
+      position: absolute;
+      left: 0;
+      top: 0;
+      display: inline-flex;
+      align-items: baseline;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      will-change: transform, opacity, filter;
+    }
+
+    .word-slot.active {
+      pointer-events: auto;
+    }
+
+    .slot-word-text {
+      display: inline-block;
+      will-change: transform, opacity, filter;
+    }
+
+    /* ==========================================================================
+       Glossy 3D Icon with Color Hue Tinting
+       ========================================================================== */
+    .icon-wrapper {
+      position: relative;
+      width: 1.02em;
+      height: 1.02em;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      isolation: isolate;
+      vertical-align: -0.15em;
+      margin-right: 0.16em;
+      flex-shrink: 0;
+      will-change: transform, opacity;
+    }
+
+    .icon-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: grayscale(1) brightness(1.1) contrast(1.08);
+      display: block;
+      pointer-events: none;
+    }
+
+    .icon-tint {
+      position: absolute;
+      inset: 0;
+      background: var(--tint);
+      mix-blend-mode: color;
+      -webkit-mask: var(--mask-url) center / contain no-repeat;
+      mask: var(--mask-url) center / contain no-repeat;
+      pointer-events: none;
+    }
+
+    /* Word specific tints */
+    .slot-0 { --tint: #E9C22E; } /* Message */
+    .slot-1 { --tint: #F2772F; } /* Browse */
+    .slot-2 { --tint: #3FB874; } /* Transact */
+    .slot-3 { --tint: #C564C4; } /* Build web */
+
+    /* ==========================================================================
+       Row at top 578u (Store buttons + 2-line caption)
+       ========================================================================== */
+    .hero-row {
+      position: absolute;
+      top: calc(578 * var(--u));
+      left: calc(112 * var(--u));
+      display: flex;
+      align-items: center;
+      gap: calc(36 * var(--u));
+      z-index: 5;
+    }
+
+    .store-buttons {
+      display: flex;
+      align-items: center;
+      gap: calc(14 * var(--u));
+    }
+
+    .store-btn {
+      height: calc(58 * var(--u));
+      padding: 0 calc(22 * var(--u));
+      border: 1.4px solid rgba(13, 13, 12, 0.22);
+      border-radius: calc(14 * var(--u));
+      background: transparent;
+      color: var(--ink);
+      font-family: var(--font);
+      display: inline-flex;
+      align-items: center;
+      gap: calc(12 * var(--u));
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+                  color 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .store-btn:hover {
+      background: var(--ink);
+      color: #FFFFFF;
+      border-color: var(--ink);
+    }
+
+    /* App Store dynamic flash state when Build web holds */
+    .store-btn.app-store-flash {
+      background: var(--ink) !important;
+      color: #FFFFFF !important;
+      border-color: var(--ink) !important;
+    }
+
+    .store-btn-icon {
+      width: calc(22 * var(--u));
+      height: calc(22 * var(--u));
+      stroke: currentColor;
+      fill: none;
+      flex-shrink: 0;
+    }
+
+    .store-btn-text {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+      line-height: 1.15;
+    }
+
+    .store-btn-label {
+      font-size: calc(11 * var(--u));
+      font-weight: 400;
+      opacity: 0.72;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .store-btn-title {
+      font-size: calc(18 * var(--u));
+      font-weight: 600;
+      letter-spacing: -0.015em;
+    }
+
+    .hero-caption {
+      font-size: calc(18.5 * var(--u));
+      font-weight: 400;
+      line-height: 1.34;
+      color: var(--ink-sec);
+      letter-spacing: -0.012em;
+    }
+
+    /* ==========================================================================
+       Stats Strip (Bottom 25%, in cream #FBF6EF with S-curve notch)
+       ========================================================================== */
+    .stats-strip {
+      position: relative;
+      width: 100%;
+      height: 25%;
+      background: var(--cream);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 calc(112 * var(--u));
+      z-index: 10;
+    }
+
+    /* The Notch SVG rising smoothly over the right side */
+    .notch-svg {
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      width: 100%;
+      height: calc(62 * var(--u));
+      pointer-events: none;
+      display: block;
+      z-index: 12;
+    }
+
+    /* Scroll hint on the raised notch shelf */
+    .scroll-hint {
+      position: absolute;
+      bottom: calc(100% + calc(18 * var(--u)));
+      right: calc(112 * var(--u));
+      font-size: calc(15 * var(--u));
+      font-weight: 500;
+      color: var(--ink-hint);
+      letter-spacing: -0.01em;
+      z-index: 15;
+      display: flex;
+      align-items: center;
+      gap: calc(5 * var(--u));
+      pointer-events: none;
+    }
+
+    .stats-content {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: calc(48 * var(--u));
+    }
+
+    .stats-lead {
+      font-size: calc(29 * var(--u));
+      font-weight: 500;
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+      color: var(--ink);
+      flex-shrink: 0;
+    }
+
+    .stats-metrics {
+      display: flex;
+      align-items: flex-start;
+      gap: calc(64 * var(--u));
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: calc(4 * var(--u));
+    }
+
+    .stat-number {
+      font-size: calc(54 * var(--u));
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: -0.035em;
+      color: var(--ink);
+    }
+
+    .stat-label {
+      font-size: calc(16.5 * var(--u));
+      font-weight: 400;
+      color: var(--ink-sec);
+      letter-spacing: -0.01em;
+    }
+
+    /* Sprout line art on the far right */
+    .sprout-art {
+      width: calc(44 * var(--u));
+      height: calc(58 * var(--u));
+      stroke: var(--ink);
+      stroke-width: 1.4;
+      fill: none;
+      flex-shrink: 0;
+    }
+
+    /* ==========================================================================
+       Responsive for Phones (<= 760px)
+       ========================================================================== */
+    @media (max-width: 760px) {
+      html, body {
+        overflow-y: auto;
+        overflow-x: hidden;
+        height: auto;
+        min-height: 100%;
+      }
+
+      .viewport {
+        height: auto;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      .hero-panel {
+        height: auto;
+        min-height: 82vh;
+        padding-bottom: 72px;
+      }
+
+      .nav {
+        height: 64px;
+        padding: 0 20px;
+      }
+
+      .nav-logo {
+        font-size: 20px;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .nav-btn-join {
+        height: 40px;
+        padding: 0 16px;
+        font-size: 14px;
+        border-radius: 6px;
+      }
+
+      .headline {
+        position: static;
+        margin-top: 96px;
+        padding: 0 20px;
+        font-size: clamp(52px, 15.5vw, 88px);
+        line-height: 0.9;
+        letter-spacing: -0.035em;
+      }
+
+      .headline-line-1 {
+        height: auto;
+        flex-wrap: wrap;
+        row-gap: 6px;
+      }
+
+      .slots-container {
+        display: inline-flex;
+        position: relative;
+        height: 1em;
+      }
+
+      .hero-row {
+        position: static;
+        margin-top: 36px;
+        padding: 0 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+      }
+
+      .store-buttons {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .store-btn {
+        flex: 1 1 140px;
+        height: 52px;
+        padding: 0 16px;
+        border-radius: 12px;
+      }
+
+      .store-btn-title {
+        font-size: 15px;
+      }
+
+      .store-btn-label {
+        font-size: 10px;
+      }
+
+      .hero-caption {
+        font-size: 15.5px;
+        line-height: 1.4;
+      }
+
+      .notch-svg {
+        display: none;
+      }
+
+      .scroll-hint {
+        display: none;
+      }
+
+      .stats-strip {
+        height: auto;
+        padding: 40px 20px 48px;
+        border-top: 1px solid rgba(13, 13, 12, 0.08);
+      }
+
+      .stats-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 32px;
+      }
+
+      .stats-lead {
+        font-size: 24px;
+      }
+
+      .stats-metrics {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px 16px;
+      }
+
+      .stat-number {
+        font-size: 38px;
+      }
+
+      .stat-label {
+        font-size: 13.5px;
+      }
+
+      .sprout-art {
+        align-self: flex-end;
+        width: 38px;
+        height: 50px;
+        margin-top: -30px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="viewport">
+    <!-- ======================================================================
+         HERO PANEL (Top 75%)
+         ====================================================================== -->
+    <div class="hero-panel" id="heroPanel">
+      <!-- Stacked drifting gradient layers -->
+      <div class="gradient-layer-wrap" id="gradientWrap">
+        <div class="gradient-layer layer-0" id="layer0"></div>
+        <div class="gradient-layer layer-1" id="layer1"></div>
+        <div class="gradient-layer layer-2" id="layer2"></div>
+        <div class="gradient-layer layer-3" id="layer3"></div>
+      </div>
+
+      <!-- Fractal noise grain overlay -->
+      <div class="noise-grain"></div>
+
+      <!-- Top Navigation (80u tall) -->
+      <header class="nav">
+        <a href="#" class="nav-left" aria-label="Vela Home">
+          <span class="nav-dot"></span>
+          <span class="nav-logo">vela</span>
+        </a>
+
+        <div class="nav-right">
+          <ul class="nav-links">
+            <li>
+              <a href="#products" class="nav-item">
+                <span>Products</span>
+                <svg class="nav-chevron" viewBox="0 0 10 10">
+                  <path d="M2.5 3.8L5 6.3L7.5 3.8" />
+                </svg>
+              </a>
+            </li>
+            <li>
+              <a href="#company" class="nav-item">
+                <span>Company</span>
+                <svg class="nav-chevron" viewBox="0 0 10 10">
+                  <path d="M2.5 3.8L5 6.3L7.5 3.8" />
+                </svg>
+              </a>
+            </li>
+            <li>
+              <a href="#docs" class="nav-item">
+                <span>Docs</span>
+                <svg class="nav-chevron" viewBox="0 0 10 10">
+                  <path d="M2.5 3.8L5 6.3L7.5 3.8" />
+                </svg>
+              </a>
+            </li>
+          </ul>
+
+          <button class="nav-btn-join">Join Vela</button>
+        </div>
+      </header>
+
+      <!-- Headline (left 112u, top 190u) -->
+      <div class="headline">
+        <div class="headline-line-1">
+          <div class="slots-container" id="slotsContainer">
+
+            <!-- Slot 0: Message -->
+            <div class="word-slot slot-0" id="slot0">
+              <span class="icon-wrapper" id="iconWrap0" style="--mask-url: url('https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/83de7c35-dd91-4e56-bfb8-0ffafc83d0e0.webp');">
+                <img class="icon-img" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/83de7c35-dd91-4e56-bfb8-0ffafc83d0e0.webp" alt="Message icon" />
+                <span class="icon-tint"></span>
+              </span>
+              <span class="slot-word-text" id="wordText0">Message</span>
+            </div>
+
+            <!-- Slot 1: Browse -->
+            <div class="word-slot slot-1" id="slot1">
+              <span class="icon-wrapper" id="iconWrap1" style="--mask-url: url('https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/4d952211-0474-48cc-af48-58f68b3b7525.webp');">
+                <img class="icon-img" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/4d952211-0474-48cc-af48-58f68b3b7525.webp" alt="Browse icon" />
+                <span class="icon-tint"></span>
+              </span>
+              <span class="slot-word-text" id="wordText1">Browse</span>
+            </div>
+
+            <!-- Slot 2: Transact -->
+            <div class="word-slot slot-2" id="slot2">
+              <span class="icon-wrapper" id="iconWrap2" style="--mask-url: url('https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/e2e91fca-5b3f-4e0e-a437-8a581592e407.webp');">
+                <img class="icon-img" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/e2e91fca-5b3f-4e0e-a437-8a581592e407.webp" alt="Transact icon" />
+                <span class="icon-tint"></span>
+              </span>
+              <span class="slot-word-text" id="wordText2">Transact</span>
+            </div>
+
+            <!-- Slot 3: Build web -->
+            <div class="word-slot slot-3" id="slot3">
+              <span class="icon-wrapper" id="iconWrap3" style="--mask-url: url('https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/6b32bb47-4ad6-4938-a637-c997b373c68b.webp');">
+                <img class="icon-img" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/6b32bb47-4ad6-4938-a637-c997b373c68b.webp" alt="Build web icon" />
+                <span class="icon-tint"></span>
+              </span>
+              <span class="slot-word-text" id="wordText3">Build web</span>
+            </div>
+
+          </div>
+        </div>
+        <div class="headline-line-2">in your terms</div>
+      </div>
+
+      <!-- Action Row (top 578u) -->
+      <div class="hero-row">
+        <div class="store-buttons">
+          <!-- App Store with neutral fruit glyph -->
+          <a href="#appstore" class="store-btn" id="appStoreBtn">
+            <svg class="store-btn-icon" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3c0 2-1 3.4-2.5 3.8" />
+              <path d="M12 7.2c-2.4-1.8-6.2-0.2-6.2 4.2 0 4.8 4 9.6 6.2 9.6s6.2-4.8 6.2-9.6c0-4.4-3.8-6-6.2-4.2z" />
+            </svg>
+            <div class="store-btn-text">
+              <span class="store-btn-label">Download on</span>
+              <span class="store-btn-title">App Store</span>
+            </div>
+          </a>
+
+          <!-- Google Play with neutral play-triangle glyph -->
+          <a href="#googleplay" class="store-btn">
+            <svg class="store-btn-icon" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="6 3.5 19.5 12 6 20.5 6 3.5" />
+            </svg>
+            <div class="store-btn-text">
+              <span class="store-btn-label">Get it on</span>
+              <span class="store-btn-title">Google Play</span>
+            </div>
+          </a>
+        </div>
+
+        <p class="hero-caption">
+          Vela is a secure messaging app, crypto wallet, and<br>
+          Web3 browser built with state of the art technology.
+        </p>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         STATS STRIP (Bottom 25%, in cream #FBF6EF with S-curve notch)
+         ====================================================================== -->
+    <div class="stats-strip">
+      <!-- Curved Notch SVG: M0 62 H1062 C1092 62 1098 54 1116 34 C1138 9 1146 1 1178 1 H1440 V62 Z -->
+      <svg class="notch-svg" viewBox="0 0 1440 62" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 62 H1062 C1092 62 1098 54 1116 34 C1138 9 1146 1 1178 1 H1440 V62 Z" fill="#FBF6EF" />
+      </svg>
+
+      <!-- Scroll hint on the raised notch shelf -->
+      <div class="scroll-hint">
+        <span>↓</span>
+        <span>Scroll to learn more</span>
+      </div>
+
+      <!-- Stats strip content -->
+      <div class="stats-content">
+        <div class="stats-lead">
+          Nothing great is<br>made alone
+        </div>
+
+        <div class="stats-metrics">
+          <div class="stat-item">
+            <div class="stat-number">11.5M+</div>
+            <div class="stat-label">Active accounts</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">$0.0002</div>
+            <div class="stat-label">Average cost per transaction</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">80+</div>
+            <div class="stat-label">Dapps integrations</div>
+          </div>
+        </div>
+
+        <!-- Thin line-art sprout (two leaves on a stem, ground line) -->
+        <svg class="sprout-art" viewBox="0 0 44 58" aria-hidden="true">
+          <line x1="4" y1="54" x2="40" y2="54" />
+          <path d="M22 54 V28 Q22 14 24 10" />
+          <path d="M22 35 C12 35 8 23 22 19 C22 27 18 35 22 35 Z" />
+          <path d="M23 25 C33 25 37 13 23 9 C23 17 27 25 23 25 Z" />
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MOTION ENGINE — ONE CLOCK
+       ====================================================================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      // 4 slots: 1.75s each -> 7.0s total cycle
+      const SLOT_DURATION = 1750; // ms
+      const TOTAL_SLOTS = 4;
+      const CYCLE_DURATION = TOTAL_SLOTS * SLOT_DURATION; // 7000 ms
+
+      // Master clock Web Animation so frame-by-frame recorder can seek it
+      const clockTarget = document.createElement('div');
+      const clockAnim = clockTarget.animate(
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: CYCLE_DURATION, iterations: Infinity, easing: 'linear' }
+      );
+
+      // DOM Elements
+      const slots = [
+        {
+          root: document.getElementById('slot0'),
+          word: document.getElementById('wordText0'),
+          icon: document.getElementById('iconWrap0'),
+          layer: document.getElementById('layer0'),
+        },
+        {
+          root: document.getElementById('slot1'),
+          word: document.getElementById('wordText1'),
+          icon: document.getElementById('iconWrap1'),
+          layer: document.getElementById('layer1'),
+        },
+        {
+          root: document.getElementById('slot2'),
+          word: document.getElementById('wordText2'),
+          icon: document.getElementById('iconWrap2'),
+          layer: document.getElementById('layer2'),
+        },
+        {
+          root: document.getElementById('slot3'),
+          word: document.getElementById('wordText3'),
+          icon: document.getElementById('iconWrap3'),
+          layer: document.getElementById('layer3'),
+        },
+      ];
+
+      const gradientWrap = document.getElementById('gradientWrap');
+      const appStoreBtn = document.getElementById('appStoreBtn');
+
+      // Motion preferences
+      const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      let isReducedMotion = motionQuery.matches;
+      motionQuery.addEventListener('change', (e) => {
+        isReducedMotion = e.matches;
+        if (isReducedMotion) {
+          clockAnim.pause();
+          render(1750); // Still Browse state
+        } else {
+          clockAnim.play();
+        }
+      });
+
+      // Tab visibility management: pause clock when tab hidden
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          clockAnim.pause();
+        } else {
+          if (!isReducedMotion) {
+            clockAnim.play();
+          }
+        }
+      });
+
+      // Easing functions
+      function easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
+      }
+
+      function easeInCubic(t) {
+        return Math.pow(t, 3);
+      }
+
+      // Smooth cosine crossfade between 0 and 1
+      function smoothStep(edge0, edge1, x) {
+        const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+        return t * t * (3 - 2 * t);
+      }
+
+      // Panel layer opacity calculation: crossfade over 0.77s (770ms) straddling boundary
+      // Straddles boundary by ±385ms
+      function computePanelOpacity(slotIndex, t) {
+        const slotStart = slotIndex * SLOT_DURATION;
+        const slotEnd = slotStart + SLOT_DURATION;
+        const halfWindow = 385; // 770ms / 2
+
+        // Normalized relative time to slot center
+        let dt = (t - slotStart) % CYCLE_DURATION;
+        if (dt < 0) dt += CYCLE_DURATION;
+
+        // Entry: from -halfWindow to +halfWindow
+        // In the range [CYCLE_DURATION - halfWindow, CYCLE_DURATION]:
+        if (dt >= CYCLE_DURATION - halfWindow) {
+          const progress = (dt - (CYCLE_DURATION - halfWindow)) / 770;
+          return smoothStep(0, 1, progress);
+        }
+        if (dt < halfWindow) {
+          const progress = (dt + halfWindow) / 770;
+          return smoothStep(0, 1, progress);
+        }
+
+        // Full hold period: between halfWindow and (SLOT_DURATION - halfWindow)
+        if (dt >= halfWindow && dt <= SLOT_DURATION - halfWindow) {
+          return 1;
+        }
+
+        // Exit: from (SLOT_DURATION - halfWindow) to (SLOT_DURATION + halfWindow)
+        if (dt > SLOT_DURATION - halfWindow && dt <= SLOT_DURATION + halfWindow) {
+          const progress = (dt - (SLOT_DURATION - halfWindow)) / 770;
+          return 1 - smoothStep(0, 1, progress);
+        }
+
+        return 0;
+      }
+
+      // Main render frame
+      function render(timeMs) {
+        if (isReducedMotion) {
+          // Still Browse state
+          slots.forEach((s, i) => {
+            s.layer.style.opacity = i === 1 ? '1' : '0';
+            s.root.style.opacity = i === 1 ? '1' : '0';
+            s.root.style.transform = 'none';
+            s.root.style.filter = 'none';
+            s.word.style.transform = 'none';
+            s.icon.style.transform = 'none';
+          });
+          gradientWrap.style.transform = 'none';
+          appStoreBtn.classList.remove('app-store-flash');
+          return;
+        }
+
+        const t = (timeMs % CYCLE_DURATION + CYCLE_DURATION) % CYCLE_DURATION;
+
+        // 1. Idle drift for gradient layers: ±2.2% / ±1.6% at scale 1.08
+        const driftX = Math.sin(t * 0.0012) * 2.2;
+        const driftY = Math.cos(t * 0.0009) * 1.6;
+        gradientWrap.style.transform = `scale(1.08) translate(${driftX}%, ${driftY}%)`;
+
+        // 2. Compute panel crossfades
+        for (let i = 0; i < TOTAL_SLOTS; i++) {
+          const op = computePanelOpacity(i, t);
+          slots[i].layer.style.opacity = op.toFixed(4);
+        }
+
+        // 3. Current active slot and local time within slot
+        const activeIndex = Math.floor(t / SLOT_DURATION) % TOTAL_SLOTS;
+        const localT = t % SLOT_DURATION;
+
+        // Idle float for active icon (±0.028em, ±3°)
+        const idleFloatY = Math.sin(t * 0.0035) * 0.028;
+        const idleRot = Math.cos(t * 0.0028) * 3;
+
+        // 4. Update each word slot
+        for (let i = 0; i < TOTAL_SLOTS; i++) {
+          const s = slots[i];
+
+          if (i === activeIndex) {
+            s.root.classList.add('active');
+
+            let wordOpacity = 1;
+            let wordY = 0; // em
+            let wordBlur = 0; // px
+            let wordScale = 1;
+
+            let iconOpacity = 1;
+            let iconScale = 1;
+            let iconRot = 0; // deg
+
+            // ENTER: over 0.5s (0 -> 500ms)
+            if (localT < 500) {
+              const pEnter = localT / 500;
+              const easeEnter = easeOutCubic(pEnter);
+
+              wordOpacity = easeEnter;
+              wordY = (1 - easeEnter) * 0.32; // rises from +0.32em
+              wordBlur = (1 - easeEnter) * 10; // 10px -> 0
+              wordScale = 0.96 + 0.04 * easeEnter; // 0.96 -> 1
+
+              // Icon follows 60ms later: duration 500ms
+              if (localT < 60) {
+                iconOpacity = 0;
+                iconScale = 0.7;
+                iconRot = -14;
+              } else {
+                const pIcon = Math.min(1, (localT - 60) / 440);
+                const easeIcon = easeOutCubic(pIcon);
+                iconOpacity = easeIcon;
+                iconScale = 0.7 + 0.3 * easeIcon; // 0.7 -> 1
+                iconRot = -14 * (1 - easeIcon); // untwist from -14° -> 0°
+              }
+            }
+            // LEAVE: the last 0.42s (1330ms -> 1750ms)
+            else if (localT >= 1330) {
+              const pLeave = (localT - 1330) / 420;
+              const easeLeave = easeInCubic(pLeave);
+
+              wordOpacity = Math.max(0, 1 - easeLeave);
+              wordY = -0.16 * easeLeave; // drifts up 0.16em
+              wordBlur = 8 * easeLeave; // 0 -> 8px
+              wordScale = 1;
+
+              iconOpacity = wordOpacity;
+              iconScale = 1;
+              iconRot = 0;
+            }
+
+            // Apply transforms and styles
+            s.root.style.opacity = wordOpacity.toFixed(4);
+
+            s.word.style.transform = `translateY(${wordY.toFixed(4)}em) scale(${wordScale.toFixed(4)})`;
+            s.word.style.filter = wordBlur > 0.05 ? `blur(${wordBlur.toFixed(2)}px)` : 'none';
+
+            // Icon incorporates entrance/leave + idle float
+            const totalIconY = wordY + idleFloatY;
+            const totalIconRot = iconRot + idleRot;
+            s.icon.style.opacity = iconOpacity.toFixed(4);
+            s.icon.style.transform = `translateY(${totalIconY.toFixed(4)}em) scale(${iconScale.toFixed(4)}) rotate(${totalIconRot.toFixed(2)}deg)`;
+
+          } else {
+            // Inactive slots
+            s.root.classList.remove('active');
+            s.root.style.opacity = '0';
+            s.word.style.transform = 'translateY(0.32em) scale(0.96)';
+            s.word.style.filter = 'blur(10px)';
+            s.icon.style.transform = 'scale(0.7) rotate(-14deg)';
+          }
+        }
+
+        // 5. App Store button flash: while "Build web" holds (slot 3, ~5600ms to 6500ms)
+        // Build web slot starts at 5250ms, ends at 7000ms.
+        // Hold is between 5700ms and 6500ms
+        const isBuildWebHold = (t >= 5700 && t <= 6500);
+        if (isBuildWebHold) {
+          appStoreBtn.classList.add('app-store-flash');
+        } else {
+          appStoreBtn.classList.remove('app-store-flash');
+        }
+      }
+
+      // Animation loop reading the single clock's currentTime
+      function tick() {
+        const time = clockAnim.currentTime || 0;
+        render(time);
+        requestAnimationFrame(tick);
+      }
+
+      // Initial start
+      if (isReducedMotion) {
+        render(1750);
+      } else {
+        requestAnimationFrame(tick);
+      }
+
+      // Expose seekable clock globally for automated tests / recording harnesses
+      window.__VELA_CLOCK__ = clockAnim;
+    })();
+  </script>
+</body>
+</html>
