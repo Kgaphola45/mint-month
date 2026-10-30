@@ -38,6 +38,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <BudgetModal />
       <DebtModal />
       <PaydayModal />
+      <AuthModal />
     </div>
   );
 }
