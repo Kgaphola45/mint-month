@@ -12,6 +12,7 @@ import {
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, formatMonthYear, getBudgetStatus } from "@/lib/utils";
 import { CategoryIcon } from "@/components/category-icon";
+import { DebtTracker } from "@/components/debt-tracker";
 
 export default function BudgetsPage() {
   const {
@@ -405,6 +406,9 @@ export default function BudgetsPage() {
           })}
         </div>
       </div>
+
+      {/* Debt & Instalment Paydown Tracker */}
+      <DebtTracker />
     </div>
   );
 }

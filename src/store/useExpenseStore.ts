@@ -7,6 +7,8 @@ import {
   MonthSummary,
   RecurringTimelineItem,
   RecurringTimelineSummary,
+  DebtInstalment,
+  DebtSummary,
 } from "@/types";
 import { storage } from "@/lib/storage";
 import { DEFAULT_CATEGORIES } from "@/lib/constants";
@@ -20,12 +22,15 @@ interface ExpenseStore {
   budgets: Budget[];
   recurringBudgets: Record<string, number>; // Category limits that automatically repeat every month
   clearedRecurring: Record<string, boolean>; // 'YYYY-MM:expenseId' -> boolean
+  debts: DebtInstalment[]; // Debt & contract instalment plans
   isLoaded: boolean;
 
   // Modals & transient UI
   quickAddOpen: boolean;
   budgetModalOpen: boolean;
+  debtModalOpen: boolean;
   editingExpense: Expense | null;
+  editingDebt: DebtInstalment | null;
 
   // Actions
   initStore: () => void;
@@ -35,7 +40,9 @@ interface ExpenseStore {
   setCurrency: (code: string) => void;
   setQuickAddOpen: (open: boolean) => void;
   setBudgetModalOpen: (open: boolean) => void;
+  setDebtModalOpen: (open: boolean) => void;
   setEditingExpense: (expense: Expense | null) => void;
+  setEditingDebt: (debt: DebtInstalment | null) => void;
 
   addExpense: (expense: Omit<Expense, "id">) => void;
   updateExpense: (id: string, updates: Partial<Expense>) => void;
@@ -60,6 +67,14 @@ interface ExpenseStore {
   // Recurring bills timeline cleared actions
   toggleRecurringCleared: (month: string, expenseId: string) => void;
   isRecurringCleared: (month: string, expenseId: string, defaultCleared: boolean) => boolean;
+
+  // Debt & instalment actions
+  addDebt: (debt: Omit<DebtInstalment, "id">) => void;
+  updateDebt: (id: string, updates: Partial<DebtInstalment>) => void;
+  deleteDebt: (id: string) => void;
+  incrementDebtInstalment: (id: string) => void;
+  decrementDebtInstalment: (id: string) => void;
+  getDebtSummary: () => DebtSummary;
 
   resetToDefaults: () => void;
   exportDataJSON: () => string;
@@ -105,11 +120,14 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   budgets: [],
   recurringBudgets: {},
   clearedRecurring: {},
+  debts: [],
   isLoaded: false,
 
   quickAddOpen: false,
   budgetModalOpen: false,
+  debtModalOpen: false,
   editingExpense: null,
+  editingDebt: null,
 
   initStore: () => {
     storage.ensureInitialized();
@@ -118,6 +136,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const budgets = storage.getBudgets();
     const recurringBudgets = storage.getRecurringBudgets();
     const clearedRecurring = storage.getClearedRecurring();
+    const debts = storage.getDebts();
     const currency = storage.getCurrency() || "ZAR";
 
     // Auto-propagate recurring expenses to selected or future months if needed
@@ -162,6 +181,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       budgets,
       recurringBudgets,
       clearedRecurring,
+      debts,
       currency,
       isLoaded: true,
     });
@@ -190,7 +210,138 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
 
   setQuickAddOpen: (open: boolean) => set({ quickAddOpen: open }),
   setBudgetModalOpen: (open: boolean) => set({ budgetModalOpen: open }),
+  setDebtModalOpen: (open: boolean) => set({ debtModalOpen: open }),
   setEditingExpense: (expense: Expense | null) => set({ editingExpense: expense }),
+  setEditingDebt: (debt: DebtInstalment | null) => set({ editingDebt: debt }),
+
+  addDebt: (debtData) => {
+    const id = `debt-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const totalAmount =
+      debtData.totalAmount || debtData.totalInstalments * debtData.monthlyAmount;
+    const isPaidOff = debtData.paidInstalments >= debtData.totalInstalments;
+
+    const newDebt: DebtInstalment = {
+      ...debtData,
+      id,
+      totalAmount,
+      isPaidOff,
+    };
+
+    const updated = [...get().debts, newDebt];
+    storage.saveDebts(updated);
+    set({ debts: updated });
+  },
+
+  updateDebt: (id, updates) => {
+    const updated = get().debts.map((d) => {
+      if (d.id !== id) return d;
+      const merged = { ...d, ...updates };
+      if (merged.paidInstalments >= merged.totalInstalments) {
+        merged.isPaidOff = true;
+      } else if (
+        updates.paidInstalments !== undefined &&
+        merged.paidInstalments < merged.totalInstalments
+      ) {
+        merged.isPaidOff = false;
+      }
+      return merged;
+    });
+    storage.saveDebts(updated);
+    set({ debts: updated });
+  },
+
+  deleteDebt: (id) => {
+    const updated = get().debts.filter((d) => d.id !== id);
+    storage.saveDebts(updated);
+    set({ debts: updated });
+  },
+
+  incrementDebtInstalment: (id) => {
+    const updated = get().debts.map((d) => {
+      if (d.id !== id) return d;
+      const paid = Math.min(d.totalInstalments, (d.paidInstalments || 0) + 1);
+      return {
+        ...d,
+        paidInstalments: paid,
+        isPaidOff: paid >= d.totalInstalments,
+      };
+    });
+    storage.saveDebts(updated);
+    set({ debts: updated });
+  },
+
+  decrementDebtInstalment: (id) => {
+    const updated = get().debts.map((d) => {
+      if (d.id !== id) return d;
+      const paid = Math.max(0, (d.paidInstalments || 0) - 1);
+      return {
+        ...d,
+        paidInstalments: paid,
+        isPaidOff: paid >= d.totalInstalments,
+      };
+    });
+    storage.saveDebts(updated);
+    set({ debts: updated });
+  },
+
+  getDebtSummary: () => {
+    const debts = get().debts;
+    let totalContractValue = 0;
+    let totalPaid = 0;
+    let totalRemaining = 0;
+    let totalMonthly = 0;
+    let activeCount = 0;
+    let paidOffCount = 0;
+
+    let minRemainingMonths = Infinity;
+    let nextPayoffName: string | undefined;
+
+    for (const d of debts) {
+      const isPaid = d.isPaidOff || d.paidInstalments >= d.totalInstalments;
+      const contractVal =
+        d.totalAmount || d.totalInstalments * d.monthlyAmount;
+      const paidVal = d.paidInstalments * d.monthlyAmount;
+      const remVal = Math.max(
+        0,
+        (d.totalInstalments - d.paidInstalments) * d.monthlyAmount
+      );
+      const remMonths = Math.max(0, d.totalInstalments - d.paidInstalments);
+
+      totalContractValue += contractVal;
+      totalPaid += paidVal;
+      totalRemaining += remVal;
+
+      if (isPaid) {
+        paidOffCount++;
+      } else {
+        activeCount++;
+        totalMonthly += d.monthlyAmount;
+        if (remMonths > 0 && remMonths < minRemainingMonths) {
+          minRemainingMonths = remMonths;
+          nextPayoffName = d.name;
+        }
+      }
+    }
+
+    const overallProgress =
+      totalContractValue > 0
+        ? Math.round((totalPaid / totalContractValue) * 100)
+        : 100;
+
+    return {
+      totalMonthly,
+      totalRemaining,
+      totalPaid,
+      totalContractValue,
+      overallProgress,
+      activeCount,
+      paidOffCount,
+      nextPayoffName:
+        minRemainingMonths < Infinity ? nextPayoffName : undefined,
+      nextPayoffMonths:
+        minRemainingMonths < Infinity ? minRemainingMonths : undefined,
+    };
+  },
 
   addExpense: (expenseData) => {
     const id = `exp-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -513,6 +664,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       expenses: get().expenses,
       budgets: get().budgets,
       recurringBudgets: get().recurringBudgets,
+      debts: get().debts,
     };
     return JSON.stringify(data, null, 2);
   },
@@ -550,6 +702,9 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       }
       if (data.recurringBudgets) {
         storage.saveRecurringBudgets(data.recurringBudgets);
+      }
+      if (Array.isArray(data.debts)) {
+        storage.saveDebts(data.debts);
       }
       if (data.currency) {
         storage.saveCurrency(data.currency);
