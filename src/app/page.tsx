@@ -29,7 +29,7 @@ export default function DashboardPage() {
       <HeroPanel />
 
       {/* 2. Main Dashboard Content Strip */}
-      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-8 sm:py-10 space-y-8">
         {/* Dynamic Overbudget Alert (in soft editorial card) */}
         {budgetStatus.status === "danger" && summary.totalBudget > 0 && (
           <div className="p-5 rounded-[24px] bg-[#FFFDF8] border border-rose-300 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">

@@ -47,7 +47,7 @@ export function Navbar() {
     <>
       {/* 80px tall Header with Hairline Border */}
       <header className="sticky top-0 z-30 w-full h-20 border-b border-[#0D0D0C]/[0.08] bg-[#FBF6EF]/85 backdrop-blur-md transition-colors flex items-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex items-center justify-between gap-4">
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 flex items-center justify-between gap-4">
           {/* Brand: 13px black dot + "mint month" Inter Tight 600 */}
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2.5 group">

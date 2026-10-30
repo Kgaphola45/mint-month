@@ -47,8 +47,8 @@ export function HeroPanel() {
       />
 
       {/* Hero Content */}
-      <div className="relative z-10 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16">
-        <div className="max-w-4xl">
+      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-10 sm:py-14 lg:py-16">
+        <div className="max-w-5xl">
           {/* Huge tight grotesk headline */}
           <h1 className="text-5xl sm:text-7xl lg:text-[88px] xl:text-[96px] font-medium leading-[0.86] tracking-[-0.032em] text-[#0D0D0C]">
             <span className="block h-[1.08em] overflow-hidden">
