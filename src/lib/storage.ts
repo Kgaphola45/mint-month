@@ -9,6 +9,8 @@ const STORAGE_KEYS = {
   RECURRING_BUDGETS: "mint_month_recurring_budgets_v2",
   CLEARED_RECURRING: "mint_month_cleared_recurring_v2",
   DEBTS: "mint_month_debts_v2",
+  INCOMES: "mint_month_incomes_v2",
+  PAYDAY: "mint_month_payday_v2",
   CURRENCY: "mint_month_currency_v2",
   INITIALIZED: "mint_month_initialized_v2",
 };
@@ -213,6 +215,37 @@ export class LocalStorageAdapter implements StorageAdapter {
     localStorage.setItem(STORAGE_KEYS.DEBTS, JSON.stringify(debts));
   }
 
+  getIncomes(): Record<string, number> {
+    if (!this.isClient()) return { default: 25000 };
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.INCOMES);
+      return raw ? JSON.parse(raw) : { default: 25000 };
+    } catch {
+      return { default: 25000 };
+    }
+  }
+
+  saveIncomes(incomes: Record<string, number>): void {
+    if (!this.isClient()) return;
+    localStorage.setItem(STORAGE_KEYS.INCOMES, JSON.stringify(incomes));
+  }
+
+  getPaydayDay(): number {
+    if (!this.isClient()) return 25;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.PAYDAY);
+      const parsed = raw ? parseInt(raw, 10) : 25;
+      return parsed >= 1 && parsed <= 31 ? parsed : 25;
+    } catch {
+      return 25;
+    }
+  }
+
+  savePaydayDay(day: number): void {
+    if (!this.isClient()) return;
+    localStorage.setItem(STORAGE_KEYS.PAYDAY, day.toString());
+  }
+
   getCurrency(): string {
     if (!this.isClient()) return "ZAR";
     return localStorage.getItem(STORAGE_KEYS.CURRENCY) || "ZAR";
@@ -232,6 +265,8 @@ export class LocalStorageAdapter implements StorageAdapter {
     localStorage.removeItem(STORAGE_KEYS.RECURRING_BUDGETS);
     localStorage.removeItem(STORAGE_KEYS.CLEARED_RECURRING);
     localStorage.removeItem(STORAGE_KEYS.DEBTS);
+    localStorage.removeItem(STORAGE_KEYS.INCOMES);
+    localStorage.removeItem(STORAGE_KEYS.PAYDAY);
     localStorage.removeItem(STORAGE_KEYS.CURRENCY);
     this.ensureInitialized();
   }

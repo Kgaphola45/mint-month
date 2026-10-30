@@ -6,6 +6,7 @@ import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, getBudgetStatus } from "@/lib/utils";
 import { HeroPanel } from "@/components/hero-panel";
 import { StatsCards } from "@/components/stats-cards";
+import { SafeToSpendMeter } from "@/components/safe-to-spend-meter";
 import { RecurringTimeline } from "@/components/recurring-timeline";
 import { CategoryChart } from "@/components/category-chart";
 import { DailyChart } from "@/components/daily-chart";
@@ -65,7 +66,12 @@ export default function DashboardPage() {
           <StatsCards />
         </section>
 
-        {/* 4. Upcoming Recurring Bills & Debit Orders Timeline */}
+        {/* 4. Safe-to-Spend Daily Meter & Payday Planner */}
+        <section>
+          <SafeToSpendMeter />
+        </section>
+
+        {/* 5. Upcoming Recurring Bills & Debit Orders Timeline */}
         <section>
           <RecurringTimeline />
         </section>

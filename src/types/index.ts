@@ -99,3 +99,30 @@ export interface DebtSummary {
   nextPayoffName?: string;
   nextPayoffMonths?: number;
 }
+
+export interface SafeToSpendSummary {
+  month: string;
+  monthlyIncome: number;
+  fixedCommitments: number; // recurring bills, debit orders, contracts (locked)
+  pendingCommitments: number; // not yet cleared this month
+  clearedCommitments: number; // already deducted
+  budgetedLiving: number; // living category limits
+  nonRecurringSpent: number; // variable expenses spent so far
+  totalSpent: number;
+  safeToSpendPool: number; // income - fixedCommitments
+  safeToSpendRemaining: number; // safeToSpendPool - nonRecurringSpent
+  dailyAllowance: number; // safeToSpendRemaining / daysRemaining
+  daysRemaining: number;
+  daysPassed: number;
+  daysInMonth: number;
+  paydayDay: number;
+  daysUntilPayday: number;
+  status: "comfortable" | "balanced" | "tight" | "overspent";
+  fixedCommitmentsCount: number;
+}
+
+export interface PaydaySettings {
+  defaultIncome: number;
+  paydayDay: number; // 1-31, default 25
+  incomesByMonth?: Record<string, number>;
+}

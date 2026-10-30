@@ -6,6 +6,7 @@ import { Navbar } from "./navbar";
 import { QuickAddModal } from "./quick-add-modal";
 import { BudgetModal } from "./budget-modal";
 import { DebtModal } from "./debt-modal";
+import { PaydayModal } from "./payday-modal";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { initStore, isLoaded } = useExpenseStore();
@@ -35,6 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <QuickAddModal />
       <BudgetModal />
       <DebtModal />
+      <PaydayModal />
     </div>
   );
 }

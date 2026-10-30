@@ -9,6 +9,7 @@ import {
   RecurringTimelineSummary,
   DebtInstalment,
   DebtSummary,
+  SafeToSpendSummary,
 } from "@/types";
 import { storage } from "@/lib/storage";
 import { DEFAULT_CATEGORIES } from "@/lib/constants";
@@ -23,12 +24,15 @@ interface ExpenseStore {
   recurringBudgets: Record<string, number>; // Category limits that automatically repeat every month
   clearedRecurring: Record<string, boolean>; // 'YYYY-MM:expenseId' -> boolean
   debts: DebtInstalment[]; // Debt & contract instalment plans
+  incomes: Record<string, number>; // Month -> Income (or 'default' -> default income)
+  paydayDay: number; // 1-31, default 25
   isLoaded: boolean;
 
   // Modals & transient UI
   quickAddOpen: boolean;
   budgetModalOpen: boolean;
   debtModalOpen: boolean;
+  paydayModalOpen: boolean;
   editingExpense: Expense | null;
   editingDebt: DebtInstalment | null;
 
@@ -41,8 +45,12 @@ interface ExpenseStore {
   setQuickAddOpen: (open: boolean) => void;
   setBudgetModalOpen: (open: boolean) => void;
   setDebtModalOpen: (open: boolean) => void;
+  setPaydayModalOpen: (open: boolean) => void;
   setEditingExpense: (expense: Expense | null) => void;
   setEditingDebt: (debt: DebtInstalment | null) => void;
+  setMonthIncome: (month: string, amount: number) => void;
+  setDefaultIncome: (amount: number) => void;
+  setPaydayDay: (day: number) => void;
 
   addExpense: (expense: Omit<Expense, "id">) => void;
   updateExpense: (id: string, updates: Partial<Expense>) => void;
@@ -110,6 +118,7 @@ interface ExpenseStore {
     budget: number;
   }>;
   getCategoryById: (id: string) => Category;
+  getSafeToSpend: (month?: string) => SafeToSpendSummary;
 }
 
 export const useExpenseStore = create<ExpenseStore>((set, get) => ({
@@ -121,11 +130,14 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   recurringBudgets: {},
   clearedRecurring: {},
   debts: [],
+  incomes: { default: 25000 },
+  paydayDay: 25,
   isLoaded: false,
 
   quickAddOpen: false,
   budgetModalOpen: false,
   debtModalOpen: false,
+  paydayModalOpen: false,
   editingExpense: null,
   editingDebt: null,
 
@@ -137,6 +149,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const recurringBudgets = storage.getRecurringBudgets();
     const clearedRecurring = storage.getClearedRecurring();
     const debts = storage.getDebts();
+    const incomes = storage.getIncomes();
+    const paydayDay = storage.getPaydayDay();
     const currency = storage.getCurrency() || "ZAR";
 
     // Auto-propagate recurring expenses to selected or future months if needed
@@ -182,6 +196,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       recurringBudgets,
       clearedRecurring,
       debts,
+      incomes,
+      paydayDay,
       currency,
       isLoaded: true,
     });
@@ -211,8 +227,27 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   setQuickAddOpen: (open: boolean) => set({ quickAddOpen: open }),
   setBudgetModalOpen: (open: boolean) => set({ budgetModalOpen: open }),
   setDebtModalOpen: (open: boolean) => set({ debtModalOpen: open }),
+  setPaydayModalOpen: (open: boolean) => set({ paydayModalOpen: open }),
   setEditingExpense: (expense: Expense | null) => set({ editingExpense: expense }),
   setEditingDebt: (debt: DebtInstalment | null) => set({ editingDebt: debt }),
+
+  setMonthIncome: (month: string, amount: number) => {
+    const updated = { ...get().incomes, [month]: amount };
+    storage.saveIncomes(updated);
+    set({ incomes: updated });
+  },
+
+  setDefaultIncome: (amount: number) => {
+    const updated = { ...get().incomes, default: amount };
+    storage.saveIncomes(updated);
+    set({ incomes: updated });
+  },
+
+  setPaydayDay: (day: number) => {
+    const clamped = Math.max(1, Math.min(31, day));
+    storage.savePaydayDay(clamped);
+    set({ paydayDay: clamped });
+  },
 
   addDebt: (debtData) => {
     const id = `debt-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
@@ -665,6 +700,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       budgets: get().budgets,
       recurringBudgets: get().recurringBudgets,
       debts: get().debts,
+      incomes: get().incomes,
+      paydayDay: get().paydayDay,
     };
     return JSON.stringify(data, null, 2);
   },
@@ -705,6 +742,12 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       }
       if (Array.isArray(data.debts)) {
         storage.saveDebts(data.debts);
+      }
+      if (data.incomes && typeof data.incomes === "object") {
+        storage.saveIncomes(data.incomes);
+      }
+      if (typeof data.paydayDay === "number") {
+        storage.savePaydayDay(data.paydayDay);
       }
       if (data.currency) {
         storage.saveCurrency(data.currency);
@@ -992,6 +1035,103 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         pendingCount,
         percentageCleared,
       },
+    };
+  },
+
+  getSafeToSpend: (month?: string) => {
+    const targetMonth = month || get().selectedMonth;
+    const incomes = get().incomes;
+    const monthlyIncome = incomes[targetMonth] || incomes.default || 25000;
+    const paydayDay = get().paydayDay || 25;
+
+    // 1. Fixed commitments (debit orders, contracts, recurring subscriptions)
+    const timeline = get().getRecurringTimeline(targetMonth);
+    const fixedCommitments = timeline.summary.totalCommitted;
+    const pendingCommitments = timeline.summary.pendingAmount;
+    const clearedCommitments = timeline.summary.clearedAmount;
+    const fixedCommitmentsCount = timeline.summary.totalCount;
+
+    // 2. Spending so far in the month
+    const monthExpenses = get().expenses.filter((e) => e.date.startsWith(targetMonth));
+    const nonRecurringExpenses = monthExpenses.filter((e) => !e.isRecurring);
+    const nonRecurringSpent = nonRecurringExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalSpent = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+    // 3. Living category budgets
+    const budget = get().budgets.find((b) => b.month === targetMonth);
+    const catBudgets = { ...(get().recurringBudgets || {}), ...(budget?.categories || {}) };
+    let budgetedLiving = 0;
+    for (const [catId, limit] of Object.entries(catBudgets)) {
+      if (limit > 0 && catId !== "cat-debt" && catId !== "cat-subscriptions") {
+        budgetedLiving += limit;
+      }
+    }
+
+    // 4. Safe-to-Spend Pools
+    const safeToSpendPool = Math.max(0, monthlyIncome - fixedCommitments);
+    const safeToSpendRemaining = safeToSpendPool - nonRecurringSpent;
+
+    // 5. Days calculations
+    const { daysInMonth, daysPassed } = getMonthStats(targetMonth);
+    const todayStr = getTodayDateStr();
+    const currentMonth = getCurrentMonthStr();
+    const todayDay = parseInt(todayStr.slice(8, 10), 10) || 1;
+
+    let daysRemaining = 1;
+    let daysUntilPayday = 0;
+
+    if (targetMonth === currentMonth) {
+      daysRemaining = Math.max(1, daysInMonth - todayDay + 1);
+      if (todayDay <= paydayDay) {
+        daysUntilPayday = paydayDay - todayDay;
+      } else {
+        daysUntilPayday = daysInMonth - todayDay + paydayDay;
+      }
+    } else if (targetMonth < currentMonth) {
+      daysRemaining = 0;
+      daysUntilPayday = 0;
+    } else {
+      daysRemaining = daysInMonth;
+      daysUntilPayday = paydayDay;
+    }
+
+    // 6. Daily Free Allowance
+    const dailyAllowance =
+      daysRemaining > 0
+        ? Math.round((safeToSpendRemaining / daysRemaining) * 100) / 100
+        : safeToSpendRemaining;
+
+    // 7. Status
+    let status: "comfortable" | "balanced" | "tight" | "overspent" = "comfortable";
+    if (safeToSpendRemaining < 0) {
+      status = "overspent";
+    } else if (dailyAllowance < 75) {
+      status = "tight";
+    } else if (dailyAllowance < 200) {
+      status = "balanced";
+    } else {
+      status = "comfortable";
+    }
+
+    return {
+      month: targetMonth,
+      monthlyIncome,
+      fixedCommitments,
+      pendingCommitments,
+      clearedCommitments,
+      budgetedLiving,
+      nonRecurringSpent,
+      totalSpent,
+      safeToSpendPool,
+      safeToSpendRemaining,
+      dailyAllowance,
+      daysRemaining,
+      daysPassed,
+      daysInMonth,
+      paydayDay,
+      daysUntilPayday,
+      status,
+      fixedCommitmentsCount,
     };
   },
 }));
