@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   CATEGORIES: "mint_month_categories_v2",
   BUDGETS: "mint_month_budgets_v2",
   RECURRING_BUDGETS: "mint_month_recurring_budgets_v2",
+  CLEARED_RECURRING: "mint_month_cleared_recurring_v2",
   CURRENCY: "mint_month_currency_v2",
   INITIALIZED: "mint_month_initialized_v2",
 };
@@ -20,6 +21,8 @@ export interface StorageAdapter {
   saveBudgets(budgets: Budget[]): void;
   getRecurringBudgets(): Record<string, number>;
   saveRecurringBudgets(recurring: Record<string, number>): void;
+  getClearedRecurring(): Record<string, boolean>;
+  saveClearedRecurring(cleared: Record<string, boolean>): void;
   getCurrency(): string;
   saveCurrency(currency: string): void;
   resetAll(): void;
@@ -54,6 +57,7 @@ export class LocalStorageAdapter implements StorageAdapter {
       localStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify(seed.expenses));
       localStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(seed.budgets));
       localStorage.setItem(STORAGE_KEYS.RECURRING_BUDGETS, JSON.stringify(defaultRecurring));
+      localStorage.setItem(STORAGE_KEYS.CLEARED_RECURRING, JSON.stringify({}));
       localStorage.setItem(STORAGE_KEYS.CURRENCY, "ZAR");
       localStorage.setItem(STORAGE_KEYS.INITIALIZED, "true");
     }
@@ -109,7 +113,6 @@ export class LocalStorageAdapter implements StorageAdapter {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.RECURRING_BUDGETS);
       if (raw) return JSON.parse(raw);
-      // Fallback defaults
       return {
         "cat-subscriptions": 250,
         "cat-debt": 3500,
@@ -129,6 +132,21 @@ export class LocalStorageAdapter implements StorageAdapter {
     localStorage.setItem(STORAGE_KEYS.RECURRING_BUDGETS, JSON.stringify(recurring));
   }
 
+  getClearedRecurring(): Record<string, boolean> {
+    if (!this.isClient()) return {};
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.CLEARED_RECURRING);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  saveClearedRecurring(cleared: Record<string, boolean>): void {
+    if (!this.isClient()) return;
+    localStorage.setItem(STORAGE_KEYS.CLEARED_RECURRING, JSON.stringify(cleared));
+  }
+
   getCurrency(): string {
     if (!this.isClient()) return "ZAR";
     return localStorage.getItem(STORAGE_KEYS.CURRENCY) || "ZAR";
@@ -146,6 +164,7 @@ export class LocalStorageAdapter implements StorageAdapter {
     localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
     localStorage.removeItem(STORAGE_KEYS.BUDGETS);
     localStorage.removeItem(STORAGE_KEYS.RECURRING_BUDGETS);
+    localStorage.removeItem(STORAGE_KEYS.CLEARED_RECURRING);
     localStorage.removeItem(STORAGE_KEYS.CURRENCY);
     this.ensureInitialized();
   }

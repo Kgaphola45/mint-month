@@ -6,6 +6,7 @@ import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, getBudgetStatus } from "@/lib/utils";
 import { HeroPanel } from "@/components/hero-panel";
 import { StatsCards } from "@/components/stats-cards";
+import { RecurringTimeline } from "@/components/recurring-timeline";
 import { CategoryChart } from "@/components/category-chart";
 import { DailyChart } from "@/components/daily-chart";
 import { TransactionsList } from "@/components/transactions-list";
@@ -64,13 +65,18 @@ export default function DashboardPage() {
           <StatsCards />
         </section>
 
-        {/* 4. Visual Charts Grid (Category Donut & Daily Bar Flow) */}
+        {/* 4. Upcoming Recurring Bills & Debit Orders Timeline */}
+        <section>
+          <RecurringTimeline />
+        </section>
+
+        {/* 5. Visual Charts Grid (Category Donut & Daily Bar Flow) */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <CategoryChart />
           <DailyChart />
         </section>
 
-        {/* 5. Recent Transactions List */}
+        {/* 6. Recent Transactions List */}
         <section>
           <TransactionsList limit={6} showViewAll={true} />
         </section>

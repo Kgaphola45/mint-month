@@ -1,9 +1,16 @@
 import { create } from "zustand";
 import { format, subMonths, addMonths, parse } from "date-fns";
-import { Expense, Category, Budget, MonthSummary } from "@/types";
+import {
+  Expense,
+  Category,
+  Budget,
+  MonthSummary,
+  RecurringTimelineItem,
+  RecurringTimelineSummary,
+} from "@/types";
 import { storage } from "@/lib/storage";
 import { DEFAULT_CATEGORIES } from "@/lib/constants";
-import { getCurrentMonthStr, getMonthStats } from "@/lib/utils";
+import { getCurrentMonthStr, getMonthStats, getTodayDateStr } from "@/lib/utils";
 
 interface ExpenseStore {
   selectedMonth: string; // 'YYYY-MM'
@@ -12,6 +19,7 @@ interface ExpenseStore {
   categories: Category[];
   budgets: Budget[];
   recurringBudgets: Record<string, number>; // Category limits that automatically repeat every month
+  clearedRecurring: Record<string, boolean>; // 'YYYY-MM:expenseId' -> boolean
   isLoaded: boolean;
 
   // Modals & transient UI
@@ -49,12 +57,20 @@ interface ExpenseStore {
   applyCurrentMonthBudgetsToAllMonths: (sourceMonth: string) => void;
   isCategoryRecurring: (month: string, categoryId: string) => boolean;
 
+  // Recurring bills timeline cleared actions
+  toggleRecurringCleared: (month: string, expenseId: string) => void;
+  isRecurringCleared: (month: string, expenseId: string, defaultCleared: boolean) => boolean;
+
   resetToDefaults: () => void;
   exportDataJSON: () => string;
   exportDataCSV: () => string;
   importDataJSON: (jsonStr: string) => boolean;
 
   // Computed helper selectors
+  getRecurringTimeline: (month?: string) => {
+    items: RecurringTimelineItem[];
+    summary: RecurringTimelineSummary;
+  };
   getExpensesForMonth: (month?: string) => Expense[];
   getMonthSummary: (month?: string) => MonthSummary;
   getCategorySpending: (month?: string) => Array<{
@@ -88,6 +104,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   categories: DEFAULT_CATEGORIES,
   budgets: [],
   recurringBudgets: {},
+  clearedRecurring: {},
   isLoaded: false,
 
   quickAddOpen: false,
@@ -100,6 +117,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const categories = storage.getCategories();
     const budgets = storage.getBudgets();
     const recurringBudgets = storage.getRecurringBudgets();
+    const clearedRecurring = storage.getClearedRecurring();
     const currency = storage.getCurrency() || "ZAR";
 
     // Auto-propagate recurring expenses to selected or future months if needed
@@ -143,6 +161,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       categories,
       budgets,
       recurringBudgets,
+      clearedRecurring,
       currency,
       isLoaded: true,
     });
@@ -454,6 +473,32 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     return Boolean(budget?.recurringCategories?.includes(categoryId));
   },
 
+  toggleRecurringCleared: (month: string, expenseId: string) => {
+    const key = `${month}:${expenseId}`;
+    const cleared = { ...get().clearedRecurring };
+    const current = cleared[key];
+
+    if (typeof current === "boolean") {
+      cleared[key] = !current;
+    } else {
+      const timeline = get().getRecurringTimeline(month);
+      const item = timeline.items.find((i) => i.expenseId === expenseId);
+      cleared[key] = !(item?.isCleared ?? false);
+    }
+
+    storage.saveClearedRecurring(cleared);
+    set({ clearedRecurring: cleared });
+  },
+
+  isRecurringCleared: (month: string, expenseId: string, defaultCleared: boolean) => {
+    const key = `${month}:${expenseId}`;
+    const cleared = get().clearedRecurring;
+    if (typeof cleared[key] === "boolean") {
+      return cleared[key];
+    }
+    return defaultCleared;
+  },
+
   resetToDefaults: () => {
     storage.resetAll();
     get().initStore();
@@ -671,5 +716,127 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     }
 
     return trends;
+  },
+
+  getRecurringTimeline: (month?: string) => {
+    const targetMonth = month || get().selectedMonth;
+    const allExpenses = get().expenses;
+    const categories = get().categories;
+    const catMap = new Map(categories.map((c) => [c.id, c]));
+
+    // Find all recurring expenses in target month
+    let recurringInMonth = allExpenses.filter(
+      (e) => e.date.startsWith(targetMonth) && e.isRecurring
+    );
+
+    // If target month has no recurring expenses yet, project from existing recurring expenses
+    if (recurringInMonth.length === 0) {
+      const uniqueTemplates = new Map<string, Expense>();
+      allExpenses
+        .filter((e) => e.isRecurring)
+        .forEach((e) => {
+          const key = `${e.categoryId}-${e.note}`;
+          if (!uniqueTemplates.has(key)) {
+            uniqueTemplates.set(key, e);
+          }
+        });
+
+      recurringInMonth = Array.from(uniqueTemplates.values()).map((t) => {
+        const day = t.date.slice(8, 10);
+        return {
+          ...t,
+          id: `proj-${t.id}-${targetMonth}`,
+          date: `${targetMonth}-${day}`,
+        };
+      });
+    }
+
+    const todayStr = getTodayDateStr();
+    const todayMonth = todayStr.slice(0, 7);
+    const todayDay = parseInt(todayStr.slice(8, 10), 10);
+
+    const items: RecurringTimelineItem[] = recurringInMonth
+      .map((exp) => {
+        const cat = catMap.get(exp.categoryId) || {
+          id: exp.categoryId,
+          name: "Uncategorized",
+          color: "#0D0D0C",
+          icon: "CircleDot",
+        };
+
+        const day = parseInt(exp.date.slice(8, 10), 10) || 1;
+
+        let defaultCleared = false;
+        let daysUntil = 0;
+
+        if (targetMonth < todayMonth) {
+          defaultCleared = true;
+          daysUntil = -1;
+        } else if (targetMonth > todayMonth) {
+          defaultCleared = false;
+          daysUntil = 10;
+        } else {
+          daysUntil = day - todayDay;
+          defaultCleared = day <= todayDay;
+        }
+
+        const isCleared = get().isRecurringCleared(
+          targetMonth,
+          exp.id,
+          defaultCleared
+        );
+
+        let status: "cleared" | "today" | "upcoming" = "upcoming";
+        if (isCleared) {
+          status = "cleared";
+        } else if (daysUntil === 0) {
+          status = "today";
+        } else {
+          status = "upcoming";
+        }
+
+        return {
+          id: exp.id,
+          expenseId: exp.id,
+          note: exp.note || cat.name,
+          amount: exp.amount,
+          categoryId: exp.categoryId,
+          category: cat,
+          paymentMethod: exp.paymentMethod,
+          date: exp.date,
+          day,
+          isCleared,
+          status,
+          daysUntil,
+        };
+      })
+      .sort((a, b) => a.day - b.day);
+
+    const totalCommitted = items.reduce((sum, item) => sum + item.amount, 0);
+    const clearedAmount = items
+      .filter((item) => item.isCleared)
+      .reduce((sum, item) => sum + item.amount, 0);
+    const pendingAmount = items
+      .filter((item) => !item.isCleared)
+      .reduce((sum, item) => sum + item.amount, 0);
+
+    const totalCount = items.length;
+    const clearedCount = items.filter((item) => item.isCleared).length;
+    const pendingCount = items.filter((item) => !item.isCleared).length;
+    const percentageCleared =
+      totalCommitted > 0 ? Math.round((clearedAmount / totalCommitted) * 100) : 0;
+
+    return {
+      items,
+      summary: {
+        totalCommitted,
+        clearedAmount,
+        pendingAmount,
+        totalCount,
+        clearedCount,
+        pendingCount,
+        percentageCleared,
+      },
+    };
   },
 }));

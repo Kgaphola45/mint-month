@@ -48,3 +48,28 @@ export interface MonthSummary {
   totalCategoriesWithBudget: number;
   recurringCount: number;
 }
+
+export interface RecurringTimelineItem {
+  id: string;
+  expenseId: string;
+  note: string;
+  amount: number;
+  categoryId: string;
+  category: Category;
+  paymentMethod: PaymentMethod;
+  date: string;         // 'YYYY-MM-DD'
+  day: number;          // 1 - 31
+  isCleared: boolean;   // Whether this debit order/bill has cleared
+  status: "cleared" | "today" | "upcoming";
+  daysUntil: number;    // negative if passed, 0 if today, positive if upcoming
+}
+
+export interface RecurringTimelineSummary {
+  totalCommitted: number;
+  clearedAmount: number;
+  pendingAmount: number;
+  totalCount: number;
+  clearedCount: number;
+  pendingCount: number;
+  percentageCleared: number;
+}

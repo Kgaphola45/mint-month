@@ -210,6 +210,24 @@ export function generateSeedData(): {
       date: `${mCurrent}-15`,
       paymentMethod: "Bank",
     },
+    {
+      id: "exp-c-15",
+      amount: 1450.00,
+      categoryId: "cat-personal-care",
+      note: "Medical Aid Debit Order",
+      date: `${mCurrent}-25`,
+      paymentMethod: "Bank",
+      isRecurring: true,
+    },
+    {
+      id: "exp-c-16",
+      amount: 650.00,
+      categoryId: "cat-transport",
+      note: "Car Insurance & Tracker",
+      date: `${mCurrent}-28`,
+      paymentMethod: "Bank",
+      isRecurring: true,
+    },
 
     // Previous Month 1 (Full Month)
     {
