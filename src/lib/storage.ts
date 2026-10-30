@@ -98,12 +98,34 @@ export class LocalStorageAdapter implements StorageAdapter {
     return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
   }
 
+  private getKey(baseKey: string): string {
+    if (!this.isClient()) return baseKey;
+    try {
+      const rawUser = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+      if (!rawUser) return baseKey;
+      const user = JSON.parse(rawUser);
+      if (!user || !user.id || user.id === DEFAULT_USER.id) {
+        return baseKey; // Default/primary user accesses base keys
+      }
+      return `${baseKey}_${user.id}`;
+    } catch {
+      return baseKey;
+    }
+  }
+
   constructor() {
     this.ensureInitialized();
   }
 
   public ensureInitialized(): void {
     if (!this.isClient()) return;
+
+    if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([DEFAULT_USER]));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.CURRENT_USER)) {
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(DEFAULT_USER));
+    }
 
     const initialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
     if (!initialized) {
@@ -129,10 +151,127 @@ export class LocalStorageAdapter implements StorageAdapter {
     }
   }
 
+  // --- User Account & Auth Methods ---
+
+  getUsers(): User[] {
+    if (!this.isClient()) return [DEFAULT_USER];
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.USERS);
+      return raw ? JSON.parse(raw) : [DEFAULT_USER];
+    } catch {
+      return [DEFAULT_USER];
+    }
+  }
+
+  saveUsers(users: User[]): void {
+    if (!this.isClient()) return;
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+  }
+
+  getCurrentUser(): User | null {
+    if (!this.isClient()) return DEFAULT_USER;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+      return raw ? JSON.parse(raw) : DEFAULT_USER;
+    } catch {
+      return DEFAULT_USER;
+    }
+  }
+
+  setCurrentUser(user: User | null): void {
+    if (!this.isClient()) return;
+    if (user) {
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+    }
+  }
+
+  registerUser(
+    name: string,
+    email: string,
+    password: string,
+    monthlySalary?: number
+  ): { success: boolean; user?: User; error?: string } {
+    if (!this.isClient()) return { success: false, error: "Client-side required" };
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const existingUsers = this.getUsers();
+
+    if (existingUsers.some((u) => u.email.toLowerCase() === normalizedEmail)) {
+      return { success: false, error: "An account with this email already exists." };
+    }
+
+    const avatarPalette = ["#0D0D0C", "#96CE96", "#F99654", "#ECD6E2", "#F6DE68"];
+    const newUser: User = {
+      id: `usr_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`,
+      name: name.trim(),
+      email: normalizedEmail,
+      passwordHash: password, // Ready for bcrypt / Supabase Auth
+      avatarColor: avatarPalette[Math.floor(Math.random() * avatarPalette.length)],
+      monthlySalary: monthlySalary && monthlySalary > 0 ? monthlySalary : 25000,
+      paydayDay: 25,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedUsers = [...existingUsers, newUser];
+    this.saveUsers(updatedUsers);
+    this.setCurrentUser(newUser);
+
+    // Initialize user's separate fresh workspace
+    const userCategoryKey = this.getKey(STORAGE_KEYS.CATEGORIES);
+    const userExpensesKey = this.getKey(STORAGE_KEYS.EXPENSES);
+    const userBudgetsKey = this.getKey(STORAGE_KEYS.BUDGETS);
+    const userDebtsKey = this.getKey(STORAGE_KEYS.DEBTS);
+    const userRecurringKey = this.getKey(STORAGE_KEYS.RECURRING_BUDGETS);
+    const userIncomesKey = this.getKey(STORAGE_KEYS.INCOMES);
+
+    localStorage.setItem(userCategoryKey, JSON.stringify(DEFAULT_CATEGORIES));
+    localStorage.setItem(userExpensesKey, JSON.stringify([]));
+    localStorage.setItem(userBudgetsKey, JSON.stringify([]));
+    localStorage.setItem(userDebtsKey, JSON.stringify([]));
+    localStorage.setItem(userRecurringKey, JSON.stringify({}));
+    localStorage.setItem(
+      userIncomesKey,
+      JSON.stringify({ default: newUser.monthlySalary || 25000 })
+    );
+
+    return { success: true, user: newUser };
+  }
+
+  authenticateUser(
+    email: string,
+    password: string
+  ): { success: boolean; user?: User; error?: string } {
+    if (!this.isClient()) return { success: false, error: "Client-side required" };
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const users = this.getUsers();
+    const user = users.find((u) => u.email.toLowerCase() === normalizedEmail);
+
+    if (!user) {
+      return { success: false, error: "No account found with this email address." };
+    }
+
+    if (user.passwordHash && user.passwordHash !== password) {
+      return { success: false, error: "Incorrect password. Please try again." };
+    }
+
+    this.setCurrentUser(user);
+    return { success: true, user };
+  }
+
+  logoutUser(): void {
+    if (!this.isClient()) return;
+    this.setCurrentUser(null);
+  }
+
+  // --- Data Access Methods with User Scoping ---
+
   getExpenses(): Expense[] {
     if (!this.isClient()) return [];
     try {
-      const raw = localStorage.getItem(STORAGE_KEYS.EXPENSES);
+      const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.EXPENSES));
       return raw ? JSON.parse(raw) : [];
     } catch {
       return [];
@@ -141,13 +280,13 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   saveExpenses(expenses: Expense[]): void {
     if (!this.isClient()) return;
-    localStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify(expenses));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.EXPENSES), JSON.stringify(expenses));
   }
 
   getCategories(): Category[] {
     if (!this.isClient()) return DEFAULT_CATEGORIES;
     try {
-      const raw = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
+      const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.CATEGORIES));
       return raw ? JSON.parse(raw) : DEFAULT_CATEGORIES;
     } catch {
       return DEFAULT_CATEGORIES;
@@ -156,13 +295,13 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   saveCategories(categories: Category[]): void {
     if (!this.isClient()) return;
-    localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.CATEGORIES), JSON.stringify(categories));
   }
 
   getBudgets(): Budget[] {
     if (!this.isClient()) return [];
     try {
-      const raw = localStorage.getItem(STORAGE_KEYS.BUDGETS);
+      const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.BUDGETS));
       return raw ? JSON.parse(raw) : [];
     } catch {
       return [];
@@ -171,23 +310,15 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   saveBudgets(budgets: Budget[]): void {
     if (!this.isClient()) return;
-    localStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(budgets));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.BUDGETS), JSON.stringify(budgets));
   }
 
   getRecurringBudgets(): Record<string, number> {
     if (!this.isClient()) return {};
     try {
-      const raw = localStorage.getItem(STORAGE_KEYS.RECURRING_BUDGETS);
+      const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.RECURRING_BUDGETS));
       if (raw) return JSON.parse(raw);
-      return {
-        "cat-subscriptions": 250,
-        "cat-debt": 3500,
-        "cat-airtime-data": 1500,
-        "cat-groceries": 3800,
-        "cat-transport": 2000,
-        "cat-personal-care": 2000,
-        "cat-clothing": 800,
-      };
+      return {};
     } catch {
       return {};
     }
@@ -195,13 +326,13 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   saveRecurringBudgets(recurring: Record<string, number>): void {
     if (!this.isClient()) return;
-    localStorage.setItem(STORAGE_KEYS.RECURRING_BUDGETS, JSON.stringify(recurring));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.RECURRING_BUDGETS), JSON.stringify(recurring));
   }
 
   getClearedRecurring(): Record<string, boolean> {
     if (!this.isClient()) return {};
     try {
-      const raw = localStorage.getItem(STORAGE_KEYS.CLEARED_RECURRING);
+      const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.CLEARED_RECURRING));
       return raw ? JSON.parse(raw) : {};
     } catch {
       return {};
@@ -210,53 +341,59 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   saveClearedRecurring(cleared: Record<string, boolean>): void {
     if (!this.isClient()) return;
-    localStorage.setItem(STORAGE_KEYS.CLEARED_RECURRING, JSON.stringify(cleared));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.CLEARED_RECURRING), JSON.stringify(cleared));
   }
 
   getDebts(): DebtInstalment[] {
-    if (!this.isClient()) return DEFAULT_DEBTS;
+    const isDefault = !this.getCurrentUser() || this.getCurrentUser()?.id === DEFAULT_USER.id;
+    if (!this.isClient()) return isDefault ? DEFAULT_DEBTS : [];
     try {
-      const raw = localStorage.getItem(STORAGE_KEYS.DEBTS);
-      return raw ? JSON.parse(raw) : DEFAULT_DEBTS;
+      const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.DEBTS));
+      if (raw) return JSON.parse(raw);
+      return isDefault ? DEFAULT_DEBTS : [];
     } catch {
-      return DEFAULT_DEBTS;
+      return isDefault ? DEFAULT_DEBTS : [];
     }
   }
 
   saveDebts(debts: DebtInstalment[]): void {
     if (!this.isClient()) return;
-    localStorage.setItem(STORAGE_KEYS.DEBTS, JSON.stringify(debts));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.DEBTS), JSON.stringify(debts));
   }
 
   getIncomes(): Record<string, number> {
-    if (!this.isClient()) return { default: 25000 };
+    const user = this.getCurrentUser();
+    const defaultVal = user?.monthlySalary || 25000;
+    if (!this.isClient()) return { default: defaultVal };
     try {
-      const raw = localStorage.getItem(STORAGE_KEYS.INCOMES);
-      return raw ? JSON.parse(raw) : { default: 25000 };
+      const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.INCOMES));
+      return raw ? JSON.parse(raw) : { default: defaultVal };
     } catch {
-      return { default: 25000 };
+      return { default: defaultVal };
     }
   }
 
   saveIncomes(incomes: Record<string, number>): void {
     if (!this.isClient()) return;
-    localStorage.setItem(STORAGE_KEYS.INCOMES, JSON.stringify(incomes));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.INCOMES), JSON.stringify(incomes));
   }
 
   getPaydayDay(): number {
-    if (!this.isClient()) return 25;
+    const user = this.getCurrentUser();
+    const defaultPayday = user?.paydayDay || 25;
+    if (!this.isClient()) return defaultPayday;
     try {
-      const raw = localStorage.getItem(STORAGE_KEYS.PAYDAY);
-      const parsed = raw ? parseInt(raw, 10) : 25;
-      return parsed >= 1 && parsed <= 31 ? parsed : 25;
+      const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.PAYDAY));
+      const parsed = raw ? parseInt(raw, 10) : defaultPayday;
+      return parsed >= 1 && parsed <= 31 ? parsed : defaultPayday;
     } catch {
-      return 25;
+      return defaultPayday;
     }
   }
 
   savePaydayDay(day: number): void {
     if (!this.isClient()) return;
-    localStorage.setItem(STORAGE_KEYS.PAYDAY, day.toString());
+    localStorage.setItem(this.getKey(STORAGE_KEYS.PAYDAY), day.toString());
   }
 
   getCurrency(): string {
@@ -281,6 +418,8 @@ export class LocalStorageAdapter implements StorageAdapter {
     localStorage.removeItem(STORAGE_KEYS.INCOMES);
     localStorage.removeItem(STORAGE_KEYS.PAYDAY);
     localStorage.removeItem(STORAGE_KEYS.CURRENCY);
+    localStorage.removeItem(STORAGE_KEYS.USERS);
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
     this.ensureInitialized();
   }
 }
