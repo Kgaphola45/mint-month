@@ -17,17 +17,6 @@ const STORAGE_KEYS = {
   INITIALIZED: "mint_month_initialized_v2",
 };
 
-export const DEFAULT_USER: User = {
-  id: "usr_emmanuel",
-  name: "Emmanuel Kgaphola",
-  email: "emmanuel@mintmonth.app",
-  passwordHash: "demo123",
-  avatarColor: "#0D0D0C",
-  monthlySalary: 25000,
-  paydayDay: 25,
-  createdAt: "2026-01-01T00:00:00.000Z",
-};
-
 export const DEFAULT_DEBTS: DebtInstalment[] = [
   {
     id: "debt-payjustnow",
