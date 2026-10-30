@@ -39,7 +39,7 @@ export function Navbar() {
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/transactions", label: "Transactions", icon: Receipt },
     { href: "/budgets", label: "Budgets", icon: PiggyBank },
-    { href: "/compare", label: "Compare", icon: ArrowLeftRight },
+    { href: "/compare", label: "Analytics", icon: ArrowLeftRight },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
 
