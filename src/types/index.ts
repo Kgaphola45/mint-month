@@ -126,3 +126,26 @@ export interface PaydaySettings {
   paydayDay: number; // 1-31, default 25
   incomesByMonth?: Record<string, number>;
 }
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  passwordHash?: string;
+  avatarColor?: string;
+  monthlySalary?: number;
+  paydayDay?: number;
+  createdAt: string;
+}
+
+export interface RegisterInput {
+  name: string;
+  email: string;
+  password: string;
+  monthlySalary?: number;
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
