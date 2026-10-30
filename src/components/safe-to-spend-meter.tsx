@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   ShieldCheck,
   Calendar,
@@ -11,9 +11,11 @@ import {
   TrendingUp,
   AlertCircle,
   CheckCircle2,
+  Mail,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, formatMonthYear } from "@/lib/utils";
+import { PaydayDigestModal } from "@/components/payday-digest-modal";
 
 export function SafeToSpendMeter() {
   const {
@@ -22,6 +24,8 @@ export function SafeToSpendMeter() {
     getSafeToSpend,
     setPaydayModalOpen,
   } = useExpenseStore();
+
+  const [digestModalOpen, setDigestModalOpen] = useState(false);
 
   const safe = getSafeToSpend(selectedMonth);
 
@@ -102,6 +106,14 @@ export function SafeToSpendMeter() {
           >
             <SlidersHorizontal className="w-3 h-3 stroke-[1.5]" />
             <span>Configure Salary</span>
+          </button>
+
+          <button
+            onClick={() => setDigestModalOpen(true)}
+            className="h-9 px-4 rounded-full bg-[#0D0D0C] text-[#FFFDF8] hover:opacity-90 text-xs font-medium inline-flex items-center gap-1.5 transition-all shadow-sm"
+          >
+            <Mail className="w-3.5 h-3.5 stroke-[1.5]" />
+            <span>Email Digest</span>
           </button>
         </div>
       </div>
@@ -268,6 +280,12 @@ export function SafeToSpendMeter() {
           <strong>{formatCurrency(safe.fixedCommitments, currency)}</strong> is permanently protected and excluded from your daily allowance.
         </span>
       </div>
+
+      {/* Payday & Debit Order Digest Modal */}
+      <PaydayDigestModal
+        open={digestModalOpen}
+        onClose={() => setDigestModalOpen(false)}
+      />
     </div>
   );
 }

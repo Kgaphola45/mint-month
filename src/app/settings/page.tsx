@@ -11,10 +11,12 @@ import {
   AlertTriangle,
   Trash2,
   User as UserIcon,
+  Mail,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { CategoryManagerModal } from "@/components/category-manager-modal";
 import { DeleteAccountModal } from "@/components/delete-account-modal";
+import { PaydayDigestModal } from "@/components/payday-digest-modal";
 
 export default function SettingsPage() {
   const {
@@ -30,6 +32,7 @@ export default function SettingsPage() {
 
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [digestModalOpen, setDigestModalOpen] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [importStatus, setImportStatus] = useState<string>("");
 
@@ -264,7 +267,43 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* 4. Privacy & Zero-Knowledge Architecture */}
+      {/* 4. Payday & Debit Order Digest (via Resend) */}
+      <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full border border-[#0D0D0C]/[0.1] flex items-center justify-center text-[#0D0D0C]">
+              <Mail className="w-4 h-4 stroke-[1.5]" />
+            </div>
+            <div>
+              <h3 className="text-[16px] font-normal text-[#0D0D0C]/56">
+                Payday & Debit Order Digest
+              </h3>
+              <p className="text-xs text-[#0D0D0C]/42 mt-0.5">
+                Automated monthly cashflow summary delivered via Resend
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setDigestModalOpen(true)}
+            className="px-4 py-2 rounded-full bg-[#0D0D0C] text-[#FFFDF8] text-xs font-medium hover:opacity-90 transition-all shadow-sm self-start sm:self-auto flex items-center gap-2"
+          >
+            <Mail className="w-3.5 h-3.5 stroke-[1.5]" />
+            <span>Send Test Digest</span>
+          </button>
+        </div>
+
+        <p className="text-xs text-[#0D0D0C]/60 leading-relaxed">
+          Receive an editorial financial digest with all upcoming debit orders scheduled to run this week, days left until your payday, and your exact guilt-free Safe-to-Spend daily allowance.
+        </p>
+
+        <div className="p-4 rounded-[18px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] flex items-center justify-between text-xs text-[#0D0D0C]/70">
+          <span>Delivery Provider:</span>
+          <span className="font-medium text-[#0D0D0C]">Resend (onboarding@resend.dev)</span>
+        </div>
+      </div>
+
+      {/* 5. Privacy & Zero-Knowledge Architecture */}
       <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full border border-[#0D0D0C]/[0.1] flex items-center justify-center text-[#0D0D0C]">
@@ -363,6 +402,12 @@ export default function SettingsPage() {
       <DeleteAccountModal
         open={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
+      />
+
+      {/* Payday & Debit Order Digest Modal */}
+      <PaydayDigestModal
+        open={digestModalOpen}
+        onClose={() => setDigestModalOpen(false)}
       />
     </div>
   );
