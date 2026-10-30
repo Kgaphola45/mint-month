@@ -93,8 +93,8 @@ export class LocalStorageAdapter implements StorageAdapter {
       const rawUser = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
       if (!rawUser) return baseKey;
       const user = JSON.parse(rawUser);
-      if (!user || !user.id || user.id === DEFAULT_USER.id) {
-        return baseKey; // Default/primary user accesses base keys
+      if (!user || !user.id) {
+        return baseKey;
       }
       return `${baseKey}_${user.id}`;
     } catch {
@@ -110,10 +110,7 @@ export class LocalStorageAdapter implements StorageAdapter {
     if (!this.isClient()) return;
 
     if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
-      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([DEFAULT_USER]));
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.CURRENT_USER)) {
-      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(DEFAULT_USER));
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([]));
     }
 
     const initialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
@@ -143,12 +140,12 @@ export class LocalStorageAdapter implements StorageAdapter {
   // --- User Account & Auth Methods ---
 
   getUsers(): User[] {
-    if (!this.isClient()) return [DEFAULT_USER];
+    if (!this.isClient()) return [];
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.USERS);
-      return raw ? JSON.parse(raw) : [DEFAULT_USER];
+      return raw ? JSON.parse(raw) : [];
     } catch {
-      return [DEFAULT_USER];
+      return [];
     }
   }
 
@@ -158,18 +155,20 @@ export class LocalStorageAdapter implements StorageAdapter {
   }
 
   getCurrentUser(): User | null {
-    if (!this.isClient()) return DEFAULT_USER;
+    if (!this.isClient()) return null;
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
-      return raw ? JSON.parse(raw) : DEFAULT_USER;
+      if (!raw) return null;
+      const user = JSON.parse(raw);
+      return user && user.id ? user : null;
     } catch {
-      return DEFAULT_USER;
+      return null;
     }
   }
 
   setCurrentUser(user: User | null): void {
     if (!this.isClient()) return;
-    if (user) {
+    if (user && user.id) {
       localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
     } else {
       localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
@@ -334,14 +333,12 @@ export class LocalStorageAdapter implements StorageAdapter {
   }
 
   getDebts(): DebtInstalment[] {
-    const isDefault = !this.getCurrentUser() || this.getCurrentUser()?.id === DEFAULT_USER.id;
-    if (!this.isClient()) return isDefault ? DEFAULT_DEBTS : [];
     try {
       const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.DEBTS));
       if (raw) return JSON.parse(raw);
-      return isDefault ? DEFAULT_DEBTS : [];
+      return DEFAULT_DEBTS;
     } catch {
-      return isDefault ? DEFAULT_DEBTS : [];
+      return DEFAULT_DEBTS;
     }
   }
 
