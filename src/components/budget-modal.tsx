@@ -4,10 +4,8 @@ import React, { useState, useEffect } from "react";
 import {
   X,
   PiggyBank,
-  AlertTriangle,
   Check,
   Repeat,
-  Sparkles,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, formatMonthYear, getBudgetStatus } from "@/lib/utils";
@@ -43,7 +41,6 @@ export function BudgetModal() {
         currentBudget?.recurringCategories || Object.keys(recurringBudgets || {})
       );
 
-      // Populate from recurringBudgets and currentBudget
       for (const [catId, amt] of Object.entries(recurringBudgets || {})) {
         if (amt > 0) mergedLimits[catId] = amt.toString();
       }
@@ -64,19 +61,17 @@ export function BudgetModal() {
       setRecurringCatIds(Array.from(activeRecurring));
       setSavedSuccess(false);
     }
-  }, [budgetModalOpen, currentBudget, recurringBudgets]);
+  }, [budgetModalOpen, currentBudget, selectedMonth, recurringBudgets]);
 
   if (!budgetModalOpen) return null;
 
   const handleClose = () => {
     setBudgetModalOpen(false);
+    setSavedSuccess(false);
   };
 
-  const handleCategoryLimitChange = (catId: string, value: string) => {
-    setCatLimits((prev) => ({
-      ...prev,
-      [catId]: value,
-    }));
+  const handleLimitChange = (catId: string, value: string) => {
+    setCatLimits((prev) => ({ ...prev, [catId]: value }));
   };
 
   const handleToggleRecurring = (catId: string) => {
@@ -86,115 +81,117 @@ export function BudgetModal() {
   };
 
   const handleMakeAllRecurring = () => {
-    const allCatIdsWithLimits = Object.keys(catLimits).filter(
-      (k) => (parseFloat(catLimits[k]) || 0) > 0
-    );
-    setRecurringCatIds(allCatIdsWithLimits);
+    const withBudget = categories
+      .filter((c) => parseFloat(catLimits[c.id] || "0") > 0)
+      .map((c) => c.id);
+    setRecurringCatIds(withBudget);
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const parsedTotal = parseFloat(totalBudget) || 0;
-    const parsedCats: Record<string, number> = {};
+    const numericCatLimits: Record<string, number> = {};
+    let sumLimits = 0;
 
     for (const [catId, val] of Object.entries(catLimits)) {
-      const num = parseFloat(val);
-      if (!isNaN(num) && num > 0) {
-        parsedCats[catId] = num;
+      const parsed = parseFloat(val);
+      if (!isNaN(parsed) && parsed > 0) {
+        numericCatLimits[catId] = parsed;
+        sumLimits += parsed;
       }
     }
 
+    const parsedTotal = parseFloat(totalBudget);
+    const finalTotal =
+      !isNaN(parsedTotal) && parsedTotal > 0 ? parsedTotal : sumLimits;
+
     setBudget({
       month: selectedMonth,
-      total: parsedTotal,
-      categories: parsedCats,
-      sortedCategories: currentBudget?.sortedCategories || [],
-      isTotalSorted: currentBudget?.isTotalSorted || false,
+      total: finalTotal,
+      categories: numericCatLimits,
       recurringCategories: recurringCatIds,
     });
 
     setSavedSuccess(true);
     setTimeout(() => {
       handleClose();
-    }, 600);
+    }, 800);
   };
 
-  // Calculate sum of category budgets
-  const sumCategoryLimits = Object.values(catLimits).reduce(
-    (sum, v) => sum + (parseFloat(v) || 0),
-    0
-  );
+  const sumCategoryLimits = Object.values(catLimits).reduce((acc, curr) => {
+    const num = parseFloat(curr);
+    return acc + (isNaN(num) ? 0 : num);
+  }, 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-[#0D0D0C]/40 backdrop-blur-sm transition-opacity"
         onClick={handleClose}
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-xl bg-card border border-border/80 rounded-3xl shadow-2xl overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+      <div className="relative w-full max-w-xl max-h-[90vh] bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] rounded-[28px] shadow-2xl flex flex-col overflow-hidden z-10">
         {/* Header */}
-        <div className="px-6 py-4 flex items-center justify-between border-b border-border/40 shrink-0">
+        <div className="px-7 pt-6 pb-4 flex items-center justify-between border-b border-[#0D0D0C]/[0.06]">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-              <PiggyBank className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FBF6EF] text-[#0D0D0C] flex items-center justify-center">
+              <PiggyBank className="w-5 h-5 stroke-[1.5]" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-foreground">
-                Monthly Budget Limits
+              <h2 className="text-lg font-medium text-[#0D0D0C]">
+                Budget Settings for {formatMonthYear(selectedMonth)}
               </h2>
-              <p className="text-xs text-muted-foreground">
-                Set monthly caps and choose items that appear in every month's budget
+              <p className="text-xs text-[#0D0D0C]/56 mt-0.5">
+                Set category limits and choose items that automatically appear in every month
               </p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="p-2 rounded-full hover:bg-[#FBF6EF] text-[#0D0D0C]/60 hover:text-[#0D0D0C] transition-colors"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 stroke-[1.5]" />
           </button>
         </div>
 
         {/* Scrollable Form Body */}
-        <form onSubmit={handleSave} className="p-6 overflow-y-auto space-y-6">
+        <form onSubmit={handleSave} className="p-7 overflow-y-auto space-y-6">
           {savedSuccess && (
-            <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2">
+            <div className="p-3.5 rounded-[16px] bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
               <Check className="w-4 h-4" />
               Budget limits saved and recurring preferences updated!
             </div>
           )}
 
           {/* Quick Notice about Every-Month Repeat */}
-          <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-300">
-              <Repeat className="w-4 h-4 shrink-0 text-indigo-500" />
-              <span>
-                <strong>Every-Month Option:</strong> Toggle the 🔁 button on any category to make it automatically appear in all months.
+          <div className="p-4 rounded-[20px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.08] flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5 text-[#0D0D0C]">
+              <Repeat className="w-4 h-4 shrink-0 stroke-[1.8]" />
+              <span className="text-[#0D0D0C]/80">
+                <strong>Every-Month Option:</strong> Toggle 🔁 on any category to make it persist across every month.
               </span>
             </div>
             <button
               type="button"
               onClick={handleMakeAllRecurring}
-              className="px-2.5 py-1 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-700 dark:text-indigo-200 font-bold shrink-0 transition-colors"
+              className="px-3 py-1.5 rounded-full border border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDF8] font-medium text-xs shrink-0 transition-all"
             >
               Repeat All
             </button>
           </div>
 
           {/* Total Monthly Budget Field */}
-          <div className="p-4 rounded-2xl bg-muted/30 border border-border/60">
-            <label className="block text-xs font-semibold text-foreground mb-1 uppercase tracking-wider">
+          <div className="p-5 rounded-[20px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.08]">
+            <label className="block text-xs font-normal text-[#0D0D0C]/56 mb-1">
               Total Monthly Budget Cap (Optional)
             </label>
-            <p className="text-xs text-muted-foreground mb-3">
+            <p className="text-xs text-[#0D0D0C]/42 mb-3">
               Leave blank to automatically sum your active category budgets.
             </p>
             <div className="relative flex items-center">
-              <span className="absolute left-3.5 text-lg font-bold font-mono text-muted-foreground">
+              <span className="absolute left-4 text-lg font-medium text-[#0D0D0C]/40">
                 {currentCurrency.symbol}
               </span>
               <input
@@ -204,14 +201,14 @@ export function BudgetModal() {
                 placeholder={sumCategoryLimits > 0 ? sumCategoryLimits.toString() : "e.g. 15000"}
                 value={totalBudget}
                 onChange={(e) => setTotalBudget(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 text-lg font-bold font-mono rounded-xl bg-card border border-border focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-foreground"
+                className="w-full pl-10 pr-4 py-3 text-2xl font-medium tracking-tight rounded-[16px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] focus:outline-none focus:border-[#0D0D0C] text-[#0D0D0C]"
               />
             </div>
 
             {sumCategoryLimits > 0 && (
-              <div className="mt-2 text-[11px] text-muted-foreground flex justify-between">
+              <div className="mt-2.5 text-xs text-[#0D0D0C]/56 flex justify-between">
                 <span>Sum of category limits:</span>
-                <span className="font-mono font-semibold text-foreground">
+                <span className="font-medium text-[#0D0D0C]">
                   {formatCurrency(sumCategoryLimits, currency)}
                 </span>
               </div>
@@ -221,20 +218,9 @@ export function BudgetModal() {
           {/* Category-wise Budgets with Every-Month Options */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Category Limits & Every-Month Options
+              <h3 className="text-xs font-normal text-[#0D0D0C]/56">
+                Category Limits & Every-Month Controls
               </h3>
-              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" /> &lt;75%
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-amber-500" /> 75-90%
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-rose-500" /> &gt;90%
-                </span>
-              </div>
             </div>
 
             <div className="space-y-3">
@@ -249,25 +235,25 @@ export function BudgetModal() {
                 return (
                   <div
                     key={cat.id}
-                    className={`p-3.5 rounded-2xl bg-card border transition-colors space-y-2 ${
+                    className={`p-4 rounded-[20px] bg-[#FBF6EF] border transition-colors space-y-2.5 ${
                       isRecurring
-                        ? "border-indigo-500/40 bg-indigo-500/[0.02]"
-                        : "border-border/60 hover:border-border"
+                        ? "border-[#0D0D0C]/30 bg-[#FBF6EF]"
+                        : "border-[#0D0D0C]/[0.06] hover:border-[#0D0D0C]/20"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex items-center gap-3 min-w-0">
                         <div
-                          className="w-8 h-8 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm"
-                          style={{ backgroundColor: cat.color }}
+                          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-[#0D0D0C]/[0.08] bg-[#FFFDF8]"
+                          style={{ color: cat.color || "#0D0D0C" }}
                         >
-                          <CategoryIcon name={cat.icon} className="w-4 h-4" />
+                          <CategoryIcon iconName={cat.icon} className="w-4 h-4 stroke-[1.5]" />
                         </div>
                         <div className="min-w-0">
-                          <span className="text-xs font-semibold text-foreground block truncate">
+                          <span className="text-xs font-medium text-[#0D0D0C] block truncate">
                             {cat.name}
                           </span>
-                          <span className="text-[11px] text-muted-foreground font-mono">
+                          <span className="text-[11px] text-[#0D0D0C]/56">
                             Spent: {formatCurrency(spent, currency)}
                           </span>
                         </div>
@@ -278,68 +264,50 @@ export function BudgetModal() {
                         <button
                           type="button"
                           onClick={() => handleToggleRecurring(cat.id)}
-                          className={`flex items-center gap-1 px-2 py-1.5 rounded-xl text-[10.5px] font-semibold border transition-all ${
+                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${
                             isRecurring
-                              ? "bg-indigo-500 text-white border-indigo-500 shadow-sm"
-                              : "bg-muted/50 text-muted-foreground hover:bg-muted border-border/50"
+                              ? "bg-[#0D0D0C] text-[#FFFDF8]"
+                              : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/60 hover:text-[#0D0D0C] bg-[#FFFDF8]"
                           }`}
-                          title={
-                            isRecurring
-                              ? "This budget appears in every month (click to make one-off)"
-                              : "Click to make this appear in every month's budget"
-                          }
+                          title="Toggle to make this budget appear in every month"
                         >
-                          <Repeat className="w-3 h-3" />
+                          <Repeat className="w-3 h-3 stroke-[2]" />
                           <span className="hidden sm:inline">
-                            {isRecurring ? "Every Month" : "One-off"}
+                            {isRecurring ? "Every Month" : "Repeat"}
                           </span>
                         </button>
 
-                        <div className="relative w-32 shrink-0">
-                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold font-mono text-muted-foreground">
+                        <div className="relative w-28 sm:w-32">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-[#0D0D0C]/40">
                             {currentCurrency.symbol}
                           </span>
                           <input
                             type="number"
                             step="any"
                             min="0"
-                            placeholder="No limit"
-                            value={limitVal}
-                            onChange={(e) =>
-                              handleCategoryLimitChange(cat.id, e.target.value)
-                            }
-                            className="w-full pl-7 pr-2.5 py-1.5 text-xs font-mono font-medium rounded-xl bg-muted/40 border border-border focus:outline-none focus:border-blue-500 text-foreground text-right"
+                            placeholder="Limit"
+                            value={catLimits[cat.id] || ""}
+                            onChange={(e) => handleLimitChange(cat.id, e.target.value)}
+                            className="w-full pl-7 pr-3 py-1.5 text-xs font-medium rounded-full bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] focus:outline-none focus:border-[#0D0D0C] text-[#0D0D0C]"
                           />
                         </div>
                       </div>
                     </div>
 
-                    {/* Progress Bar when budget limit is set */}
+                    {/* Visual budget meter for this category */}
                     {limitNum > 0 && (
-                      <div className="space-y-1">
-                        <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div className="pt-2 border-t border-[#0D0D0C]/[0.06] flex items-center gap-3">
+                        <div className="flex-1 h-1.5 bg-[#0D0D0C]/[0.06] rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all duration-300 ${progressStatus.progressColor}`}
+                            className="h-full rounded-full transition-all duration-300 bg-[#0D0D0C]"
                             style={{
                               width: `${Math.min(progressStatus.percentage, 100)}%`,
                             }}
                           />
                         </div>
-                        <div className="flex items-center justify-between text-[10.5px]">
-                          <span
-                            className={`font-semibold ${progressStatus.color} flex items-center gap-1`}
-                          >
-                            {progressStatus.isOver && (
-                              <AlertTriangle className="w-3 h-3 text-rose-500" />
-                            )}
-                            {progressStatus.percentage}% used
-                          </span>
-                          <span className="text-muted-foreground font-mono">
-                            {limitNum - spent >= 0
-                              ? `${formatCurrency(limitNum - spent, currency)} left`
-                              : `${formatCurrency(Math.abs(limitNum - spent), currency)} overspent`}
-                          </span>
-                        </div>
+                        <span className="text-[10px] text-[#0D0D0C]/56 shrink-0">
+                          {progressStatus.percentage}% used
+                        </span>
                       </div>
                     )}
                   </div>
@@ -348,21 +316,20 @@ export function BudgetModal() {
             </div>
           </div>
 
-          {/* Footer Actions */}
-          <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border/40 shrink-0">
+          {/* Action Footer */}
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#0D0D0C]/[0.06]">
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2.5 rounded-2xl text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors"
+              className="px-5 py-2.5 rounded-full border border-[#0D0D0C]/20 text-xs font-medium text-[#0D0D0C] hover:bg-[#FBF6EF] transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md active:scale-95 transition-all flex items-center gap-1.5"
+              className="h-12 px-7 rounded-full bg-[#0D0D0C] text-[#FFFDF8] hover:bg-[#0D0D0C]/90 text-sm font-medium transition-all shadow-sm active:scale-95"
             >
-              <Check className="w-4 h-4" />
-              <span>Save Budget</span>
+              Save Budgets
             </button>
           </div>
         </form>

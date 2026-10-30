@@ -8,15 +8,14 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  ReferenceLine,
   Cell,
 } from "recharts";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency } from "@/lib/utils";
-import { BarChart3, Flame } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 
 export function DailyChart() {
-  const { selectedMonth, getDailySpending, getMonthSummary, currency } =
+  const { selectedMonth, getDailySpending, getMonthSummary, currency, setQuickAddOpen } =
     useExpenseStore();
   const summary = getMonthSummary(selectedMonth);
   const dailyData = getDailySpending(selectedMonth);
@@ -29,35 +28,43 @@ export function DailyChart() {
     );
   }, [dailyData]);
 
+  // Empty state: cream card + thin line-art illustration (1px stroke) + white space + black pill button
   if (summary.totalSpent === 0) {
     return (
-      <div className="p-6 rounded-3xl bg-card border border-border/60 shadow-sm flex flex-col items-center justify-center min-h-[340px] text-center">
-        <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
-          <BarChart3 className="w-6 h-6 stroke-[1.5]" />
+      <div className="p-12 sm:p-16 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center min-h-[380px] text-center">
+        <div className="w-16 h-16 rounded-full border border-[#0D0D0C]/[0.12] flex items-center justify-center text-[#0D0D0C]/60 mb-5">
+          <BarChart3 className="w-8 h-8 stroke-[1]" />
         </div>
-        <h4 className="text-sm font-semibold text-foreground">No Daily Activity</h4>
-        <p className="text-xs text-muted-foreground max-w-xs mt-1">
+        <h4 className="text-xl font-medium text-[#0D0D0C] tracking-[-0.02em]">
+          No Daily Activity
+        </h4>
+        <p className="text-sm text-[#0D0D0C]/56 max-w-sm mt-1.5 mb-7">
           Start logging expenses to observe your daily spending flow across {summary.month}.
         </p>
+        <button
+          onClick={() => setQuickAddOpen(true)}
+          className="inline-flex items-center gap-2 h-12 px-7 rounded-full bg-[#0D0D0C] text-[#FFFDF8] text-sm font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm"
+        >
+          + Add First Expense
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="p-6 rounded-3xl bg-card border border-border/60 shadow-sm flex flex-col justify-between">
+    <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-bold tracking-tight uppercase tracking-wider text-muted-foreground">
+          <h3 className="text-[16px] font-normal text-[#0D0D0C]/56">
             Daily Spending Flow
           </h3>
-          <p className="text-xs text-muted-foreground">
-            Day-by-day expenditure pattern
+          <p className="text-xs text-[#0D0D0C]/42 mt-0.5">
+            Day-by-day cash outflows
           </p>
         </div>
 
         {peakDay.spent > 0 && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold">
-            <Flame className="w-3.5 h-3.5 fill-amber-500/20" />
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#0D0D0C]/[0.08] bg-[#FBF6EF] text-xs font-normal text-[#0D0D0C]">
             <span>
               Peak: Day {peakDay.day} ({formatCurrency(peakDay.spent, currency, true)})
             </span>
@@ -65,43 +72,37 @@ export function DailyChart() {
         )}
       </div>
 
-      <div className="w-full h-[220px]">
+      <div className="w-full h-[230px]">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={dailyData}
-            margin={{ top: 10, right: 8, left: -20, bottom: 0 }}
-          >
+          <BarChart data={dailyData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
             <XAxis
               dataKey="day"
+              stroke="rgba(13, 13, 12, 0.2)"
+              fontSize={11}
               tickLine={false}
-              axisLine={false}
-              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-              interval={window && window.innerWidth < 640 ? 4 : 2}
+              tick={{ fill: "rgba(13, 13, 12, 0.42)", fontFamily: "var(--font-inter-tight)" }}
+              interval="preserveStartEnd"
             />
             <YAxis
+              stroke="rgba(13, 13, 12, 0.2)"
+              fontSize={11}
               tickLine={false}
-              axisLine={false}
-              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-              tickFormatter={(v) => formatCurrency(v, currency, true)}
+              tick={{ fill: "rgba(13, 13, 12, 0.42)", fontFamily: "var(--font-inter-tight)" }}
+              tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : v)}
             />
             <Tooltip
-              cursor={{ fill: "hsl(var(--muted) / 0.4)", radius: 6 }}
+              cursor={{ fill: "rgba(13, 13, 12, 0.04)" }}
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   const data = payload[0].payload;
                   return (
-                    <div className="bg-popover border border-border rounded-xl p-2.5 shadow-xl text-xs space-y-1">
-                      <div className="font-semibold text-foreground">
-                        Day {data.day} ({data.date})
+                    <div className="bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] rounded-[14px] p-3 shadow-xl">
+                      <div className="text-[11px] text-[#0D0D0C]/56">{data.date}</div>
+                      <div className="text-base font-medium text-[#0D0D0C] tracking-tight mt-0.5">
+                        {formatCurrency(data.spent, currency)}
                       </div>
-                      <div className="flex justify-between gap-4 font-mono text-muted-foreground">
-                        <span>Spent:</span>
-                        <span className="font-bold text-mint-500">
-                          {formatCurrency(data.spent, currency)}
-                        </span>
-                      </div>
-                      <div className="text-[10px] text-muted-foreground">
-                        {data.count} {data.count === 1 ? "expense" : "expenses"}
+                      <div className="text-[11px] text-[#0D0D0C]/42">
+                        {data.count} transaction{data.count === 1 ? "" : "s"}
                       </div>
                     </div>
                   );
@@ -109,27 +110,14 @@ export function DailyChart() {
                 return null;
               }}
             />
-            {summary.dailyAverage > 0 && (
-              <ReferenceLine
-                y={summary.dailyAverage}
-                stroke="#10b981"
-                strokeDasharray="3 3"
-                strokeOpacity={0.6}
-              />
-            )}
-            <Bar dataKey="spent" radius={[6, 6, 2, 2]}>
+            <Bar dataKey="spent" radius={[4, 4, 0, 0]} maxBarSize={28}>
               {dailyData.map((entry, index) => {
                 const isPeak = entry.day === peakDay.day && entry.spent > 0;
                 return (
                   <Cell
                     key={`bar-${index}`}
-                    fill={
-                      isPeak
-                        ? "#f59e0b" // Warm Amber for peak
-                        : entry.spent > 0
-                        ? "#10b981" // Mint Emerald for active spending
-                        : "hsl(var(--muted) / 0.4)" // subtle empty bar
-                    }
+                    fill={isPeak ? "#F99654" : "#0D0D0C"}
+                    className="transition-opacity hover:opacity-80"
                   />
                 );
               })}
@@ -137,23 +125,6 @@ export function DailyChart() {
           </BarChart>
         </ResponsiveContainer>
       </div>
-
-      <div className="flex items-center justify-between pt-3 border-t border-border/40 text-xs text-muted-foreground">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-mint-500" />
-            Normal Days
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-amber-500" />
-            Highest Day
-          </span>
-        </div>
-        <span className="font-mono text-[11px]">
-          Avg: {formatCurrency(summary.dailyAverage, currency, true)}/day
-        </span>
-      </div>
     </div>
   );
 }
-

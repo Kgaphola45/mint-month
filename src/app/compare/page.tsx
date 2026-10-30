@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { ArrowLeftRight } from "lucide-react";
 import { MonthComparison } from "@/components/month-comparison";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatMonthYear } from "@/lib/utils";
@@ -10,23 +9,17 @@ export default function ComparePage() {
   const { selectedMonth } = useExpenseStore();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
-          <ArrowLeftRight className="w-5 h-5 stroke-[2]" />
-        </div>
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-            Month Comparison & Trends
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            Evaluating {formatMonthYear(selectedMonth)} against previous month and historical data
-          </p>
-        </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8">
+      <div className="pb-6 border-b border-[#0D0D0C]/[0.08]">
+        <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-[#0D0D0C]">
+          Month Comparison & Trends
+        </h1>
+        <p className="text-sm text-[#0D0D0C]/56 mt-1">
+          Evaluating {formatMonthYear(selectedMonth)} against previous month and multi-month trajectories
+        </p>
       </div>
 
       <MonthComparison />
     </div>
   );
 }
-

@@ -1,28 +1,20 @@
 "use client";
 
 import React from "react";
-import {
-  Sparkles,
-  AlertOctagon,
-  Plus,
-  PiggyBank,
-  ArrowRight,
-  TrendingUp,
-} from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
-import { formatMonthYear, formatCurrency, getBudgetStatus } from "@/lib/utils";
+import { formatCurrency, getBudgetStatus } from "@/lib/utils";
+import { HeroPanel } from "@/components/hero-panel";
 import { StatsCards } from "@/components/stats-cards";
 import { CategoryChart } from "@/components/category-chart";
 import { DailyChart } from "@/components/daily-chart";
 import { TransactionsList } from "@/components/transactions-list";
-import Link from "next/link";
 
 export default function DashboardPage() {
   const {
     selectedMonth,
     getMonthSummary,
     currency,
-    setQuickAddOpen,
     setBudgetModalOpen,
   } = useExpenseStore();
 
@@ -30,129 +22,59 @@ export default function DashboardPage() {
   const budgetStatus = getBudgetStatus(summary.totalSpent, summary.totalBudget);
 
   return (
-    <div className="space-y-6">
-      {/* Dynamic Overbudget / Critical Alert Banner */}
-      {budgetStatus.status === "danger" && summary.totalBudget > 0 && (
-        <div className="p-4 rounded-3xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-4 animate-in fade-in duration-300">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-rose-500 text-white flex items-center justify-center shrink-0">
-              <AlertOctagon className="w-5 h-5 stroke-[2.2]" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-rose-600 dark:text-rose-400">
-                {summary.remaining < 0
-                  ? `Over Budget Warning: You have exceeded this month's budget by ${formatCurrency(
-                      Math.abs(summary.remaining),
-                      currency
-                    )}!`
-                  : `Budget Alert: You've utilized ${budgetStatus.percentage}% of your monthly cap.`}
-              </h4>
-              <p className="text-xs text-rose-600/80 dark:text-rose-400/80">
-                Consider adjusting limits or slowing non-essential spending.
-              </p>
-            </div>
-          </div>
+    <div className="flex flex-col w-full">
+      {/* 1. Vela-styled Editorial Hero Panel with 4 cycling gradients & headline */}
+      <HeroPanel />
 
-          <button
-            onClick={() => setBudgetModalOpen(true)}
-            className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shrink-0 transition-colors"
-          >
-            Adjust Budget
-          </button>
-        </div>
-      )}
-
-      {/* Hero Welcome & Quick Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            <span>{formatMonthYear(selectedMonth)}</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-mint-500/10 text-mint-600 dark:text-mint-400 border border-mint-500/20 hidden sm:inline-flex items-center gap-1">
-              <Sparkles className="w-3 h-3" />
-              Monthly Tracker
-            </span>
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            Snapshot of your monthly spending habits and cash flow
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setBudgetModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-card hover:bg-muted border border-border/70 text-xs font-semibold text-foreground transition-all shadow-sm active:scale-95"
-          >
-            <PiggyBank className="w-4 h-4 text-blue-500" />
-            <span>Budgets</span>
-          </button>
-          <button
-            onClick={() => setQuickAddOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-mint-500 hover:bg-mint-600 active:scale-95 text-white font-semibold text-xs shadow-glow transition-all"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Quick Expense</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 1. Top Summary Cards */}
-      <StatsCards />
-
-      {/* 2. Visual Charts Row (Category Donut & Daily Flow) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <CategoryChart />
-        <DailyChart />
-      </div>
-
-      {/* 3. Lower Section: Recent Transactions & Month Compare Teaser */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <TransactionsList limit={6} showViewAll={true} />
-        </div>
-
-        {/* Month Highlights & Fast Links Side Widget */}
-        <div className="space-y-4">
-          {/* Quick Month-over-Month teaser card */}
-          <div className="p-6 rounded-3xl bg-card border border-border/60 shadow-sm flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Month Trends
-                </span>
-                <span className="p-1 rounded-lg bg-indigo-500/10 text-indigo-500">
-                  <TrendingUp className="w-4 h-4" />
-                </span>
+      {/* 2. Main Dashboard Content Strip */}
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8">
+        {/* Dynamic Overbudget Alert (in soft editorial card) */}
+        {budgetStatus.status === "danger" && summary.totalBudget > 0 && (
+          <div className="p-5 rounded-[24px] bg-[#FFFDF8] border border-rose-300 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-full border border-rose-200 flex items-center justify-center text-rose-600 shrink-0 bg-rose-50">
+                <AlertCircle className="w-5 h-5 stroke-[1.5]" />
               </div>
-              <h4 className="text-sm font-bold text-foreground">
-                How does this month compare?
-              </h4>
-              <p className="text-xs text-muted-foreground mt-1">
-                View 6-month historical spending curves and see category shifts from last month.
-              </p>
+              <div>
+                <h4 className="text-sm font-medium text-[#0D0D0C]">
+                  {summary.remaining < 0
+                    ? `Monthly limit exceeded by ${formatCurrency(
+                        Math.abs(summary.remaining),
+                        currency
+                      )}`
+                    : `Budget alert: ${budgetStatus.percentage}% of your monthly cap used`}
+                </h4>
+                <p className="text-xs text-[#0D0D0C]/56 mt-0.5">
+                  Consider reviewing non-essential spending or updating category limits.
+                </p>
+              </div>
             </div>
 
-            <Link
-              href="/compare"
-              className="mt-4 flex items-center justify-between p-3 rounded-2xl bg-muted/40 hover:bg-muted text-xs font-semibold text-foreground transition-all group"
+            <button
+              onClick={() => setBudgetModalOpen(true)}
+              className="px-4 py-2 rounded-full border border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-xs font-medium text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDF8] transition-all self-start sm:self-auto"
             >
-              <span>Explore Month Comparison</span>
-              <ArrowRight className="w-4 h-4 text-mint-500 transition-transform group-hover:translate-x-1" />
-            </Link>
+              Adjust Budget
+            </button>
           </div>
+        )}
 
-          {/* Privacy pledge card */}
-          <div className="p-5 rounded-3xl bg-mint-500/[0.04] border border-mint-500/20 text-xs text-muted-foreground space-y-1.5">
-            <div className="font-bold text-foreground flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-mint-500 animate-pulse" />
-              100% Local & Private
-            </div>
-            <p className="text-[11px] leading-relaxed">
-              Mint Month stores your data securely in your browser's local memory. No ads, no trackers, no external cloud sync required.
-            </p>
-          </div>
-        </div>
+        {/* 3. The 4 Stat Cards */}
+        <section>
+          <StatsCards />
+        </section>
+
+        {/* 4. Visual Charts Grid (Category Donut & Daily Bar Flow) */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CategoryChart />
+          <DailyChart />
+        </section>
+
+        {/* 5. Recent Transactions List */}
+        <section>
+          <TransactionsList limit={6} showViewAll={true} />
+        </section>
       </div>
     </div>
   );
 }
-

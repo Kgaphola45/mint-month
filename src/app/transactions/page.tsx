@@ -3,24 +3,18 @@
 import React, { useState, useMemo } from "react";
 import {
   Search,
-  Filter,
   Plus,
-  ArrowUpDown,
   Download,
   Repeat,
   Trash2,
   Edit2,
-  Calendar,
-  Zap,
-  CreditCard,
-  Banknote,
-  Building2,
+  Receipt,
   RotateCcw,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, formatDisplayDate, formatMonthYear } from "@/lib/utils";
 import { CategoryIcon } from "@/components/category-icon";
-import { PaymentMethod, Expense } from "@/types";
+import { Expense } from "@/types";
 import { PAYMENT_METHODS } from "@/lib/constants";
 
 export default function TransactionsPage() {
@@ -39,7 +33,7 @@ export default function TransactionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCatFilter, setSelectedCatFilter] = useState<string>("all");
   const [selectedPaymentFilter, setSelectedPaymentFilter] = useState<string>("all");
-  const [recurringFilter, setRecurringFilter] = useState<string>("all"); // 'all' | 'recurring' | 'onetime'
+  const [recurringFilter, setRecurringFilter] = useState<string>("all");
   const [monthScope, setMonthScope] = useState<"selected" | "all">("selected");
   const [sortBy, setSortBy] = useState<"date-desc" | "date-asc" | "amount-desc" | "amount-asc">("date-desc");
 
@@ -66,19 +60,19 @@ export default function TransactionsPage() {
 
     // Recurring filter
     if (recurringFilter === "recurring") {
-      result = result.filter((e) => Boolean(e.isRecurring));
+      result = result.filter((e) => e.isRecurring);
     } else if (recurringFilter === "onetime") {
       result = result.filter((e) => !e.isRecurring);
     }
 
-    // Search query filter (note, amount, category name)
-    if (searchQuery.trim()) {
+    // Search query filter (note, category name, amount)
+    if (searchQuery.trim() !== "") {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter((e) => {
         const cat = getCategoryById(e.categoryId);
         return (
           e.note?.toLowerCase().includes(q) ||
-          cat?.name.toLowerCase().includes(q) ||
+          cat.name.toLowerCase().includes(q) ||
           e.amount.toString().includes(q) ||
           e.paymentMethod.toLowerCase().includes(q)
         );
@@ -87,10 +81,18 @@ export default function TransactionsPage() {
 
     // Sorting
     result.sort((a, b) => {
-      if (sortBy === "date-desc") return b.date.localeCompare(a.date);
-      if (sortBy === "date-asc") return a.date.localeCompare(b.date);
-      if (sortBy === "amount-desc") return b.amount - a.amount;
-      if (sortBy === "amount-asc") return a.amount - b.amount;
+      if (sortBy === "date-desc") {
+        return b.date.localeCompare(a.date);
+      }
+      if (sortBy === "date-asc") {
+        return a.date.localeCompare(b.date);
+      }
+      if (sortBy === "amount-desc") {
+        return b.amount - a.amount;
+      }
+      if (sortBy === "amount-asc") {
+        return a.amount - b.amount;
+      }
       return 0;
     });
 
@@ -122,8 +124,8 @@ export default function TransactionsPage() {
   };
 
   const handleDownloadCSV = () => {
-    const csvContent = exportDataCSV();
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const csv = exportDataCSV();
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -133,81 +135,81 @@ export default function TransactionsPage() {
     document.body.removeChild(link);
   };
 
-  const paymentIcons: Record<PaymentMethod, React.ReactNode> = {
-    Card: <CreditCard className="w-3 h-3 text-blue-500" />,
-    Bank: <Building2 className="w-3 h-3 text-purple-500" />,
-    Cash: <Banknote className="w-3 h-3 text-emerald-500" />,
-    EFT: <Building2 className="w-3 h-3 text-purple-500" />,
-    "Instant EFT": <Zap className="w-3 h-3 text-amber-500" />,
+  const resetFilters = () => {
+    setSearchQuery("");
+    setSelectedCatFilter("all");
+    setSelectedPaymentFilter("all");
+    setRecurringFilter("all");
+    setSortBy("date-desc");
   };
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-[#0D0D0C]/[0.08]">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-            All Transactions
+          <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-[#0D0D0C]">
+            Transactions
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-[#0D0D0C]/56 mt-1">
             {monthScope === "selected"
-              ? `Viewing transactions for ${formatMonthYear(selectedMonth)}`
-              : "Viewing all-time records across all months"}
+              ? `Viewing records for ${formatMonthYear(selectedMonth)}`
+              : "Viewing all historical expenses"}
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             onClick={handleDownloadCSV}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-card hover:bg-muted border border-border/70 text-xs font-semibold text-foreground transition-all shadow-sm active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDF8] text-xs font-medium transition-all shadow-sm"
             title="Download CSV"
           >
-            <Download className="w-4 h-4 text-muted-foreground" />
+            <Download className="w-3.5 h-3.5 stroke-[1.8]" />
             <span className="hidden sm:inline">Export CSV</span>
           </button>
           <button
             onClick={() => setQuickAddOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-mint-500 hover:bg-mint-600 text-white font-semibold text-xs shadow-glow active:scale-95 transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 text-[#FFFDF8] text-xs font-medium transition-all shadow-sm active:scale-95"
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <Plus className="w-3.5 h-3.5 stroke-[2]" />
             <span>Add Expense</span>
           </button>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="p-4 rounded-3xl bg-card border border-border/60 shadow-sm space-y-3">
+      <div className="p-6 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-4">
         {/* Top Row: Search + Scope toggle */}
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <div className="relative flex-1 w-full">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#0D0D0C]/42" />
             <input
               type="text"
               placeholder="Search by note, category, or amount..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-2xl bg-muted/40 border border-border/70 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-mint-500"
+              className="w-full pl-11 pr-4 py-2.5 rounded-full bg-[#FBF6EF] border border-[#0D0D0C]/[0.08] text-xs sm:text-sm text-[#0D0D0C] placeholder:text-[#0D0D0C]/42 focus:outline-none focus:border-[#0D0D0C]"
             />
           </div>
 
           {/* Month Scope Toggle */}
-          <div className="flex items-center p-1 rounded-2xl bg-muted/60 border border-border/40 shrink-0 self-stretch sm:self-auto">
+          <div className="flex items-center p-1 rounded-full bg-[#FBF6EF] border border-[#0D0D0C]/[0.08] shrink-0 self-stretch sm:self-auto">
             <button
               onClick={() => setMonthScope("selected")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
                 monthScope === "selected"
-                  ? "bg-card text-foreground font-bold shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-[#0D0D0C] text-[#FFFDF8] shadow-sm"
+                  : "text-[#0D0D0C]/56 hover:text-[#0D0D0C]"
               }`}
             >
               {formatMonthYear(selectedMonth)}
             </button>
             <button
               onClick={() => setMonthScope("all")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
                 monthScope === "all"
-                  ? "bg-card text-foreground font-bold shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-[#0D0D0C] text-[#FFFDF8] shadow-sm"
+                  : "text-[#0D0D0C]/56 hover:text-[#0D0D0C]"
               }`}
             >
               All Time
@@ -216,96 +218,94 @@ export default function TransactionsPage() {
         </div>
 
         {/* Bottom Row: Category, Payment, Recurring, Sort Dropdowns */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
           {/* Category Filter */}
-          <div>
-            <select
-              value={selectedCatFilter}
-              onChange={(e) => setSelectedCatFilter(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-muted/30 border border-border/70 text-xs text-foreground focus:outline-none focus:border-mint-500"
-            >
-              <option value="all">All Categories</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={selectedCatFilter}
+            onChange={(e) => setSelectedCatFilter(e.target.value)}
+            className="w-full px-3.5 py-2 rounded-full bg-[#FBF6EF] border border-[#0D0D0C]/[0.08] text-xs text-[#0D0D0C] focus:outline-none focus:border-[#0D0D0C]"
+          >
+            <option value="all">All Categories</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
 
           {/* Payment Method Filter */}
-          <div>
-            <select
-              value={selectedPaymentFilter}
-              onChange={(e) => setSelectedPaymentFilter(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-muted/30 border border-border/70 text-xs text-foreground focus:outline-none focus:border-mint-500"
-            >
-              <option value="all">All Payment Methods</option>
-              {PAYMENT_METHODS.map((pm) => (
-                <option key={pm.id} value={pm.id}>
-                  {pm.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={selectedPaymentFilter}
+            onChange={(e) => setSelectedPaymentFilter(e.target.value)}
+            className="w-full px-3.5 py-2 rounded-full bg-[#FBF6EF] border border-[#0D0D0C]/[0.08] text-xs text-[#0D0D0C] focus:outline-none focus:border-[#0D0D0C]"
+          >
+            <option value="all">All Payment Methods</option>
+            {PAYMENT_METHODS.map((pm) => (
+              <option key={pm.id} value={pm.id}>
+                {pm.label}
+              </option>
+            ))}
+          </select>
 
           {/* Recurring Filter */}
-          <div>
-            <select
-              value={recurringFilter}
-              onChange={(e) => setRecurringFilter(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-muted/30 border border-border/70 text-xs text-foreground focus:outline-none focus:border-mint-500"
-            >
-              <option value="all">All Types</option>
-              <option value="recurring">Recurring Only</option>
-              <option value="onetime">One-Time Only</option>
-            </select>
-          </div>
+          <select
+            value={recurringFilter}
+            onChange={(e) => setRecurringFilter(e.target.value)}
+            className="w-full px-3.5 py-2 rounded-full bg-[#FBF6EF] border border-[#0D0D0C]/[0.08] text-xs text-[#0D0D0C] focus:outline-none focus:border-[#0D0D0C]"
+          >
+            <option value="all">All Types</option>
+            <option value="recurring">Recurring Only</option>
+            <option value="onetime">One-Time Only</option>
+          </select>
 
           {/* Sort By */}
-          <div>
-            <select
-              value={sortBy}
-              // @ts-expect-error type narrowing
-              onChange={(e) => setSortBy(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-muted/30 border border-border/70 text-xs text-foreground focus:outline-none focus:border-mint-500"
-            >
-              <option value="date-desc">Newest First</option>
-              <option value="date-asc">Oldest First</option>
-              <option value="amount-desc">Amount: High to Low</option>
-              <option value="amount-asc">Amount: Low to High</option>
-            </select>
-          </div>
+          <select
+            value={sortBy}
+            // @ts-expect-error type narrowing
+            onChange={(e) => setSortBy(e.target.value)}
+            className="w-full px-3.5 py-2 rounded-full bg-[#FBF6EF] border border-[#0D0D0C]/[0.08] text-xs text-[#0D0D0C] focus:outline-none focus:border-[#0D0D0C]"
+          >
+            <option value="date-desc">Newest First</option>
+            <option value="date-asc">Oldest First</option>
+            <option value="amount-desc">Amount: High to Low</option>
+            <option value="amount-asc">Amount: Low to High</option>
+          </select>
         </div>
       </div>
 
       {/* Filter Stats Bar */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground px-2">
+      <div className="flex items-center justify-between text-xs text-[#0D0D0C]/56 px-2">
         <span>
-          Showing <strong className="text-foreground">{filteredExpenses.length}</strong>{" "}
-          transactions
+          Showing <strong className="text-[#0D0D0C] font-medium">{filteredExpenses.length}</strong> transactions
         </span>
         <span>
           Filtered Total:{" "}
-          <strong className="text-foreground font-mono text-sm font-bold">
+          <strong className="text-[#0D0D0C] text-sm font-medium tracking-tight">
             {formatCurrency(totalFilteredAmount, currency)}
           </strong>
         </span>
       </div>
 
       {/* Transactions List */}
-      <div className="p-6 rounded-3xl bg-card border border-border/60 shadow-sm divide-y divide-border/40">
+      <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] divide-y divide-[#0D0D0C]/[0.05]">
         {filteredExpenses.length === 0 ? (
-          <div className="py-12 flex flex-col items-center justify-center text-center">
-            <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground mb-3">
-              <Filter className="w-5 h-5" />
+          <div className="py-16 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 rounded-full border border-[#0D0D0C]/[0.12] flex items-center justify-center text-[#0D0D0C]/60 mb-5">
+              <Receipt className="w-8 h-8 stroke-[1]" />
             </div>
-            <h4 className="text-sm font-semibold text-foreground">
-              No matching transactions
+            <h4 className="text-xl font-medium text-[#0D0D0C] tracking-[-0.02em]">
+              No Matching Transactions
             </h4>
-            <p className="text-xs text-muted-foreground max-w-xs mt-1">
-              Try adjusting your search query or reset filters.
+            <p className="text-sm text-[#0D0D0C]/56 max-w-sm mt-1.5 mb-6">
+              Try adjusting your search criteria or resetting filters.
             </p>
+            <button
+              onClick={resetFilters}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-xs font-medium text-[#0D0D0C] transition-all"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset Filters</span>
+            </button>
           </div>
         ) : (
           filteredExpenses.map((expense) => {
@@ -315,39 +315,38 @@ export default function TransactionsPage() {
             return (
               <div
                 key={expense.id}
-                className="py-3.5 flex items-center justify-between gap-3 group hover:bg-muted/30 px-2 -mx-2 rounded-2xl transition-colors"
+                className="py-3.5 flex items-center justify-between gap-4 group hover:bg-[#FBF6EF]/50 -mx-3 px-3 rounded-[16px] transition-colors"
               >
                 {/* Left: Category Icon + Details */}
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3.5 min-w-0">
                   <div
-                    className="w-10 h-10 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-sm"
-                    style={{ backgroundColor: category.color }}
+                    className="w-10 h-10 rounded-full border border-[#0D0D0C]/[0.08] flex items-center justify-center shrink-0 bg-[#FFFDF8]"
+                    style={{ color: category.color || "#0D0D0C" }}
                   >
-                    <CategoryIcon name={category.icon} className="w-5 h-5" />
+                    <CategoryIcon iconName={category.icon} className="w-4 h-4 stroke-[1.5]" />
                   </div>
 
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold text-foreground truncate">
+                      <span className="text-sm font-medium text-[#0D0D0C] truncate">
                         {expense.note || category.name}
                       </span>
                       {expense.isRecurring && (
-                        <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                        <span className="flex items-center gap-0.5 text-[10px] font-normal px-2 py-0.5 rounded-full border border-[#0D0D0C]/[0.1] text-[#0D0D0C]/70">
                           <Repeat className="w-2.5 h-2.5" />
-                          Recurring
+                          <span>Monthly</span>
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                      <span className="font-medium text-[11px] text-foreground/80">
+                    <div className="flex items-center gap-2 text-xs text-[#0D0D0C]/56 mt-0.5">
+                      <span className="font-normal text-[#0D0D0C]/80">
                         {category.name}
                       </span>
                       <span>•</span>
-                      <span className="text-[11px]">{formatDisplayDate(expense.date)}</span>
+                      <span>{formatDisplayDate(expense.date)}</span>
                       <span>•</span>
-                      <span className="flex items-center gap-1 text-[11px] px-1.5 py-0.2 rounded-md bg-muted font-medium">
-                        {paymentIcons[expense.paymentMethod]}
+                      <span className="text-[11px] text-[#0D0D0C]/42">
                         {expense.paymentMethod}
                       </span>
                     </div>
@@ -356,44 +355,43 @@ export default function TransactionsPage() {
 
                 {/* Right: Amount & Actions */}
                 <div className="flex items-center gap-3 shrink-0">
-                  <div className="text-right">
-                    <div className="text-sm sm:text-base font-bold font-mono text-foreground">
-                      -{formatCurrency(expense.amount, currency)}
-                    </div>
-                  </div>
+                  <span className="text-base sm:text-lg font-medium tracking-tight text-[#0D0D0C]">
+                    {formatCurrency(expense.amount, currency)}
+                  </span>
 
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => handleEdit(expense)}
-                      className="p-1.5 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                      title="Edit transaction"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-
                     {isDeleting ? (
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 bg-[#FFFDF8] border border-[#0D0D0C]/[0.12] rounded-full p-1 shadow-sm">
                         <button
                           onClick={() => handleDelete(expense.id)}
-                          className="px-2 py-1 rounded-lg bg-rose-500 text-white text-[10px] font-bold"
+                          className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-medium"
                         >
                           Confirm
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(null)}
-                          className="px-2 py-1 rounded-lg bg-muted text-foreground text-[10px]"
+                          className="px-2 py-0.5 rounded-full hover:bg-[#FBF6EF] text-[#0D0D0C] text-[10px]"
                         >
-                          ✕
+                          Cancel
                         </button>
                       </div>
                     ) : (
-                      <button
-                        onClick={() => setConfirmDeleteId(expense.id)}
-                        className="p-1.5 rounded-xl hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 transition-colors"
-                        title="Delete transaction"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <>
+                        <button
+                          onClick={() => handleEdit(expense)}
+                          className="p-1.5 rounded-full hover:bg-[#FBF6EF] text-[#0D0D0C]/60 hover:text-[#0D0D0C] transition-colors"
+                          title="Edit expense"
+                        >
+                          <Edit2 className="w-3.5 h-3.5 stroke-[1.5]" />
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(expense.id)}
+                          className="p-1.5 rounded-full hover:bg-[#FBF6EF] text-[#0D0D0C]/60 hover:text-rose-600 transition-colors"
+                          title="Delete expense"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 stroke-[1.5]" />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -405,4 +403,3 @@ export default function TransactionsPage() {
     </div>
   );
 }
-

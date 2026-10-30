@@ -3,14 +3,10 @@
 import React from "react";
 import { motion } from "framer-motion";
 import {
-  TrendingDown,
-  TrendingUp,
   Wallet,
-  PiggyBank,
-  CalendarCheck,
-  AlertTriangle,
-  ArrowUpRight,
-  Edit3,
+  Shield,
+  Calendar,
+  BarChart3,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, getBudgetStatus } from "@/lib/utils";
@@ -23,9 +19,9 @@ export function StatsCards() {
   const budgetStatus = getBudgetStatus(summary.totalSpent, summary.totalBudget);
 
   // Projected spend at end of month based on daily run rate
-  const projectedMonthTotal = Math.round(summary.dailyAverage * summary.daysInMonth);
-  const isPacingOverBudget =
-    summary.totalBudget > 0 && projectedMonthTotal > summary.totalBudget;
+  const projectedMonthTotal = Math.round(
+    summary.dailyAverage * summary.daysInMonth
+  );
 
   const cards = [
     {
@@ -33,11 +29,8 @@ export function StatsCards() {
       value: formatCurrency(summary.totalSpent, currency),
       subtitle: `${summary.daysPassed} days tracked`,
       icon: Wallet,
-      iconColor: "text-mint-500",
-      bgColor: "bg-mint-500/10",
       indicator: (
-        <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
-          <CalendarCheck className="w-3.5 h-3.5 text-mint-500" />
+        <span className="text-xs font-normal text-[#0D0D0C]/56">
           {summary.daysPassed} of {summary.daysInMonth} days
         </span>
       ),
@@ -52,24 +45,23 @@ export function StatsCards() {
         summary.totalBudget > 0
           ? `${summary.sortedCount}/${summary.totalCategoriesWithBudget} sorted ✓ • ${budgetStatus.percentage}% used`
           : "Click to set monthly budget",
-      icon: PiggyBank,
-      iconColor: "text-blue-500",
-      bgColor: "bg-blue-500/10",
+      icon: BarChart3,
       onClick: () => setBudgetModalOpen(true),
-      actionBadge: (
-        <span className="flex items-center gap-1 text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:underline">
-          <Edit3 className="w-3 h-3" /> Edit
-        </span>
+      actionButton: (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setBudgetModalOpen(true);
+          }}
+          className="px-3 py-1 rounded-[7px] border-[1.4px] border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-xs font-medium text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDF8] transition-all"
+        >
+          Edit
+        </button>
       ),
-      indicator: summary.totalCategoriesWithBudget > 0 ? (
-        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-          ✓ {summary.sortedCount} sorted
-        </span>
-      ) : null,
       progress: summary.totalBudget > 0 ? (
-        <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mt-2">
+        <div className="w-full h-1 bg-[#0D0D0C]/[0.06] rounded-full overflow-hidden mt-3">
           <div
-            className={`h-full rounded-full transition-all duration-500 ${budgetStatus.progressColor}`}
+            className="h-full rounded-full transition-all duration-500 bg-[#0D0D0C]"
             style={{ width: `${Math.min(budgetStatus.percentage, 100)}%` }}
           />
         </div>
@@ -87,19 +79,11 @@ export function StatsCards() {
               currency,
               true
             )}/day left`
-          : "Exceeded limit!",
-      icon: summary.remaining >= 0 ? TrendingDown : AlertTriangle,
-      iconColor: summary.remaining >= 0 ? "text-emerald-500" : "text-rose-500",
-      bgColor: summary.remaining >= 0 ? "bg-emerald-500/10" : "bg-rose-500/10",
+          : "Exceeded monthly limit",
+      icon: Shield,
       alert: budgetStatus.status === "danger" || summary.remaining < 0,
       indicator: (
-        <span
-          className={`text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
-            summary.remaining >= 0
-              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-              : "bg-rose-500/10 text-rose-600 dark:text-rose-400 animate-pulse"
-          }`}
-        >
+        <span className="text-[11px] font-normal text-[#0D0D0C]/70 px-2.5 py-0.5 rounded-full border border-[#0D0D0C]/[0.1]">
           {summary.remaining >= 0 ? "Within Budget" : "Overspent"}
         </span>
       ),
@@ -108,23 +92,17 @@ export function StatsCards() {
       title: "Daily Average",
       value: formatCurrency(summary.dailyAverage, currency),
       subtitle: `Projected: ${formatCurrency(projectedMonthTotal, currency, true)}`,
-      icon: TrendingUp,
-      iconColor: isPacingOverBudget ? "text-amber-500" : "text-purple-500",
-      bgColor: isPacingOverBudget ? "bg-amber-500/10" : "bg-purple-500/10",
-      indicator: isPacingOverBudget ? (
-        <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
-          <AlertTriangle className="w-3 h-3" /> Pace High
-        </span>
-      ) : (
-        <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-0.5">
-          <ArrowUpRight className="w-3 h-3 text-purple-500" /> On Track
+      icon: Calendar,
+      indicator: (
+        <span className="text-xs font-normal text-[#0D0D0C]/56">
+          Daily Run Rate
         </span>
       ),
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
       {cards.map((card, i) => {
         const Icon = card.icon;
         return (
@@ -134,39 +112,42 @@ export function StatsCards() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: i * 0.05 }}
             onClick={card.onClick}
-            className={`group relative p-5 rounded-3xl bg-card border border-border/60 hover:border-border transition-all duration-200 shadow-sm hover:shadow-card dark:hover:shadow-card-dark ${
+            className={`group relative p-6 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] hover:border-[#0D0D0C]/20 transition-all duration-200 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between ${
               card.onClick ? "cursor-pointer" : ""
-            } ${card.alert ? "border-rose-500/40 bg-rose-500/[0.02]" : ""}`}
+            }`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-muted-foreground tracking-wide uppercase">
-                {card.title}
-              </span>
-              <div className="flex items-center gap-2">
-                {card.actionBadge}
-                <div
-                  className={`w-9 h-9 rounded-2xl ${card.bgColor} ${card.iconColor} flex items-center justify-center transition-transform group-hover:scale-105`}
-                >
-                  <Icon className="w-4 h-4 stroke-[2.2]" />
+            <div>
+              {/* Header: 16px label at 56% opacity + Thin line icon (24px, 1.2px stroke) */}
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[16px] font-normal text-[#0D0D0C]/56">
+                  {card.title}
+                </span>
+                <div className="flex items-center gap-2">
+                  {card.actionButton}
+                  <div className="w-6 h-6 flex items-center justify-center text-[#0D0D0C]">
+                    <Icon className="w-6 h-6 stroke-[1.2]" />
+                  </div>
                 </div>
+              </div>
+
+              {/* Number: 48px, 500 weight, tight tracking -0.032em, ink #0D0D0C */}
+              <div className="text-[48px] font-medium leading-none tracking-[-0.032em] text-[#0D0D0C] font-sans my-2">
+                {card.value}
               </div>
             </div>
 
-            <div className="space-y-1">
-              <div className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-mono">
-                {card.value}
-              </div>
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div>
+              {/* Footer info: 56% opacity */}
+              <div className="flex items-center justify-between text-xs text-[#0D0D0C]/56 pt-2">
                 <span className="truncate">{card.subtitle}</span>
                 {card.indicator}
               </div>
-            </div>
 
-            {card.progress}
+              {card.progress}
+            </div>
           </motion.div>
         );
       })}
     </div>
   );
 }
-

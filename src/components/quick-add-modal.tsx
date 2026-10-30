@@ -4,14 +4,12 @@ import React, { useState, useEffect, useRef } from "react";
 import confetti from "canvas-confetti";
 import {
   X,
-  Plus,
   Repeat,
   Calendar,
-  Zap,
   CreditCard,
   Banknote,
   Building2,
-  Check,
+  Zap,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { PAYMENT_METHODS } from "@/lib/constants";
@@ -33,7 +31,7 @@ export function QuickAddModal() {
     updateExpense,
   } = useExpenseStore();
 
-  const currentCurrency = CURRENCIES[currency] || CURRENCIES.INR;
+  const currentCurrency = CURRENCIES[currency] || CURRENCIES.ZAR;
   const amountInputRef = useRef<HTMLInputElement>(null);
 
   const [amount, setAmount] = useState<string>("");
@@ -44,7 +42,6 @@ export function QuickAddModal() {
   const [isRecurring, setIsRecurring] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
-  // Default date to today if today matches selectedMonth, otherwise 1st of selectedMonth
   const getDefaultDate = () => {
     const today = getTodayDateStr();
     if (today.startsWith(selectedMonth)) {
@@ -58,13 +55,13 @@ export function QuickAddModal() {
       if (editingExpense) {
         setAmount(editingExpense.amount.toString());
         setCategoryId(editingExpense.categoryId);
-        setNote(editingExpense.note);
+        setNote(editingExpense.note || "");
         setDate(editingExpense.date);
         setPaymentMethod(editingExpense.paymentMethod);
-        setIsRecurring(Boolean(editingExpense.isRecurring));
+        setIsRecurring(!!editingExpense.isRecurring);
       } else {
         setAmount("");
-        setCategoryId(categories[0]?.id || "cat-food");
+        setCategoryId(categories[0]?.id || "");
         setNote("");
         setDate(getDefaultDate());
         setPaymentMethod("Card");
@@ -74,9 +71,9 @@ export function QuickAddModal() {
 
       setTimeout(() => {
         amountInputRef.current?.focus();
-      }, 50);
+      }, 100);
     }
-  }, [quickAddOpen, editingExpense, categories, selectedMonth]);
+  }, [quickAddOpen, editingExpense, selectedMonth, categories]);
 
   if (!quickAddOpen) return null;
 
@@ -85,9 +82,9 @@ export function QuickAddModal() {
     setEditingExpense(null);
   };
 
-  const handleQuickAmount = (delta: number) => {
-    const current = parseFloat(amount) || 0;
-    setAmount((current + delta).toString());
+  const handleQuickAmount = (val: number) => {
+    const currentVal = parseFloat(amount) || 0;
+    setAmount((currentVal + val).toString());
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -96,7 +93,6 @@ export function QuickAddModal() {
 
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
       setError("Please enter a valid amount greater than 0");
-      amountInputRef.current?.focus();
       return;
     }
 
@@ -129,13 +125,12 @@ export function QuickAddModal() {
         isRecurring,
       });
 
-      // Launch micro confetti
       try {
         confetti({
           particleCount: 25,
           spread: 40,
           origin: { y: 0.8 },
-          colors: ["#10b981", "#3b82f6", "#f59e0b"],
+          colors: ["#0D0D0C", "#96CE96", "#F99654"],
         });
       } catch {
         // ignore
@@ -146,55 +141,55 @@ export function QuickAddModal() {
   };
 
   const paymentIcons: Record<PaymentMethod, React.ReactNode> = {
-    Card: <CreditCard className="w-3.5 h-3.5 text-blue-500" />,
-    Bank: <Building2 className="w-3.5 h-3.5 text-purple-500" />,
-    Cash: <Banknote className="w-3.5 h-3.5 text-emerald-500" />,
-    EFT: <Building2 className="w-3.5 h-3.5 text-purple-500" />,
-    "Instant EFT": <Zap className="w-3.5 h-3.5 text-amber-500" />,
+    Card: <CreditCard className="w-3.5 h-3.5 stroke-[1.5]" />,
+    Bank: <Building2 className="w-3.5 h-3.5 stroke-[1.5]" />,
+    Cash: <Banknote className="w-3.5 h-3.5 stroke-[1.5]" />,
+    EFT: <Building2 className="w-3.5 h-3.5 stroke-[1.5]" />,
+    "Instant EFT": <Zap className="w-3.5 h-3.5 stroke-[1.5]" />,
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-[#0D0D0C]/40 backdrop-blur-sm transition-opacity"
         onClick={handleClose}
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-lg bg-card border border-border/80 rounded-3xl shadow-2xl overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] rounded-[28px] shadow-2xl overflow-hidden z-10">
         {/* Header */}
-        <div className="px-6 pt-5 pb-3 flex items-center justify-between border-b border-border/40">
+        <div className="px-7 pt-6 pb-4 flex items-center justify-between border-b border-[#0D0D0C]/[0.06]">
           <div>
-            <h2 className="text-base font-bold text-foreground">
-              {editingExpense ? "Edit Expense" : "Quick Add Expense"}
+            <h2 className="text-lg font-medium text-[#0D0D0C]">
+              {editingExpense ? "Edit Expense" : "Add Expense"}
             </h2>
-            <p className="text-xs text-muted-foreground">
-              {editingExpense ? "Update your transaction details" : "Track spending in seconds"}
+            <p className="text-xs text-[#0D0D0C]/56 mt-0.5">
+              {editingExpense ? "Update your transaction details" : "Log outlays in South African Rands"}
             </p>
           </div>
           <button
             onClick={handleClose}
-            className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="p-2 rounded-full hover:bg-[#FBF6EF] text-[#0D0D0C]/60 hover:text-[#0D0D0C] transition-colors"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 stroke-[1.5]" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-7 space-y-5">
           {error && (
-            <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold">
+            <div className="p-3 rounded-[16px] bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
               {error}
             </div>
           )}
 
           {/* Large Amount Field */}
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">
-              Amount
+            <label className="block text-xs font-normal text-[#0D0D0C]/56 mb-1.5">
+              Amount ({currentCurrency.symbol} - {currentCurrency.code})
             </label>
             <div className="relative flex items-center">
-              <span className="absolute left-4 text-2xl font-bold font-mono text-muted-foreground">
+              <span className="absolute left-5 text-2xl font-medium text-[#0D0D0C]/40">
                 {currentCurrency.symbol}
               </span>
               <input
@@ -205,33 +200,33 @@ export function QuickAddModal() {
                 placeholder="0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 text-3xl font-bold font-mono rounded-2xl bg-muted/40 border border-border/70 focus:outline-none focus:border-mint-500 focus:ring-2 focus:ring-mint-500/20 transition-all text-foreground"
+                className="w-full pl-12 pr-4 py-3.5 text-4xl font-medium tracking-tight rounded-[20px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.08] focus:outline-none focus:border-[#0D0D0C] text-[#0D0D0C] transition-colors"
                 required
               />
             </div>
 
             {/* Quick Amount Chips */}
-            <div className="flex items-center gap-1.5 mt-2 overflow-x-auto pb-1">
-              <span className="text-[11px] text-muted-foreground mr-1">Quick:</span>
+            <div className="flex items-center gap-1.5 mt-2.5 overflow-x-auto pb-1">
+              <span className="text-xs text-[#0D0D0C]/42 mr-1">Quick:</span>
               {[50, 100, 250, 500, 1000].map((val) => (
                 <button
                   key={val}
                   type="button"
                   onClick={() => handleQuickAmount(val)}
-                  className="px-2.5 py-1 rounded-xl text-xs font-mono font-medium bg-muted/60 hover:bg-mint-500/15 hover:text-mint-600 dark:hover:text-mint-400 border border-border/40 transition-colors"
+                  className="px-3 py-1 rounded-full border border-[#0D0D0C]/[0.08] bg-[#FFFDF8] hover:bg-[#FBF6EF] text-xs font-medium text-[#0D0D0C] transition-colors"
                 >
-                  +{currentCurrency.symbol}{val}
+                  +{val}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Category Picker Grid */}
+          {/* Category Selector */}
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
+            <label className="block text-xs font-normal text-[#0D0D0C]/56 mb-2">
               Category
             </label>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-36 overflow-y-auto pr-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
               {categories.map((cat) => {
                 const isSelected = categoryId === cat.id;
                 return (
@@ -239,131 +234,122 @@ export function QuickAddModal() {
                     key={cat.id}
                     type="button"
                     onClick={() => setCategoryId(cat.id)}
-                    className={`flex items-center gap-2 p-2 rounded-2xl border text-left transition-all ${isSelected
-                        ? "border-mint-500 bg-mint-500/10 shadow-sm"
-                        : "border-border/60 hover:bg-muted/40"
-                      }`}
+                    className={`flex items-center gap-2 p-2.5 rounded-[16px] text-xs font-medium border text-left transition-all ${
+                      isSelected
+                        ? "bg-[#0D0D0C] text-[#FFFDF8] border-[#0D0D0C] shadow-sm"
+                        : "bg-[#FBF6EF] text-[#0D0D0C] border-[#0D0D0C]/[0.08] hover:border-[#0D0D0C]/20"
+                    }`}
                   >
                     <div
-                      className="w-7 h-7 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm"
-                      style={{ backgroundColor: cat.color }}
+                      className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+                      style={{
+                        backgroundColor: isSelected ? "rgba(255,255,255,0.2)" : cat.color || "#0D0D0C",
+                        color: "#fff",
+                      }}
                     >
-                      <CategoryIcon name={cat.icon} className="w-3.5 h-3.5" />
+                      <CategoryIcon iconName={cat.icon} className="w-3.5 h-3.5" />
                     </div>
-                    <span className="text-xs font-medium text-foreground truncate">
-                      {cat.name}
-                    </span>
+                    <span className="truncate">{cat.name}</span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Note & Description */}
+          {/* Note input */}
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">
-              Note (Optional)
+            <label className="block text-xs font-normal text-[#0D0D0C]/56 mb-1.5">
+              Note (optional)
             </label>
             <input
               type="text"
-              placeholder="e.g., Dinner at Blue Tokai, Uber ride, Grocery run"
+              placeholder="e.g., Apple Music, Woolworths, VOX data..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-muted/40 border border-border/70 focus:outline-none focus:border-mint-500 focus:ring-1 focus:ring-mint-500/20 text-xs text-foreground placeholder:text-muted-foreground"
+              className="w-full px-4 py-2.5 rounded-[16px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.08] text-xs sm:text-sm text-[#0D0D0C] placeholder:text-[#0D0D0C]/42 focus:outline-none focus:border-[#0D0D0C]"
             />
           </div>
 
-          {/* Date & Payment Method Row */}
+          {/* Date & Payment Method */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Date */}
             <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">
+              <label className="block text-xs font-normal text-[#0D0D0C]/56 mb-1.5">
                 Date
               </label>
               <div className="relative">
+                <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#0D0D0C]/42 pointer-events-none" />
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-muted/40 border border-border/70 focus:outline-none focus:border-mint-500 text-xs text-foreground"
+                  className="w-full pl-9 pr-3 py-2 rounded-[16px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.08] text-xs text-[#0D0D0C] focus:outline-none focus:border-[#0D0D0C]"
                   required
                 />
               </div>
             </div>
 
-            {/* Payment Method Pills */}
             <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">
+              <label className="block text-xs font-normal text-[#0D0D0C]/56 mb-1.5">
                 Payment Method
               </label>
-              <div className="grid grid-cols-4 gap-1">
-                {PAYMENT_METHODS.map((pm) => {
-                  const isSelected = paymentMethod === pm.id;
-                  return (
-                    <button
-                      key={pm.id}
-                      type="button"
-                      onClick={() => setPaymentMethod(pm.id)}
-                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold flex flex-col items-center justify-center gap-1 border transition-all ${isSelected
-                          ? "bg-card border-mint-500 text-foreground shadow-sm ring-1 ring-mint-500"
-                          : "border-border/50 text-muted-foreground hover:bg-muted/40"
-                        }`}
-                    >
-                      {paymentIcons[pm.id]}
-                      <span>{pm.label.split(" ")[0]}</span>
-                    </button>
-                  );
-                })}
+              <div className="grid grid-cols-3 gap-1">
+                {(["Card", "EFT", "Cash"] as PaymentMethod[]).map((pm) => (
+                  <button
+                    key={pm}
+                    type="button"
+                    onClick={() => setPaymentMethod(pm)}
+                    className={`py-2 px-1.5 rounded-[14px] text-xs font-medium border flex items-center justify-center gap-1 transition-all ${
+                      paymentMethod === pm
+                        ? "bg-[#0D0D0C] text-[#FFFDF8] border-[#0D0D0C]"
+                        : "bg-[#FBF6EF] text-[#0D0D0C] border-[#0D0D0C]/[0.08] hover:border-[#0D0D0C]/20"
+                    }`}
+                  >
+                    {paymentIcons[pm]}
+                    <span>{pm}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Recurring Toggle Switch */}
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/30 border border-border/50">
+          {/* Monthly Recurring Expense Switch */}
+          <div className="p-3.5 rounded-[18px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] flex items-center justify-between cursor-pointer" onClick={() => setIsRecurring(!isRecurring)}>
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
-                <Repeat className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-full border border-[#0D0D0C]/[0.08] bg-[#FFFDF8] flex items-center justify-center text-[#0D0D0C]">
+                <Repeat className="w-4 h-4 stroke-[1.5]" />
               </div>
               <div>
-                <span className="text-xs font-bold text-foreground block">
-                  Monthly Recurring Expense
+                <span className="text-xs font-medium text-[#0D0D0C] block">
+                  Repeat Every Month
                 </span>
-                <span className="text-[11px] text-muted-foreground">
-                  Auto-projects to future months (Rent, Netflix, WiFi)
+                <span className="text-[11px] text-[#0D0D0C]/56">
+                  Auto-projects into all future monthly trackers
                 </span>
               </div>
             </div>
 
-            <button
-              type="button"
-              role="switch"
-              aria-checked={isRecurring}
-              onClick={() => setIsRecurring(!isRecurring)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isRecurring ? "bg-mint-500" : "bg-muted"
-                }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isRecurring ? "translate-x-6" : "translate-x-1"
-                  }`}
-              />
-            </button>
+            <input
+              type="checkbox"
+              checked={isRecurring}
+              onChange={(e) => setIsRecurring(e.target.checked)}
+              className="w-4 h-4 accent-[#0D0D0C] cursor-pointer"
+            />
           </div>
 
-          {/* Submit Actions */}
-          <div className="flex items-center justify-end gap-2.5 pt-2">
+          {/* Action Buttons */}
+          <div className="flex items-center justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2.5 rounded-2xl text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors"
+              className="px-5 py-2.5 rounded-full border border-[#0D0D0C]/20 text-xs font-medium text-[#0D0D0C] hover:bg-[#FBF6EF] transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-2xl bg-mint-500 hover:bg-mint-600 text-white text-xs font-bold shadow-glow active:scale-95 transition-all flex items-center gap-1.5"
+              className="h-12 px-7 rounded-full bg-[#0D0D0C] text-[#FFFDF8] hover:bg-[#0D0D0C]/90 text-sm font-medium transition-all shadow-sm active:scale-95"
             >
-              <Check className="w-4 h-4" />
-              <span>{editingExpense ? "Save Changes" : "Record Expense"}</span>
+              {editingExpense ? "Save Changes" : "Save Expense"}
             </button>
           </div>
         </form>

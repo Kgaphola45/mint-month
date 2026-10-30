@@ -10,18 +10,15 @@ import {
   ArrowLeftRight,
   Settings,
   Plus,
-  Coins,
-  ShieldCheck,
 } from "lucide-react";
 import { MonthPicker } from "./month-picker";
-import { ThemeToggle } from "./theme-toggle";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { CURRENCIES } from "@/lib/currencies";
 
 export function Navbar() {
   const pathname = usePathname();
   const { setQuickAddOpen, currency } = useExpenseStore();
-  const currentCurrency = CURRENCIES[currency] || CURRENCIES.INR;
+  const currentCurrency = CURRENCIES[currency] || CURRENCIES.ZAR;
 
   // Global keyboard shortcut: Cmd/Ctrl + K or 'n' opens quick add
   useEffect(() => {
@@ -48,44 +45,32 @@ export function Navbar() {
 
   return (
     <>
-      {/* Top Header */}
-      <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/80 backdrop-blur-md transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          {/* Logo & Brand */}
+      {/* 80px tall Header with Hairline Border */}
+      <header className="sticky top-0 z-30 w-full h-20 border-b border-[#0D0D0C]/[0.08] bg-[#FBF6EF]/85 backdrop-blur-md transition-colors flex items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex items-center justify-between gap-4">
+          {/* Brand: 13px black dot + "mint month" Inter Tight 600 */}
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-mint-600 via-mint-500 to-emerald-400 flex items-center justify-center text-white shadow-glow group-hover:scale-105 transition-transform">
-                <Coins className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-base tracking-tight text-foreground flex items-center gap-1.5">
-                  Mint Month
-                  <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-md bg-mint-500/10 text-mint-600 dark:text-mint-400 border border-mint-500/20">
-                    MVP
-                  </span>
-                </span>
-                <span className="text-[10.5px] text-muted-foreground -mt-0.5 hidden sm:flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-mint-500" />
-                  Privacy-first tracker
-                </span>
-              </div>
+              <span className="w-[13px] h-[13px] rounded-full bg-[#0D0D0C] shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="font-semibold text-xl sm:text-[22px] tracking-[-0.02em] text-[#0D0D0C]">
+                mint month
+              </span>
             </Link>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1 bg-muted/40 p-1 rounded-2xl border border-border/30">
+            {/* Desktop Pill Navigation (rounded full, not boxy) */}
+            <nav className="hidden lg:flex items-center gap-1 bg-[#FFFDF8] p-1.5 rounded-full border border-[#0D0D0C]/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
               {navLinks.map((link) => {
-                const Icon = link.icon;
                 const isActive = pathname === link.href;
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${isActive
-                        ? "bg-card text-foreground shadow-sm font-semibold"
-                        : "text-muted-foreground hover:text-foreground hover:bg-card/50"
-                      }`}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-all ${
+                      isActive
+                        ? "bg-[#0D0D0C] text-[#FFFDF8] shadow-sm"
+                        : "text-[#0D0D0C]/56 hover:text-[#0D0D0C] hover:bg-[#0D0D0C]/[0.04]"
+                    }`}
                   >
-                    <Icon className="w-3.5 h-3.5" />
                     <span>{link.label}</span>
                   </Link>
                 );
@@ -93,62 +78,56 @@ export function Navbar() {
             </nav>
           </div>
 
-          {/* Central Month Switcher */}
+          {/* Central Month Switcher (pill style) */}
           <div className="flex items-center justify-center">
             <MonthPicker />
           </div>
 
           {/* Right Action Items */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Currency Pill */}
+          <div className="flex items-center gap-3">
+            {/* Outlined Currency Pill */}
             <Link
               href="/settings"
-              className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/40 transition-colors"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[#FFFDF8] hover:bg-[#FFFDF8]/80 text-[#0D0D0C] border border-[#0D0D0C]/[0.12] transition-colors shadow-sm"
               title="Change Currency in Settings"
             >
-              <span className="font-bold text-mint-500">{currentCurrency.symbol}</span>
-              <span className="text-[11px]">{currentCurrency.code}</span>
+              <span className="font-medium text-[#0D0D0C]">{currentCurrency.symbol}</span>
+              <span className="text-[11px] text-[#0D0D0C]/56">{currentCurrency.code}</span>
             </Link>
 
-            <ThemeToggle />
-
-            {/* Add Expense Action Button */}
+            {/* Add Expense Button: 48px tall, 999px radius, black ink #0D0D0C, white text */}
             <button
               onClick={() => setQuickAddOpen(true)}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-mint-500 hover:bg-mint-600 active:scale-95 text-white font-medium text-xs sm:text-sm shadow-glow transition-all"
+              className="h-12 px-6 rounded-full bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 active:scale-95 text-[#FFFDF8] font-medium text-xs sm:text-sm shadow-sm transition-all flex items-center gap-2"
             >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <Plus className="w-4 h-4 stroke-[2]" />
               <span className="hidden sm:inline">Add Expense</span>
               <span className="sm:hidden">Add</span>
-              <kbd className="hidden md:inline-flex items-center px-1.5 py-0.5 text-[10px] font-sans font-semibold text-mint-100 bg-white/20 rounded">
-                ⌘K
-              </kbd>
             </button>
           </div>
         </div>
       </header>
 
-      {/* Bottom Floating Navigation Bar for Mobile */}
-      <div className="lg:hidden fixed bottom-4 inset-x-4 z-30 max-w-md mx-auto">
-        <nav className="glass bg-card/90 border border-border/70 rounded-3xl p-1.5 shadow-2xl flex items-center justify-around backdrop-blur-xl">
-          {navLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl text-[10px] font-medium transition-all ${isActive
-                    ? "text-mint-600 dark:text-mint-400 font-bold bg-mint-500/10"
-                    : "text-muted-foreground hover:text-foreground"
-                  }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? "stroke-[2.2]" : "stroke-[1.8]"}`} />
-                <span className="mt-0.5">{link.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+      {/* Mobile Floating Pill Navigation */}
+      <div className="lg:hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-40 bg-[#FFFDF8]/95 backdrop-blur-xl border border-[#0D0D0C]/[0.1] rounded-full p-1.5 shadow-xl flex items-center gap-1">
+        {navLinks.map((link) => {
+          const Icon = link.icon;
+          const isActive = pathname === link.href;
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`p-2.5 rounded-full transition-all ${
+                isActive
+                  ? "bg-[#0D0D0C] text-[#FFFDF8]"
+                  : "text-[#0D0D0C]/56 hover:text-[#0D0D0C]"
+              }`}
+              title={link.label}
+            >
+              <Icon className="w-4 h-4 stroke-[1.8]" />
+            </Link>
+          );
+        })}
       </div>
     </>
   );

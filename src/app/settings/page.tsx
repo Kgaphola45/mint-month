@@ -2,12 +2,8 @@
 
 import React, { useState } from "react";
 import {
-  Settings,
-  Coins,
-  Palette,
   Download,
   Upload,
-  Trash2,
   RotateCcw,
   ShieldCheck,
   Database,
@@ -15,13 +11,10 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
-import { CURRENCIES } from "@/lib/currencies";
 import { CategoryManagerModal } from "@/components/category-manager-modal";
 
 export default function SettingsPage() {
   const {
-    currency,
-    setCurrency,
     categories,
     expenses,
     budgets,
@@ -66,161 +59,150 @@ export default function SettingsPage() {
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;
-      const success = importDataJSON(content);
-      if (success) {
-        setImportStatus("Data imported successfully!");
-        setTimeout(() => setImportStatus(""), 4000);
-      } else {
-        setImportStatus("Failed to parse JSON file.");
-        setTimeout(() => setImportStatus(""), 4000);
+      if (content) {
+        const success = importDataJSON(content);
+        if (success) {
+          setImportStatus("Data backup successfully restored!");
+          setTimeout(() => setImportStatus(""), 4000);
+        } else {
+          setImportStatus("Error: Invalid JSON backup file format.");
+          setTimeout(() => setImportStatus(""), 4000);
+        }
       }
     };
     reader.readAsText(file);
   };
 
+  const handleResetData = () => {
+    resetToDefaults();
+    setConfirmReset(false);
+    setImportStatus("Workspace restored to default seed data.");
+    setTimeout(() => setImportStatus(""), 4000);
+  };
+
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-muted text-foreground flex items-center justify-center">
-          <Settings className="w-5 h-5 stroke-[2]" />
-        </div>
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-            Settings & Preferences
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            Configure currency, custom categories, data backups, and privacy
-          </p>
-        </div>
+      <div className="pb-6 border-b border-[#0D0D0C]/[0.08]">
+        <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-[#0D0D0C]">
+          Settings & Preferences
+        </h1>
+        <p className="text-sm text-[#0D0D0C]/56 mt-1">
+          Configure currency, custom categories, data backups, and privacy
+        </p>
       </div>
 
       {importStatus && (
-        <div className="p-3.5 rounded-2xl bg-mint-500/10 border border-mint-500/30 text-mint-600 dark:text-mint-400 text-xs font-semibold flex items-center gap-2">
-          <Check className="w-4 h-4" />
-          {importStatus}
+        <div className="p-4 rounded-[20px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.12] text-[#0D0D0C] text-xs font-medium flex items-center gap-2.5 shadow-sm">
+          <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{importStatus}</span>
         </div>
       )}
 
       {/* 1. Currency Configuration */}
-      <div className="p-6 rounded-3xl bg-card border border-border/60 shadow-sm space-y-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-            <Coins className="w-4 h-4" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-foreground">
-              Currency
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Configured in South African Rands only (ZAR - R)
-            </p>
-          </div>
+      <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-5">
+        <div>
+          <h3 className="text-[16px] font-normal text-[#0D0D0C]/56">
+            Currency
+          </h3>
+          <p className="text-xs text-[#0D0D0C]/42 mt-0.5">
+            Configured strictly in South African Rands (ZAR / R)
+          </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-mint-500/10 border border-mint-500/30 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-mint-500 text-white font-mono font-bold text-lg flex items-center justify-center shadow-sm">
+        <div className="p-5 rounded-[20px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] flex items-center justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FFFDF8] text-[#0D0D0C] font-medium text-base flex items-center justify-center">
               R
             </div>
             <div>
-              <span className="text-sm font-bold text-foreground block">
+              <span className="text-sm font-medium text-[#0D0D0C] block">
                 South African Rand (ZAR)
               </span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-[#0D0D0C]/56">
                 All budgets, expenses, and charts are rendered in Rands only
               </span>
             </div>
           </div>
-          <span className="px-2.5 py-1 rounded-full bg-mint-500/20 text-mint-700 dark:text-mint-300 text-xs font-bold flex items-center gap-1">
-            <Check className="w-3.5 h-3.5" /> Active Currency
+          <span className="px-3 py-1 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FFFDF8] text-[#0D0D0C] text-xs font-medium flex items-center gap-1.5 shadow-sm">
+            <Check className="w-3.5 h-3.5" /> Active
           </span>
         </div>
       </div>
 
       {/* 2. Category Management */}
-      <div className="p-6 rounded-3xl bg-card border border-border/60 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-mint-500/10 text-mint-500 flex items-center justify-center">
-            <Palette className="w-4 h-4" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-foreground">
-              Manage Categories
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              {categories.length} categories active ({categories.filter((c) => c.isCustom).length} custom)
-            </p>
-          </div>
+      <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <div>
+          <h3 className="text-[16px] font-normal text-[#0D0D0C]/56">
+            Category Manager
+          </h3>
+          <p className="text-xs text-[#0D0D0C]/42 mt-0.5">
+            {categories.length} categories active ({categories.filter((c) => c.isCustom).length} custom additions)
+          </p>
         </div>
 
         <button
           onClick={() => setCategoryModalOpen(true)}
-          className="px-4 py-2 rounded-2xl bg-card hover:bg-muted border border-border text-xs font-semibold text-foreground transition-all shadow-sm active:scale-95"
+          className="btn-vela-outline px-4 py-2.5 text-xs font-medium"
         >
           Customize Categories →
         </button>
       </div>
 
       {/* 3. Data Backup & Export / Import */}
-      <div className="p-6 rounded-3xl bg-card border border-border/60 shadow-sm space-y-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-            <Download className="w-4 h-4" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-foreground">
-              Export & Backup Data
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Export your expense sheets as CSV or full JSON backup
-            </p>
-          </div>
+      <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-5">
+        <div>
+          <h3 className="text-[16px] font-normal text-[#0D0D0C]/56">
+            Export & Backup Data
+          </h3>
+          <p className="text-xs text-[#0D0D0C]/42 mt-0.5">
+            Export your monthly ledger as CSV or full JSON backup
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <button
             onClick={handleDownloadCSV}
-            className="flex items-center justify-between p-3.5 rounded-2xl border border-border/60 hover:bg-muted/40 transition-colors text-left"
+            className="flex items-center justify-between p-4 rounded-[18px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] hover:border-[#0D0D0C]/20 transition-all text-left"
           >
             <div>
-              <span className="text-xs font-bold text-foreground block">
+              <span className="text-xs font-medium text-[#0D0D0C] block">
                 Export to CSV
               </span>
-              <span className="text-[11px] text-muted-foreground">
-                Compatible with Excel, Google Sheets, Numbers
+              <span className="text-[11px] text-[#0D0D0C]/56">
+                Spreadsheet ready format (Excel, Sheets)
               </span>
             </div>
-            <Download className="w-4 h-4 text-mint-500 shrink-0" />
+            <Download className="w-4 h-4 text-[#0D0D0C]/60 shrink-0" />
           </button>
 
           <button
             onClick={handleDownloadJSON}
-            className="flex items-center justify-between p-3.5 rounded-2xl border border-border/60 hover:bg-muted/40 transition-colors text-left"
+            className="flex items-center justify-between p-4 rounded-[18px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] hover:border-[#0D0D0C]/20 transition-all text-left"
           >
             <div>
-              <span className="text-xs font-bold text-foreground block">
+              <span className="text-xs font-medium text-[#0D0D0C] block">
                 Export Full Backup (JSON)
               </span>
-              <span className="text-[11px] text-muted-foreground">
-                Contains expenses, budgets, categories
+              <span className="text-[11px] text-[#0D0D0C]/56">
+                Contains expenses, budgets, and recurring items
               </span>
             </div>
-            <Database className="w-4 h-4 text-blue-500 shrink-0" />
+            <Database className="w-4 h-4 text-[#0D0D0C]/60 shrink-0" />
           </button>
         </div>
 
         {/* Import JSON */}
         <div className="pt-2">
-          <label className="flex items-center justify-between p-3.5 rounded-2xl border border-dashed border-border/80 hover:border-mint-500/50 hover:bg-muted/30 cursor-pointer transition-all">
+          <label className="flex items-center justify-between p-4 rounded-[18px] border border-dashed border-[#0D0D0C]/[0.15] hover:border-[#0D0D0C] hover:bg-[#FBF6EF]/50 cursor-pointer transition-all">
             <div className="flex items-center gap-3">
-              <Upload className="w-4 h-4 text-muted-foreground" />
+              <Upload className="w-4 h-4 text-[#0D0D0C]/60" />
               <div>
-                <span className="text-xs font-bold text-foreground block">
-                  Import Backup JSON
+                <span className="text-xs font-medium text-[#0D0D0C] block">
+                  Restore from JSON Backup
                 </span>
-                <span className="text-[11px] text-muted-foreground">
-                  Restore previously exported Mint Month backup file
+                <span className="text-[11px] text-[#0D0D0C]/56">
+                  Select a valid `.json` export file from disk
                 </span>
               </div>
             </div>
@@ -230,43 +212,60 @@ export default function SettingsPage() {
               onChange={handleFileUpload}
               className="hidden"
             />
-            <span className="text-xs font-semibold text-mint-600 dark:text-mint-400">
-              Browse File
-            </span>
           </label>
         </div>
       </div>
 
-      {/* 4. Danger Zone: Reset Data */}
-      <div className="p-6 rounded-3xl bg-rose-500/[0.03] border border-rose-500/20 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
-            <Trash2 className="w-4 h-4" />
+      {/* 4. Privacy & Zero-Knowledge Architecture */}
+      <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full border border-[#0D0D0C]/[0.1] flex items-center justify-center text-[#0D0D0C]">
+            <ShieldCheck className="w-4 h-4 stroke-[1.5]" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-foreground">
-              Clear & Reset Data
+            <h3 className="text-[16px] font-normal text-[#0D0D0C]/56">
+              Privacy-First & Local Storage
             </h3>
-            <p className="text-xs text-muted-foreground">
-              Reset all entries back to initial 3-month sample data
+            <p className="text-xs text-[#0D0D0C]/42 mt-0.5">
+              100% Client-Side Encryption and Offline Storage
             </p>
           </div>
+        </div>
+
+        <p className="text-xs text-[#0D0D0C]/56 leading-relaxed">
+          Mint Month runs fully in your browser. All expenses, budgets, categories, and payment details are stored strictly in your browser's private local storage. No trackers, no ad telemetry, and no external servers inspect your transactions.
+        </p>
+
+        <div className="flex items-center justify-between pt-2 border-t border-[#0D0D0C]/[0.06] text-xs text-[#0D0D0C]/56">
+          <span>Current Database Records:</span>
+          <span className="font-medium text-[#0D0D0C]">
+            {expenses.length} expenses • {budgets.length} budgets • {categories.length} categories
+          </span>
+        </div>
+      </div>
+
+      {/* 5. Danger Zone: Reset Data */}
+      <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-rose-300 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <div>
+          <h3 className="text-sm font-medium text-rose-800">
+            Reset All Workspace Data
+          </h3>
+          <p className="text-xs text-[#0D0D0C]/56 mt-0.5">
+            Clear customized entries and reload default seed data
+          </p>
         </div>
 
         {confirmReset ? (
           <div className="flex items-center gap-2">
             <button
-              onClick={() => {
-                resetToDefaults();
-                setConfirmReset(false);
-              }}
-              className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors"
+              onClick={handleResetData}
+              className="px-4 py-2 rounded-full bg-rose-600 text-white text-xs font-medium hover:bg-rose-700 transition-colors shadow-sm"
             >
               Yes, Reset Everything
             </button>
             <button
               onClick={() => setConfirmReset(false)}
-              className="px-3 py-1.5 rounded-xl bg-muted text-foreground text-xs font-medium"
+              className="px-3.5 py-2 rounded-full border border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-xs font-medium text-[#0D0D0C] transition-colors"
             >
               Cancel
             </button>
@@ -274,27 +273,16 @@ export default function SettingsPage() {
         ) : (
           <button
             onClick={() => setConfirmReset(true)}
-            className="px-4 py-2 rounded-2xl border border-rose-500/30 hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-semibold transition-colors self-start sm:self-auto"
+            className="px-4 py-2 rounded-full border border-rose-300 hover:border-rose-500 hover:bg-rose-50 text-rose-700 text-xs font-medium transition-colors self-start sm:self-auto"
           >
-            Reset to Sample Data
+            Reset to Defaults
           </button>
         )}
       </div>
 
-      {/* 5. Supabase & Privacy Architecture Note */}
-      <div className="p-6 rounded-3xl bg-muted/20 border border-border/50 text-xs text-muted-foreground space-y-2">
-        <div className="flex items-center gap-2 font-bold text-foreground">
-          <ShieldCheck className="w-4 h-4 text-mint-500" />
-          Privacy-First & Cloud-Ready Architecture
-        </div>
-        <p className="leading-relaxed">
-          Mint Month runs on an offline-first storage adapter layer (`src/lib/storage.ts`). The data models (Expense, Category, Budget) are 100% structured to connect directly to <strong>Supabase</strong> with standard Postgres Foreign Keys and JSONB fields whenever you want multi-device synchronization.
-        </p>
-      </div>
-
-      {/* Modal for Categories */}
+      {/* Category Management Modal */}
       <CategoryManagerModal
-        isOpen={categoryModalOpen}
+        open={categoryModalOpen}
         onClose={() => setCategoryModalOpen(false)}
       />
     </div>

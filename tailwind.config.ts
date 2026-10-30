@@ -10,6 +10,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        cream: {
+          DEFAULT: "#FBF6EF",
+          card: "#FFFDF8",
+          darker: "#F2ECDF",
+        },
+        ink: {
+          DEFAULT: "#0D0D0C",
+          sec: "rgba(13, 13, 12, 0.56)",
+          hint: "rgba(13, 13, 12, 0.42)",
+          border: "rgba(13, 13, 12, 0.08)",
+        },
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
@@ -57,19 +68,26 @@ const config: Config = {
           950: "#022c22",
         },
       },
+      fontFamily: {
+        sans: ["var(--font-inter-tight)", "'Inter Tight'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+      },
+      letterSpacing: {
+        tightest: "-0.032em",
+      },
       borderRadius: {
+        "4xl": "2rem",
         "3xl": "1.5rem",
-        "2xl": "1rem",
-        xl: "0.75rem",
-        lg: "0.5rem",
-        md: "0.375rem",
-        sm: "0.25rem",
+        "2xl": "1.25rem",
+        xl: "1rem",
+        lg: "0.75rem",
+        md: "0.5rem",
+        sm: "0.375rem",
       },
       boxShadow: {
-        subtle: "0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)",
-        glow: "0 0 24px -4px rgba(16, 185, 129, 0.25)",
-        card: "0 10px 30px -10px rgba(0,0,0,0.05), 0 2px 8px -2px rgba(0,0,0,0.03)",
-        "card-dark": "0 10px 30px -10px rgba(0,0,0,0.3), 0 2px 8px -2px rgba(0,0,0,0.2)",
+        subtle: "0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02)",
+        vela: "0 8px 24px rgba(0, 0, 0, 0.04)",
+        card: "0 8px 24px rgba(0, 0, 0, 0.04)",
+        "card-hover": "0 12px 32px rgba(0, 0, 0, 0.07)",
       },
       keyframes: {
         "pulse-subtle": {
@@ -86,4 +104,3 @@ const config: Config = {
 };
 
 export default config;
-
