@@ -70,10 +70,18 @@ export function AuthModal() {
         monthlySalary: parsedSalary,
       });
 
-      setLoading(false);
       if (res.success) {
+        // Trigger Welcome / Account Confirmation email via Resend
+        fetch("/api/auth/welcome", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim(), name: name.trim() }),
+        }).catch(() => {});
+
+        setLoading(false);
         handleClose();
       } else {
+        setLoading(false);
         setError(res.error || "Registration failed");
       }
     }

@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     // 5. Send email via Resend with Vela editorial styling
     try {
       const resend = getResendClient();
-      await resend.emails.send({
+      const sendResult = await resend.emails.send({
         from: "Mint Month <onboarding@resend.dev>",
         to: normalizedEmail,
         subject: "Your Mint Month reset code",
@@ -121,18 +121,37 @@ export async function POST(req: NextRequest) {
 </html>
 `,
       });
-    } catch (err: any) {
-      // In development or if Resend test mode is restricted, log safe error message without exposing key or OTP
-      console.error("Resend delivery notice:", err?.message || "Delivery error");
-    }
 
-    // Always return { ok: true } even if user not found (security protocol)
-    return NextResponse.json({ ok: true });
-  } catch (err: any) {
+      // Check if Resend returned an error (e.g. 403 sandbox restriction)
+      if (sendResult?.error) {
+        const errorMsg = sendResult.error.message || "";
+        const isSandboxRestricted =
+          sendResult.error.statusCode === 403 ||
+          errorMsg.toLowerCase().includes("testing emails to your own email address");
+
+        return NextResponse.json({
+          ok: true,
+          sent: false,
+          sandbox: isSandboxRestricted,
+          allowedEmail: "emmanuelkgaphola@outlook.com",
+          devOtp: isSandboxRestricted ? rawOtp : undefined,
+          message: errorMsg,
+        });
+      }
+
+      return NextResponse.json({
+        ok: true,
+        sent: true,
+        email: normalizedEmail,
+      });
+    } catch {
+      // Safe fallback
+      return NextResponse.json({ ok: true, sent: false });
+    }
+  } catch {
     return NextResponse.json(
       { ok: false, error: "Internal server error" },
       { status: 500 }
     );
   }
 }
-

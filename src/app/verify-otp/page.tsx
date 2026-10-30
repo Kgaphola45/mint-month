@@ -3,14 +3,25 @@
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, ArrowLeft, RefreshCw, ShieldCheck } from "lucide-react";
+import { ArrowRight, ArrowLeft, RefreshCw, ShieldCheck, Info } from "lucide-react";
 
 function VerifyOtpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailParam = searchParams.get("email") || "";
+  const isSandbox = searchParams.get("sandbox") === "1";
+  const initialDevOtp = searchParams.get("devOtp") || "";
+  const allowedEmail = searchParams.get("allowedEmail") || "emmanuelkgaphola@outlook.com";
+  const wasSent = searchParams.get("sent") === "1";
 
-  const [otpDigits, setOtpDigits] = useState<string[]>(["", "", "", "", "", ""]);
+  const [otpDigits, setOtpDigits] = useState<string[]>(() => {
+    if (initialDevOtp && initialDevOtp.length === 6) {
+      return initialDevOtp.split("");
+    }
+    return ["", "", "", "", "", ""];
+  });
+
+  const [devOtp, setDevOtp] = useState<string>(initialDevOtp);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [timer, setTimer] = useState(60);
@@ -28,13 +39,14 @@ function VerifyOtpContent() {
     return () => clearInterval(interval);
   }, [timer]);
 
-  // Focus first input on mount
+  // Focus input on mount
   useEffect(() => {
-    inputRefs.current[0]?.focus();
-  }, []);
+    if (!initialDevOtp) {
+      inputRefs.current[0]?.focus();
+    }
+  }, [initialDevOtp]);
 
   const handleChange = (index: number, value: string) => {
-    // Only accept numeric input
     const clean = value.replace(/[^0-9]/g, "");
     if (!clean) {
       const updated = [...otpDigits];
@@ -48,7 +60,6 @@ function VerifyOtpContent() {
     updated[index] = char;
     setOtpDigits(updated);
 
-    // Auto-advance to next box if available
     if (index < 5 && char) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -111,7 +122,6 @@ function VerifyOtpContent() {
         return;
       }
 
-      // Valid OTP -> forward to reset password page with secure reset token
       router.push(
         `/reset-password?token=${encodeURIComponent(data.resetToken)}&email=${encodeURIComponent(
           emailParam.trim()
@@ -130,17 +140,26 @@ function VerifyOtpContent() {
     setResendSuccess(false);
 
     try {
-      await fetch("/api/auth/forgot-password", {
+      const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: emailParam.trim() }),
       });
 
+      const data = await res.json();
+
       setTimer(60);
       setResendSuccess(true);
-      setOtpDigits(["", "", "", "", "", ""]);
-      inputRefs.current[0]?.focus();
-      setTimeout(() => setResendSuccess(false), 4000);
+
+      if (data?.sandbox && data?.devOtp) {
+        setDevOtp(data.devOtp);
+        setOtpDigits(data.devOtp.split(""));
+      } else {
+        setOtpDigits(["", "", "", "", "", ""]);
+        inputRefs.current[0]?.focus();
+      }
+
+      setTimeout(() => setResendSuccess(false), 5000);
     } catch {
       setError("Failed to resend code. Please try again.");
     } finally {
@@ -162,13 +181,41 @@ function VerifyOtpContent() {
             Verify code
           </h1>
           <p className="text-sm text-[#0D0D0C]/56 mt-1.5 leading-relaxed">
-            We sent a 6-digit verification code to{" "}
+            Enter the 6-digit verification code for{" "}
             <span className="font-medium text-[#0D0D0C]">
               {emailParam || "your email"}
             </span>
             . The code expires in 10 minutes.
           </p>
         </div>
+
+        {/* Resend Free Tier Sandbox Explanation */}
+        {isSandbox && (
+          <div className="p-4 rounded-[18px] bg-[#F6DE68]/30 border border-[#F6DE68]/70 text-xs text-[#0D0D0C] space-y-2">
+            <div className="flex items-center gap-2 font-semibold">
+              <Info className="w-4 h-4 shrink-0 text-[#0D0D0C]" />
+              <span>Resend Sandbox Mode</span>
+            </div>
+            <p className="text-[#0D0D0C]/80 leading-relaxed">
+              With Resend&apos;s default domain (<code className="font-mono text-[11px] bg-black/[0.05] px-1 py-0.5 rounded">onboarding@resend.dev</code>), live emails are delivered exclusively to the account owner (<strong className="font-semibold text-[#0D0D0C]">{allowedEmail}</strong>).
+            </p>
+            {devOtp && (
+              <p className="font-medium text-[#0D0D0C] bg-[#FFFDF8] p-2.5 rounded-[12px] border border-[#0D0D0C]/[0.1]">
+                Your verification code is: <strong className="font-mono text-sm tracking-widest">{devOtp}</strong> (pre-filled below).
+              </p>
+            )}
+            <p className="text-[11px] text-[#0D0D0C]/60">
+              To send live emails to any public email, verify a custom domain at <a href="https://resend.com/domains" target="_blank" rel="noreferrer" className="underline font-medium">resend.com/domains</a>.
+            </p>
+          </div>
+        )}
+
+        {wasSent && !isSandbox && (
+          <div className="p-3.5 rounded-[16px] bg-[#96CE96]/30 border border-[#96CE96]/60 text-xs text-[#0D0D0C] flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-[#0D0D0C] shrink-0" />
+            <span>Code sent! Please check your inbox and Junk/Spam folder.</span>
+          </div>
+        )}
 
         {error && (
           <div className="p-3.5 rounded-[16px] bg-[#ECD6E2]/60 border border-[#ECD6E2] text-xs text-[#0D0D0C] flex items-center gap-2">
@@ -180,7 +227,7 @@ function VerifyOtpContent() {
         {resendSuccess && (
           <div className="p-3.5 rounded-[16px] bg-[#96CE96]/30 border border-[#96CE96]/60 text-xs text-[#0D0D0C] flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-[#0D0D0C] shrink-0" />
-            <span>A fresh 6-digit code has been sent to your email.</span>
+            <span>A fresh 6-digit code has been generated.</span>
           </div>
         )}
 
@@ -265,4 +312,3 @@ export default function VerifyOtpPage() {
     </Suspense>
   );
 }
-

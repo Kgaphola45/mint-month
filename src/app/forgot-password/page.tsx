@@ -31,9 +31,19 @@ export default function ForgotPasswordPage() {
         return;
       }
 
-      // Security: backend always returns { ok: true }
-      // Navigate to OTP verification page
-      router.push(`/verify-otp?email=${encodeURIComponent(email.trim())}`);
+      // Navigate to OTP verification page with delivery metadata
+      const queryParams = new URLSearchParams({
+        email: email.trim(),
+      });
+      if (data.sandbox) {
+        queryParams.set("sandbox", "1");
+        if (data.devOtp) queryParams.set("devOtp", data.devOtp);
+        if (data.allowedEmail) queryParams.set("allowedEmail", data.allowedEmail);
+      } else if (data.sent) {
+        queryParams.set("sent", "1");
+      }
+
+      router.push(`/verify-otp?${queryParams.toString()}`);
     } catch {
       setError("Network error. Please check your connection and try again.");
       setLoading(false);
