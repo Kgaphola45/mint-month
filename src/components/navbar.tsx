@@ -12,6 +12,7 @@ import {
   Plus,
 } from "lucide-react";
 import { MonthPicker } from "./month-picker";
+import { UserMenu } from "./user-menu";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { CURRENCIES } from "@/lib/currencies";
 
@@ -94,6 +95,9 @@ export function Navbar() {
               <span className="font-medium text-[#0D0D0C]">{currentCurrency.symbol}</span>
               <span className="text-[11px] text-[#0D0D0C]/56">{currentCurrency.code}</span>
             </Link>
+
+            {/* User Profile / Account Switcher Menu */}
+            <UserMenu />
 
             {/* Add Expense Button: 48px tall, 999px radius, black ink #0D0D0C, white text */}
             <button
