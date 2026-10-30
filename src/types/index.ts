@@ -73,3 +73,29 @@ export interface RecurringTimelineSummary {
   pendingCount: number;
   percentageCleared: number;
 }
+
+export interface DebtInstalment {
+  id: string;
+  name: string; // e.g. "PayJustNow", "Phone Contract", "Laptop Contract", "TFG Account"
+  totalInstalments: number; // e.g. 3, 24, 6
+  paidInstalments: number; // e.g. 2, 14, 4
+  monthlyAmount: number; // e.g. 550, 899, 1199, 650
+  totalAmount?: number; // total contract value
+  startDate?: string; // 'YYYY-MM'
+  targetPayoffDate?: string; // e.g. 'Nov 2026'
+  categoryId?: string; // 'cat-debt' or 'cat-clothing'
+  notes?: string;
+  isPaidOff?: boolean;
+}
+
+export interface DebtSummary {
+  totalMonthly: number;
+  totalRemaining: number;
+  totalPaid: number;
+  totalContractValue: number;
+  overallProgress: number;
+  activeCount: number;
+  paidOffCount: number;
+  nextPayoffName?: string;
+  nextPayoffMonths?: number;
+}

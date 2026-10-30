@@ -1,4 +1,4 @@
-import { Expense, Category, Budget } from "@/types";
+import { Expense, Category, Budget, DebtInstalment } from "@/types";
 import { DEFAULT_CATEGORIES } from "./constants";
 import { generateSeedData } from "./dummy-data";
 
@@ -8,9 +8,57 @@ const STORAGE_KEYS = {
   BUDGETS: "mint_month_budgets_v2",
   RECURRING_BUDGETS: "mint_month_recurring_budgets_v2",
   CLEARED_RECURRING: "mint_month_cleared_recurring_v2",
+  DEBTS: "mint_month_debts_v2",
   CURRENCY: "mint_month_currency_v2",
   INITIALIZED: "mint_month_initialized_v2",
 };
+
+export const DEFAULT_DEBTS: DebtInstalment[] = [
+  {
+    id: "debt-payjustnow",
+    name: "PayJustNow",
+    totalInstalments: 3,
+    paidInstalments: 2,
+    monthlyAmount: 550,
+    totalAmount: 1650,
+    categoryId: "cat-debt",
+    notes: "3-month interest-free split (1 payment remaining)",
+    isPaidOff: false,
+  },
+  {
+    id: "debt-phone-contract",
+    name: "Phone Contract",
+    totalInstalments: 24,
+    paidInstalments: 11,
+    monthlyAmount: 899,
+    totalAmount: 21576,
+    categoryId: "cat-debt",
+    notes: "24-month device & contract (13 months remaining)",
+    isPaidOff: false,
+  },
+  {
+    id: "debt-laptop-contract",
+    name: "Laptop Contract",
+    totalInstalments: 24,
+    paidInstalments: 14,
+    monthlyAmount: 1199,
+    totalAmount: 28776,
+    categoryId: "cat-debt",
+    notes: "Workstation laptop finance (10 months remaining)",
+    isPaidOff: false,
+  },
+  {
+    id: "debt-tfg",
+    name: "TFG Clothing Account",
+    totalInstalments: 6,
+    paidInstalments: 4,
+    monthlyAmount: 650,
+    totalAmount: 3900,
+    categoryId: "cat-clothing",
+    notes: "6-month interest-free store plan (2 instalments left)",
+    isPaidOff: false,
+  },
+];
 
 export interface StorageAdapter {
   getExpenses(): Expense[];
@@ -23,6 +71,8 @@ export interface StorageAdapter {
   saveRecurringBudgets(recurring: Record<string, number>): void;
   getClearedRecurring(): Record<string, boolean>;
   saveClearedRecurring(cleared: Record<string, boolean>): void;
+  getDebts(): DebtInstalment[];
+  saveDebts(debts: DebtInstalment[]): void;
   getCurrency(): string;
   saveCurrency(currency: string): void;
   resetAll(): void;
@@ -58,6 +108,7 @@ export class LocalStorageAdapter implements StorageAdapter {
       localStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(seed.budgets));
       localStorage.setItem(STORAGE_KEYS.RECURRING_BUDGETS, JSON.stringify(defaultRecurring));
       localStorage.setItem(STORAGE_KEYS.CLEARED_RECURRING, JSON.stringify({}));
+      localStorage.setItem(STORAGE_KEYS.DEBTS, JSON.stringify(DEFAULT_DEBTS));
       localStorage.setItem(STORAGE_KEYS.CURRENCY, "ZAR");
       localStorage.setItem(STORAGE_KEYS.INITIALIZED, "true");
     }
@@ -147,6 +198,21 @@ export class LocalStorageAdapter implements StorageAdapter {
     localStorage.setItem(STORAGE_KEYS.CLEARED_RECURRING, JSON.stringify(cleared));
   }
 
+  getDebts(): DebtInstalment[] {
+    if (!this.isClient()) return DEFAULT_DEBTS;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.DEBTS);
+      return raw ? JSON.parse(raw) : DEFAULT_DEBTS;
+    } catch {
+      return DEFAULT_DEBTS;
+    }
+  }
+
+  saveDebts(debts: DebtInstalment[]): void {
+    if (!this.isClient()) return;
+    localStorage.setItem(STORAGE_KEYS.DEBTS, JSON.stringify(debts));
+  }
+
   getCurrency(): string {
     if (!this.isClient()) return "ZAR";
     return localStorage.getItem(STORAGE_KEYS.CURRENCY) || "ZAR";
@@ -165,6 +231,7 @@ export class LocalStorageAdapter implements StorageAdapter {
     localStorage.removeItem(STORAGE_KEYS.BUDGETS);
     localStorage.removeItem(STORAGE_KEYS.RECURRING_BUDGETS);
     localStorage.removeItem(STORAGE_KEYS.CLEARED_RECURRING);
+    localStorage.removeItem(STORAGE_KEYS.DEBTS);
     localStorage.removeItem(STORAGE_KEYS.CURRENCY);
     this.ensureInitialized();
   }
