@@ -14,7 +14,7 @@ import {
   RegisterInput,
   LoginInput,
 } from "@/types";
-import { storage, DEFAULT_USER } from "@/lib/storage";
+import { storage } from "@/lib/storage";
 import { DEFAULT_CATEGORIES } from "@/lib/constants";
 import { getCurrentMonthStr, getMonthStats, getTodayDateStr } from "@/lib/utils";
 
@@ -149,9 +149,9 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   paydayDay: 25,
   isLoaded: false,
 
-  currentUser: DEFAULT_USER,
-  isAuthenticated: true,
-  users: [DEFAULT_USER],
+  currentUser: null,
+  isAuthenticated: false,
+  users: [],
   authModalOpen: false,
   authModalMode: "login",
 
@@ -297,6 +297,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       currentUser: null,
       isAuthenticated: false,
     });
+    get().initStore();
   },
 
   switchUser: (userId: string) => {

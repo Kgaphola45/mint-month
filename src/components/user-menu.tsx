@@ -127,52 +127,56 @@ export function UserMenu() {
             </div>
           </div>
 
-          {/* Switch Account Section */}
-          <div className="px-2 py-1.5 text-[10px] font-medium uppercase tracking-[0.05em] text-[#0D0D0C]/40">
-            Switch Account ({users.length})
-          </div>
+          {/* Switch Account Section (only if multiple accounts exist) */}
+          {users.length > 1 && (
+            <>
+              <div className="px-2 py-1.5 text-[10px] font-medium uppercase tracking-[0.05em] text-[#0D0D0C]/40">
+                Switch Account ({users.length})
+              </div>
 
-          <div className="space-y-0.5 mb-1 max-h-40 overflow-y-auto">
-            {users.map((u) => {
-              const isCurrent = u.id === currentUser.id;
-              const uInitials = u.name
-                .split(" ")
-                .filter(Boolean)
-                .map((p) => p[0])
-                .slice(0, 2)
-                .join("")
-                .toUpperCase();
+              <div className="space-y-0.5 mb-1 max-h-40 overflow-y-auto">
+                {users.map((u) => {
+                  const isCurrent = u.id === currentUser.id;
+                  const uInitials = u.name
+                    .split(" ")
+                    .filter(Boolean)
+                    .map((p) => p[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase();
 
-              return (
-                <button
-                  key={u.id}
-                  onClick={() => handleSwitch(u.id)}
-                  className={`w-full p-2 rounded-[14px] text-xs flex items-center justify-between transition-colors ${
-                    isCurrent
-                      ? "bg-[#0D0D0C] text-[#FFFDF8] font-medium"
-                      : "text-[#0D0D0C]/75 hover:bg-[#FBF6EF] hover:text-[#0D0D0C]"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 truncate">
-                    <div
-                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${
+                  return (
+                    <button
+                      key={u.id}
+                      onClick={() => handleSwitch(u.id)}
+                      className={`w-full p-2 rounded-[14px] text-xs flex items-center justify-between transition-colors ${
                         isCurrent
-                          ? "bg-[#FFFDF8] text-[#0D0D0C]"
-                          : "text-[#FFFDF8]"
+                          ? "bg-[#0D0D0C] text-[#FFFDF8] font-medium"
+                          : "text-[#0D0D0C]/75 hover:bg-[#FBF6EF] hover:text-[#0D0D0C]"
                       }`}
-                      style={{
-                        backgroundColor: isCurrent ? "#FFFDF8" : u.avatarColor || "#0D0D0C",
-                      }}
                     >
-                      {uInitials}
-                    </div>
-                    <span className="truncate">{u.name}</span>
-                  </div>
-                  {isCurrent && <Check className="w-3.5 h-3.5 stroke-[2]" />}
-                </button>
-              );
-            })}
-          </div>
+                      <div className="flex items-center gap-2 truncate">
+                        <div
+                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${
+                            isCurrent
+                              ? "bg-[#FFFDF8] text-[#0D0D0C]"
+                              : "text-[#FFFDF8]"
+                          }`}
+                          style={{
+                            backgroundColor: isCurrent ? "#FFFDF8" : u.avatarColor || "#0D0D0C",
+                          }}
+                        >
+                          {uInitials}
+                        </div>
+                        <span className="truncate">{u.name}</span>
+                      </div>
+                      {isCurrent && <Check className="w-3.5 h-3.5 stroke-[2]" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
           <div className="border-t border-[#0D0D0C]/[0.06] pt-1 space-y-0.5">
             <button

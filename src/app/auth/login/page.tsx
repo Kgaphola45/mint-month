@@ -3,15 +3,15 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, ArrowRight, Sparkles } from "lucide-react";
+import { Mail, Lock, ArrowRight } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useExpenseStore();
 
-  const [email, setEmail] = useState("emmanuel@mintmonth.app");
-  const [password, setPassword] = useState("demo123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -26,18 +26,6 @@ export default function LoginPage() {
       router.push("/");
     } else {
       setError(res.error || "Authentication failed.");
-    }
-  };
-
-  const handleDemoLogin = () => {
-    setEmail("emmanuel@mintmonth.app");
-    setPassword("demo123");
-    const res = login({
-      email: "emmanuel@mintmonth.app",
-      password: "demo123",
-    });
-    if (res.success) {
-      router.push("/");
     }
   };
 
@@ -109,18 +97,6 @@ export default function LoginPage() {
             <span>Sign In</span>
             <ArrowRight className="w-4 h-4 stroke-[2]" />
           </button>
-
-          <div className="pt-2 border-t border-[#0D0D0C]/[0.06] flex flex-col items-center gap-2">
-            <span className="text-[11px] text-[#0D0D0C]/50">Or use instant demo</span>
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              className="w-full h-11 px-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] text-xs font-medium text-[#0D0D0C] hover:bg-[#FFFDF8] transition-all flex items-center justify-center gap-2"
-            >
-              <Sparkles className="w-3.5 h-3.5 stroke-[1.5]" />
-              <span>Log in as Emmanuel (Default Account)</span>
-            </button>
-          </div>
         </form>
 
         <div className="text-center text-xs text-[#0D0D0C]/60 pt-2">

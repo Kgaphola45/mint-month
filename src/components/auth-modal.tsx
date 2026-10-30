@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Lock, Mail, User as UserIcon, Wallet, ArrowRight, Check, Sparkles } from "lucide-react";
+import { X, Lock, Mail, User as UserIcon, Wallet, ArrowRight, Check } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 
 export function AuthModal() {
@@ -11,7 +11,6 @@ export function AuthModal() {
     setAuthModalOpen,
     login,
     register,
-    currentUser,
   } = useExpenseStore();
 
   const [mode, setMode] = useState<"login" | "register">(authModalMode || "login");
@@ -27,33 +26,14 @@ export function AuthModal() {
     if (authModalOpen) {
       setMode(authModalMode || "login");
       setError(null);
-      if (authModalMode === "login" && !email) {
-        setEmail(currentUser?.email || "emmanuel@mintmonth.app");
-        setPassword("demo123");
-      }
     }
-  }, [authModalOpen, authModalMode, currentUser]);
+  }, [authModalOpen, authModalMode]);
 
   if (!authModalOpen) return null;
 
   const handleClose = () => {
     setAuthModalOpen(false);
     setError(null);
-  };
-
-  const handleDemoLogin = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setEmail("emmanuel@mintmonth.app");
-    setPassword("demo123");
-    const res = login({
-      email: "emmanuel@mintmonth.app",
-      password: "demo123",
-    });
-    if (res.success) {
-      handleClose();
-    } else {
-      setError(res.error || "Demo login failed");
-    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -251,21 +231,6 @@ export function AuthModal() {
             <span>{mode === "login" ? "Sign In" : "Create Account"}</span>
             <ArrowRight className="w-4 h-4 stroke-[2]" />
           </button>
-
-          {/* Demo Login Shortcut */}
-          {mode === "login" && (
-            <div className="pt-2 border-t border-[#0D0D0C]/[0.06] flex flex-col items-center gap-2">
-              <span className="text-[11px] text-[#0D0D0C]/50">Or sign in with 1-click</span>
-              <button
-                type="button"
-                onClick={handleDemoLogin}
-                className="w-full h-10 px-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] text-xs font-medium text-[#0D0D0C] hover:bg-[#FFFDF8] transition-all flex items-center justify-center gap-2"
-              >
-                <Sparkles className="w-3.5 h-3.5 stroke-[1.5]" />
-                <span>Log in as Emmanuel (Default Account)</span>
-              </button>
-            </div>
-          )}
         </form>
       </div>
     </div>
