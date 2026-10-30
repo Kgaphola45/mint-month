@@ -276,6 +276,46 @@ export class LocalStorageAdapter implements StorageAdapter {
     this.setCurrentUser(null);
   }
 
+  deleteUserAccount(userId: string): boolean {
+    if (!this.isClient()) return false;
+
+    const users = this.getUsers();
+    const target = users.find((u) => u.id === userId);
+    if (!target) return false;
+
+    // 1. Remove user from saved users list
+    const updatedUsers = users.filter((u) => u.id !== userId);
+    this.saveUsers(updatedUsers);
+
+    // 2. Remove all user-scoped records from localStorage
+    const userKeys = [
+      `${STORAGE_KEYS.EXPENSES}_${userId}`,
+      `${STORAGE_KEYS.CATEGORIES}_${userId}`,
+      `${STORAGE_KEYS.BUDGETS}_${userId}`,
+      `${STORAGE_KEYS.RECURRING_BUDGETS}_${userId}`,
+      `${STORAGE_KEYS.CLEARED_RECURRING}_${userId}`,
+      `${STORAGE_KEYS.DEBTS}_${userId}`,
+      `${STORAGE_KEYS.INCOMES}_${userId}`,
+      `${STORAGE_KEYS.PAYDAY}_${userId}`,
+    ];
+
+    userKeys.forEach((key) => {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // ignore errors
+      }
+    });
+
+    // 3. If currently logged in as this user, log out
+    const current = this.getCurrentUser();
+    if (current && current.id === userId) {
+      this.logoutUser();
+    }
+
+    return true;
+  }
+
   // --- Data Access Methods with User Scoping ---
 
   getExpenses(): Expense[] {

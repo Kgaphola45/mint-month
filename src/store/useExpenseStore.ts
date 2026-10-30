@@ -61,6 +61,7 @@ interface ExpenseStore {
   register: (input: RegisterInput) => { success: boolean; error?: string };
   logout: () => void;
   switchUser: (userId: string) => void;
+  deleteAccount: (userId?: string) => Promise<{ success: boolean; error?: string }>;
   setEditingExpense: (expense: Expense | null) => void;
   setEditingDebt: (debt: DebtInstalment | null) => void;
   setMonthIncome: (month: string, amount: number) => void;
@@ -311,6 +312,59 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       });
       get().initStore();
     }
+  },
+
+  deleteAccount: async (userId?: string) => {
+    const current = get().currentUser;
+    const targetId = userId || current?.id;
+    if (!targetId) {
+      return { success: false, error: "No account selected for deletion." };
+    }
+
+    const users = storage.getUsers();
+    const targetUser =
+      users.find((u) => u.id === targetId) || (current?.id === targetId ? current : null);
+
+    // 1. Purge from server DB if user had an email
+    if (targetUser?.email) {
+      try {
+        await fetch("/api/auth/delete-account", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: targetUser.email }),
+        });
+      } catch {
+        // Proceed even if server route or network fails
+      }
+    }
+
+    // 2. Purge client-side records
+    const deleted = storage.deleteUserAccount(targetId);
+    if (!deleted) {
+      return { success: false, error: "Failed to remove user account from local storage." };
+    }
+
+    const remainingUsers = storage.getUsers();
+
+    // 3. Reset store if active user was purged
+    if (current?.id === targetId) {
+      set({
+        currentUser: null,
+        isAuthenticated: false,
+        users: remainingUsers,
+        expenses: [],
+        categories: DEFAULT_CATEGORIES,
+        budgets: [],
+        recurringBudgets: {},
+        clearedRecurring: {},
+        debts: [],
+      });
+      get().initStore();
+    } else {
+      set({ users: remainingUsers });
+    }
+
+    return { success: true };
   },
 
   setEditingExpense: (expense: Expense | null) => set({ editingExpense: expense }),

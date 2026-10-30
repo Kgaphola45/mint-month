@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import {
   User as UserIcon,
   LogOut,
@@ -9,8 +10,11 @@ import {
   Check,
   ChevronDown,
   Sparkles,
+  Settings,
+  Trash2,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
+import { DeleteAccountModal } from "@/components/delete-account-modal";
 
 export function UserMenu() {
   const {
@@ -23,6 +27,7 @@ export function UserMenu() {
   } = useExpenseStore();
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on click outside
@@ -179,6 +184,15 @@ export function UserMenu() {
           )}
 
           <div className="border-t border-[#0D0D0C]/[0.06] pt-1 space-y-0.5">
+            <Link
+              href="/settings"
+              onClick={() => setMenuOpen(false)}
+              className="w-full p-2 rounded-[14px] text-xs text-[#0D0D0C]/80 hover:bg-[#FBF6EF] hover:text-[#0D0D0C] flex items-center gap-2 transition-colors"
+            >
+              <Settings className="w-3.5 h-3.5 stroke-[1.5]" />
+              <span>Settings & Privacy</span>
+            </Link>
+
             <button
               onClick={handleRegisterNew}
               className="w-full p-2 rounded-[14px] text-xs text-[#0D0D0C]/80 hover:bg-[#FBF6EF] hover:text-[#0D0D0C] flex items-center gap-2 transition-colors"
@@ -189,14 +203,31 @@ export function UserMenu() {
 
             <button
               onClick={handleLogout}
-              className="w-full p-2 rounded-[14px] text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
+              className="w-full p-2 rounded-[14px] text-xs text-[#0D0D0C]/80 hover:bg-[#FBF6EF] hover:text-[#0D0D0C] flex items-center gap-2 transition-colors"
             >
               <LogOut className="w-3.5 h-3.5 stroke-[1.5]" />
               <span>Sign Out</span>
             </button>
+
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                setDeleteModalOpen(true);
+              }}
+              className="w-full p-2 rounded-[14px] text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5 stroke-[1.5]" />
+              <span>Delete Account...</span>
+            </button>
           </div>
         </div>
       )}
+
+      {/* Permanently Delete Account Modal */}
+      <DeleteAccountModal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+      />
     </div>
   );
 }

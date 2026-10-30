@@ -9,12 +9,16 @@ import {
   Database,
   Check,
   AlertTriangle,
+  Trash2,
+  User as UserIcon,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { CategoryManagerModal } from "@/components/category-manager-modal";
+import { DeleteAccountModal } from "@/components/delete-account-modal";
 
 export default function SettingsPage() {
   const {
+    currentUser,
     categories,
     expenses,
     budgets,
@@ -25,6 +29,7 @@ export default function SettingsPage() {
   } = useExpenseStore();
 
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [importStatus, setImportStatus] = useState<string>("");
 
@@ -96,6 +101,49 @@ export default function SettingsPage() {
         <div className="p-4 rounded-[20px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.12] text-[#0D0D0C] text-xs font-medium flex items-center gap-2.5 shadow-sm">
           <Check className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{importStatus}</span>
+        </div>
+      )}
+
+      {/* Account Overview Card */}
+      {currentUser && (
+        <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+          <div className="flex items-center gap-4">
+            <div
+              className="w-13 h-13 rounded-full flex items-center justify-center text-sm font-semibold text-[#FFFDF8] shadow-sm shrink-0"
+              style={{ backgroundColor: currentUser.avatarColor || "#0D0D0C" }}
+            >
+              {currentUser.name
+                ? currentUser.name
+                    .split(" ")
+                    .filter(Boolean)
+                    .map((p) => p[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase()
+                : "U"}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-medium text-[#0D0D0C]">
+                  {currentUser.name}
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-full bg-[#96CE96]/30 text-[10px] font-medium text-[#0D0D0C]">
+                  Signed In
+                </span>
+              </div>
+              <p className="text-xs text-[#0D0D0C]/50 mt-0.5">
+                {currentUser.email} • Payday {currentUser.paydayDay || 25}th • Take-home salary R{(currentUser.monthlySalary || 25000).toLocaleString()}/mo
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setDeleteModalOpen(true)}
+            className="px-4 py-2 rounded-full border border-rose-300 hover:border-rose-500 hover:bg-rose-50 text-rose-700 text-xs font-medium transition-colors self-start sm:self-auto flex items-center gap-1.5"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Delete Account</span>
+          </button>
         </div>
       )}
 
@@ -280,10 +328,41 @@ export default function SettingsPage() {
         )}
       </div>
 
+      {/* 6. Danger Zone: Permanently Delete Account */}
+      {currentUser && (
+        <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-rose-400 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Trash2 className="w-4 h-4 text-rose-600" />
+              <h3 className="text-sm font-medium text-rose-800">
+                Permanently Delete Account
+              </h3>
+            </div>
+            <p className="text-xs text-[#0D0D0C]/60 leading-relaxed max-w-xl">
+              Permanently destroy your vault (<strong className="font-semibold text-[#0D0D0C]">{currentUser.email}</strong>), along with all recorded expenses, budgets, debit orders, and authentication credentials. This action cannot be reversed.
+            </p>
+          </div>
+
+          <button
+            onClick={() => setDeleteModalOpen(true)}
+            className="px-5 py-2.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium transition-all shadow-sm self-start sm:self-auto shrink-0 flex items-center gap-2"
+          >
+            <Trash2 className="w-3.5 h-3.5 stroke-[2]" />
+            <span>Delete Account</span>
+          </button>
+        </div>
+      )}
+
       {/* Category Management Modal */}
       <CategoryManagerModal
         open={categoryModalOpen}
         onClose={() => setCategoryModalOpen(false)}
+      />
+
+      {/* Permanently Delete Account Modal */}
+      <DeleteAccountModal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
       />
     </div>
   );

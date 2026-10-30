@@ -183,5 +183,29 @@ export const serverDb = {
     memoryDb.userPasswords[normalized] = passwordHash;
     saveDb();
   },
+
+  // Permanently delete user data from server DB
+  deleteUserAccount(email: string): boolean {
+    loadDb();
+    const normalized = email.trim().toLowerCase();
+
+    // Purge password reset records
+    memoryDb.passwordResets = memoryDb.passwordResets.filter(
+      (r) => r.email !== normalized
+    );
+
+    // Purge reset tokens
+    memoryDb.resetTokens = memoryDb.resetTokens.filter(
+      (t) => t.email !== normalized
+    );
+
+    // Purge saved password hash
+    if (memoryDb.userPasswords[normalized]) {
+      delete memoryDb.userPasswords[normalized];
+    }
+
+    saveDb();
+    return true;
+  },
 };
 
