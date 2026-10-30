@@ -10,8 +10,11 @@ import {
   DebtInstalment,
   DebtSummary,
   SafeToSpendSummary,
+  User,
+  RegisterInput,
+  LoginInput,
 } from "@/types";
-import { storage } from "@/lib/storage";
+import { storage, DEFAULT_USER } from "@/lib/storage";
 import { DEFAULT_CATEGORIES } from "@/lib/constants";
 import { getCurrentMonthStr, getMonthStats, getTodayDateStr } from "@/lib/utils";
 
@@ -27,6 +30,13 @@ interface ExpenseStore {
   incomes: Record<string, number>; // Month -> Income (or 'default' -> default income)
   paydayDay: number; // 1-31, default 25
   isLoaded: boolean;
+
+  // User Accounts & Authentication
+  currentUser: User | null;
+  isAuthenticated: boolean;
+  users: User[];
+  authModalOpen: boolean;
+  authModalMode: "login" | "register";
 
   // Modals & transient UI
   quickAddOpen: boolean;
@@ -46,6 +56,11 @@ interface ExpenseStore {
   setBudgetModalOpen: (open: boolean) => void;
   setDebtModalOpen: (open: boolean) => void;
   setPaydayModalOpen: (open: boolean) => void;
+  setAuthModalOpen: (open: boolean, mode?: "login" | "register") => void;
+  login: (input: LoginInput) => { success: boolean; error?: string };
+  register: (input: RegisterInput) => { success: boolean; error?: string };
+  logout: () => void;
+  switchUser: (userId: string) => void;
   setEditingExpense: (expense: Expense | null) => void;
   setEditingDebt: (debt: DebtInstalment | null) => void;
   setMonthIncome: (month: string, amount: number) => void;
@@ -134,6 +149,12 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   paydayDay: 25,
   isLoaded: false,
 
+  currentUser: DEFAULT_USER,
+  isAuthenticated: true,
+  users: [DEFAULT_USER],
+  authModalOpen: false,
+  authModalMode: "login",
+
   quickAddOpen: false,
   budgetModalOpen: false,
   debtModalOpen: false,
@@ -143,6 +164,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
 
   initStore: () => {
     storage.ensureInitialized();
+    const currentUser = storage.getCurrentUser();
+    const users = storage.getUsers();
     const expenses = storage.getExpenses();
     const categories = storage.getCategories();
     const budgets = storage.getBudgets();
@@ -190,6 +213,9 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     }
 
     set({
+      currentUser,
+      isAuthenticated: Boolean(currentUser),
+      users,
       expenses: updatedExpenses,
       categories,
       budgets,
@@ -228,6 +254,64 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   setBudgetModalOpen: (open: boolean) => set({ budgetModalOpen: open }),
   setDebtModalOpen: (open: boolean) => set({ debtModalOpen: open }),
   setPaydayModalOpen: (open: boolean) => set({ paydayModalOpen: open }),
+  setAuthModalOpen: (open: boolean, mode: "login" | "register" = "login") =>
+    set({ authModalOpen: open, authModalMode: mode }),
+
+  login: (input) => {
+    const res = storage.authenticateUser(input.email, input.password);
+    if (res.success && res.user) {
+      set({
+        currentUser: res.user,
+        isAuthenticated: true,
+        authModalOpen: false,
+      });
+      get().initStore();
+      return { success: true };
+    }
+    return { success: false, error: res.error || "Authentication failed" };
+  },
+
+  register: (input) => {
+    const res = storage.registerUser(
+      input.name,
+      input.email,
+      input.password,
+      input.monthlySalary
+    );
+    if (res.success && res.user) {
+      set({
+        currentUser: res.user,
+        isAuthenticated: true,
+        users: storage.getUsers(),
+        authModalOpen: false,
+      });
+      get().initStore();
+      return { success: true };
+    }
+    return { success: false, error: res.error || "Registration failed" };
+  },
+
+  logout: () => {
+    storage.logoutUser();
+    set({
+      currentUser: null,
+      isAuthenticated: false,
+    });
+  },
+
+  switchUser: (userId: string) => {
+    const users = storage.getUsers();
+    const target = users.find((u) => u.id === userId);
+    if (target) {
+      storage.setCurrentUser(target);
+      set({
+        currentUser: target,
+        isAuthenticated: true,
+      });
+      get().initStore();
+    }
+  },
+
   setEditingExpense: (expense: Expense | null) => set({ editingExpense: expense }),
   setEditingDebt: (debt: DebtInstalment | null) => set({ editingDebt: debt }),
 
