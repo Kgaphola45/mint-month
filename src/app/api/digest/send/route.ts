@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getResendClient } from "@/lib/resend";
+import { transporter, getFromAddress } from "@/lib/nodemailer";
 
 interface DebitOrderItem {
   name: string;
@@ -286,29 +286,12 @@ export async function POST(req: NextRequest) {
     `;
 
     try {
-      const resend = getResendClient();
-      const sendResult = await resend.emails.send({
-        from: "Mint Month <onboarding@resend.dev>",
+      await transporter.sendMail({
+        from: getFromAddress(),
         to: normalizedEmail,
         subject,
         html: htmlContent,
       });
-
-      if (sendResult?.error) {
-        const errorMsg = sendResult.error.message || "";
-        const isSandbox =
-          sendResult.error.statusCode === 403 ||
-          errorMsg.toLowerCase().includes("testing emails to your own email address");
-
-        return NextResponse.json({
-          ok: true,
-          sent: false,
-          sandbox: isSandbox,
-          allowedEmail: "emmanuelkgaphola@outlook.com",
-          message: errorMsg,
-          previewSubject: subject,
-        });
-      }
 
       return NextResponse.json({
         ok: true,
@@ -316,8 +299,15 @@ export async function POST(req: NextRequest) {
         deliveredTo: normalizedEmail,
         previewSubject: subject,
       });
-    } catch {
-      return NextResponse.json({ ok: true, sent: false });
+    } catch (sendError: unknown) {
+      const errorMsg = sendError instanceof Error ? sendError.message : String(sendError);
+      console.error("Nodemailer Outlook send error (digest):", errorMsg);
+      return NextResponse.json({
+        ok: true,
+        sent: false,
+        error: errorMsg,
+        previewSubject: subject,
+      });
     }
   } catch {
     return NextResponse.json(
@@ -326,4 +316,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
