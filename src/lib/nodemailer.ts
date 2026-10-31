@@ -1,25 +1,33 @@
-import nodemailer from "nodemailer";
+import nodemailer, { Transporter, SendMailOptions } from "nodemailer";
 
-const outlookUser = process.env.OUTLOOK_USER || "proit45ma@outlook.com";
-const outlookPass = process.env.OUTLOOK_APP_PASSWORD || "syutoatawbwcamcc";
+export function getGmailTransporter(): Transporter {
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
 
-export const transporter = nodemailer.createTransport({
-  host: process.env.OUTLOOK_HOST || "smtp.office365.com",
-  port: Number(process.env.OUTLOOK_PORT) || 587,
-  secure: false, // Port 587 uses STARTTLS
-  auth: {
-    user: outlookUser,
-    pass: outlookPass,
-  },
-  tls: {
-    ciphers: "SSLv3",
-    rejectUnauthorized: false,
-  },
-});
-
-export function getFromAddress(): string {
-  if (process.env.OUTLOOK_FROM) {
-    return process.env.OUTLOOK_FROM;
+  if (!user || !pass) {
+    throw new Error("Missing Gmail credentials. Add to .env.local");
   }
-  return `"Mint Month" <${outlookUser}>`;
+
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: user.trim(),
+      pass: pass.trim().replace(/\s+/g, ""),
+    },
+  });
 }
+
+export const transporter = {
+  sendMail: async (options: SendMailOptions) => {
+    const client = getGmailTransporter();
+    const fromAddress = options.from || `"Mint Month" <${process.env.GMAIL_USER}>`;
+    return client.sendMail({
+      ...options,
+      from: fromAddress,
+    });
+  },
+  verify: (callback?: (err: Error | null, success: boolean) => void) => {
+    const client = getGmailTransporter();
+    return client.verify(callback as any);
+  },
+};

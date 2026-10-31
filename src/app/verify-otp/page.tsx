@@ -151,7 +151,10 @@ function VerifyOtpContent() {
       setTimer(60);
       setResendSuccess(true);
 
-      if (data?.sandbox && data?.devOtp) {
+      const bypass = data?.devBypassOtp || data?.devOtp;
+      if (bypass) {
+        setDevOtp(bypass);
+        setOtpDigits(bypass.split(""));
         setDevOtp(data.devOtp);
         setOtpDigits(data.devOtp.split(""));
       } else {
@@ -169,7 +172,7 @@ function VerifyOtpContent() {
 
   return (
     <div className="min-h-[82vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] rounded-[28px] p-7 sm:p-9 shadow-[0_24px_48px_rgba(0,0,0,0.06)] space-y-6">
+      <div className="w-full max-w-md bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] rounded-[28px] p-7 sm:p-9 shadow-[0_24px_48px_rgba(0,0,0,0.06)] space-y-6">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#0D0D0C]" />
@@ -189,28 +192,19 @@ function VerifyOtpContent() {
           </p>
         </div>
 
-        {/* Resend Free Tier Sandbox Explanation */}
-        {isSandbox && (
+        {devOtp && (
           <div className="p-4 rounded-[18px] bg-[#F6DE68]/30 border border-[#F6DE68]/70 text-xs text-[#0D0D0C] space-y-2">
             <div className="flex items-center gap-2 font-semibold">
               <Info className="w-4 h-4 shrink-0 text-[#0D0D0C]" />
-              <span>Resend Sandbox Mode</span>
+              <span>Development Code Available</span>
             </div>
-            <p className="text-[#0D0D0C]/80 leading-relaxed">
-              With Resend&apos;s default domain (<code className="font-mono text-[11px] bg-black/[0.05] px-1 py-0.5 rounded">onboarding@resend.dev</code>), live emails are delivered exclusively to the account owner (<strong className="font-semibold text-[#0D0D0C]">{allowedEmail}</strong>).
-            </p>
-            {devOtp && (
-              <p className="font-medium text-[#0D0D0C] bg-[#FFFDF8] p-2.5 rounded-[12px] border border-[#0D0D0C]/[0.1]">
-                Your verification code is: <strong className="font-mono text-sm tracking-widest">{devOtp}</strong> (pre-filled below).
-              </p>
-            )}
-            <p className="text-[11px] text-[#0D0D0C]/60">
-              To send live emails to any public email, verify a custom domain at <a href="https://resend.com/domains" target="_blank" rel="noreferrer" className="underline font-medium">resend.com/domains</a>.
+            <p className="font-medium text-[#0D0D0C] bg-[#FFFDFA] p-2.5 rounded-[12px] border border-[#0D0D0C]/[0.1]">
+              Your verification code is: <strong className="font-mono text-sm tracking-widest">{devOtp}</strong> (pre-filled below).
             </p>
           </div>
         )}
 
-        {wasSent && !isSandbox && (
+        {wasSent && (
           <div className="p-3.5 rounded-[16px] bg-[#96CE96]/30 border border-[#96CE96]/60 text-xs text-[#0D0D0C] flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-[#0D0D0C] shrink-0" />
             <span>Code sent! Please check your inbox and Junk/Spam folder.</span>
@@ -248,7 +242,7 @@ function VerifyOtpContent() {
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 onPaste={handlePaste}
-                className="w-12 h-14 sm:w-13 sm:h-16 text-center text-2xl font-semibold rounded-[16px] border border-[#0D0D0C]/[0.14] bg-[#FBF6EF] text-[#0D0D0C] focus:outline-none focus:border-[#0D0D0C] focus:bg-[#FFFDF8] transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]"
+                className="w-12 h-14 sm:w-13 sm:h-16 text-center text-2xl font-semibold rounded-[16px] border border-[#0D0D0C]/[0.14] bg-[#FBF6EF] text-[#0D0D0C] focus:outline-none focus:border-[#0D0D0C] focus:bg-[#FFFDFA] transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]"
               />
             ))}
           </div>
@@ -257,7 +251,7 @@ function VerifyOtpContent() {
           <button
             type="submit"
             disabled={loading || fullOtp.length !== 6}
-            className="w-full h-12 rounded-full bg-[#0D0D0C] text-[#FFFDF8] text-sm font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-12 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-sm font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span>{loading ? "Verifying..." : "Verify Code"}</span>
             <ArrowRight className="w-4 h-4 stroke-[2]" />

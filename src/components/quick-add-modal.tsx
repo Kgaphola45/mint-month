@@ -157,7 +157,7 @@ export function QuickAddModal() {
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-lg bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] rounded-[28px] shadow-2xl overflow-hidden z-10">
+      <div className="relative w-full max-w-lg bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] rounded-[28px] shadow-2xl overflow-hidden z-10">
         {/* Header */}
         <div className="px-7 pt-6 pb-4 flex items-center justify-between border-b border-[#0D0D0C]/[0.06]">
           <div>
@@ -213,7 +213,7 @@ export function QuickAddModal() {
                   key={val}
                   type="button"
                   onClick={() => handleQuickAmount(val)}
-                  className="px-3 py-1 rounded-full border border-[#0D0D0C]/[0.08] bg-[#FFFDF8] hover:bg-[#FBF6EF] text-xs font-medium text-[#0D0D0C] transition-colors"
+                  className="px-3 py-1 rounded-full border border-[#0D0D0C]/[0.08] bg-[#FFFDFA] hover:bg-[#FBF6EF] text-xs font-medium text-[#0D0D0C] transition-colors"
                 >
                   +{val}
                 </button>
@@ -236,7 +236,7 @@ export function QuickAddModal() {
                     onClick={() => setCategoryId(cat.id)}
                     className={`flex items-center gap-2 p-2.5 rounded-[16px] text-xs font-medium border text-left transition-all ${
                       isSelected
-                        ? "bg-[#0D0D0C] text-[#FFFDF8] border-[#0D0D0C] shadow-sm"
+                        ? "bg-[#0D0D0C] text-[#FFFDFA] border-[#0D0D0C] shadow-sm"
                         : "bg-[#FBF6EF] text-[#0D0D0C] border-[#0D0D0C]/[0.08] hover:border-[#0D0D0C]/20"
                     }`}
                   >
@@ -300,7 +300,7 @@ export function QuickAddModal() {
                     onClick={() => setPaymentMethod(pm)}
                     className={`py-2 px-1.5 rounded-[14px] text-xs font-medium border flex items-center justify-center gap-1 transition-all ${
                       paymentMethod === pm
-                        ? "bg-[#0D0D0C] text-[#FFFDF8] border-[#0D0D0C]"
+                        ? "bg-[#0D0D0C] text-[#FFFDFA] border-[#0D0D0C]"
                         : "bg-[#FBF6EF] text-[#0D0D0C] border-[#0D0D0C]/[0.08] hover:border-[#0D0D0C]/20"
                     }`}
                   >
@@ -315,7 +315,7 @@ export function QuickAddModal() {
           {/* Monthly Recurring Expense Switch */}
           <div className="p-3.5 rounded-[18px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] flex items-center justify-between cursor-pointer" onClick={() => setIsRecurring(!isRecurring)}>
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full border border-[#0D0D0C]/[0.08] bg-[#FFFDF8] flex items-center justify-center text-[#0D0D0C]">
+              <div className="w-8 h-8 rounded-full border border-[#0D0D0C]/[0.08] bg-[#FFFDFA] flex items-center justify-center text-[#0D0D0C]">
                 <Repeat className="w-4 h-4 stroke-[1.5]" />
               </div>
               <div>
@@ -347,7 +347,7 @@ export function QuickAddModal() {
             </button>
             <button
               type="submit"
-              className="h-12 px-7 rounded-full bg-[#0D0D0C] text-[#FFFDF8] hover:bg-[#0D0D0C]/90 text-sm font-medium transition-all shadow-sm active:scale-95"
+              className="h-12 px-7 rounded-full bg-[#0D0D0C] text-[#FFFDFA] hover:bg-[#0D0D0C]/90 text-sm font-medium transition-all shadow-sm active:scale-95"
             >
               {editingExpense ? "Save Changes" : "Save Expense"}
             </button>

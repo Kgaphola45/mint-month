@@ -1,31 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { z } from "zod";
 import { serverDb } from "@/lib/server-db";
+
+const verifyOtpSchema = z.object({
+  email: z.string().trim().email("Please provide a valid email address"),
+  otp: z
+    .string()
+    .trim()
+    .length(6, "Verification code must be exactly 6 digits")
+    .regex(/^\d{6}$/, "Verification code must contain only numbers"),
+});
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, otp } = body || {};
+    const parseResult = verifyOtpSchema.safeParse(body);
 
-    if (!email || !otp || typeof otp !== "string") {
+    if (!parseResult.success) {
       return NextResponse.json(
-        { ok: false, error: "Email and 6-digit OTP code are required." },
+        { ok: false, error: parseResult.error.issues[0]?.message || "Invalid input" },
         { status: 400 }
       );
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
-    const cleanOtp = otp.trim();
+    const { email, otp } = parseResult.data;
+    const normalizedEmail = email.toLowerCase();
 
-    if (cleanOtp.length !== 6) {
-      return NextResponse.json(
-        { ok: false, error: "Please enter a valid 6-digit verification code." },
-        { status: 400 }
-      );
-    }
-
-    // Hash incoming OTP
-    const otpHash = serverDb.hashOtp(cleanOtp);
+    // Hash incoming OTP with SHA-256
+    const otpHash = serverDb.hashOtp(otp);
 
     // Look up latest record where used=false and expiresAt > now
     const record = serverDb.findValidOtp(normalizedEmail, otpHash);
@@ -37,7 +40,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Mark OTP as used (one-time use)
+    // Mark OTP as used (one-time use guarantee)
     serverDb.markOtpUsed(record.id);
 
     // Generate secure 32-byte reset token
@@ -57,4 +60,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

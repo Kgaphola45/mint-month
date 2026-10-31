@@ -62,7 +62,7 @@ export function RecurringTimeline() {
 
   if (items.length === 0) {
     return (
-      <div className="p-8 sm:p-12 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center min-h-[300px] text-center">
+      <div className="p-8 sm:p-12 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center min-h-[300px] text-center">
         <div className="w-16 h-16 rounded-full border border-[#0D0D0C]/[0.12] flex items-center justify-center text-[#0D0D0C]/60 mb-5">
           <CalendarClock className="w-8 h-8 stroke-[1]" />
         </div>
@@ -74,7 +74,7 @@ export function RecurringTimeline() {
         </p>
         <button
           onClick={() => setQuickAddOpen(true)}
-          className="inline-flex items-center gap-2 h-12 px-7 rounded-full bg-[#0D0D0C] text-[#FFFDF8] text-sm font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm"
+          className="inline-flex items-center gap-2 h-12 px-7 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-sm font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm"
         >
           <Plus className="w-4 h-4 stroke-[2]" />
           <span>+ Add Recurring Bill</span>
@@ -84,7 +84,7 @@ export function RecurringTimeline() {
   }
 
   return (
-    <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-6">
+    <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-6">
       {/* Top Header & Filters */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#0D0D0C]/[0.06]">
         <div>
@@ -111,7 +111,7 @@ export function RecurringTimeline() {
               onClick={() => setFilter("all")}
               className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
                 filter === "all"
-                  ? "bg-[#0D0D0C] text-[#FFFDF8] shadow-sm"
+                  ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-sm"
                   : "text-[#0D0D0C]/56 hover:text-[#0D0D0C]"
               }`}
             >
@@ -121,7 +121,7 @@ export function RecurringTimeline() {
               onClick={() => setFilter("pending")}
               className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
                 filter === "pending"
-                  ? "bg-[#0D0D0C] text-[#FFFDF8] shadow-sm"
+                  ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-sm"
                   : "text-[#0D0D0C]/56 hover:text-[#0D0D0C]"
               }`}
             >
@@ -131,7 +131,7 @@ export function RecurringTimeline() {
               onClick={() => setFilter("cleared")}
               className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
                 filter === "cleared"
-                  ? "bg-[#0D0D0C] text-[#FFFDF8] shadow-sm"
+                  ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-sm"
                   : "text-[#0D0D0C]/56 hover:text-[#0D0D0C]"
               }`}
             >
@@ -141,7 +141,7 @@ export function RecurringTimeline() {
 
           <button
             onClick={() => setQuickAddOpen(true)}
-            className="px-4 py-2 rounded-full border border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-xs font-medium text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDF8] transition-all flex items-center gap-1.5 shadow-sm"
+            className="px-4 py-2 rounded-full border border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-xs font-medium text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] transition-all flex items-center gap-1.5 shadow-sm"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2]" />
             <span>New Bill</span>
@@ -233,7 +233,7 @@ export function RecurringTimeline() {
 
                 {/* Category Icon */}
                 <div
-                  className="w-10 h-10 rounded-full border border-[#0D0D0C]/[0.08] flex items-center justify-center shrink-0 bg-[#FFFDF8]"
+                  className="w-10 h-10 rounded-full border border-[#0D0D0C]/[0.08] flex items-center justify-center shrink-0 bg-[#FFFDFA]"
                   style={{ color: bill.category.color || "#0D0D0C" }}
                 >
                   <CategoryIcon iconName={bill.category.icon} className="w-4 h-4 stroke-[1.5]" />
@@ -287,7 +287,7 @@ export function RecurringTimeline() {
                       <span>⚡ Runs Today</span>
                     </span>
                   ) : (
-                    <span className="px-2.5 py-1 rounded-full text-xs font-normal border border-[#0D0D0C]/[0.1] bg-[#FFFDF8] text-[#0D0D0C]/60">
+                    <span className="px-2.5 py-1 rounded-full text-xs font-normal border border-[#0D0D0C]/[0.1] bg-[#FFFDFA] text-[#0D0D0C]/60">
                       {bill.daysUntil > 0 ? `In ${bill.daysUntil} days` : "Scheduled"}
                     </span>
                   )}
@@ -297,7 +297,7 @@ export function RecurringTimeline() {
                     onClick={() => handleToggle(bill.expenseId, bill.isCleared)}
                     className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                       bill.isCleared
-                        ? "bg-[#0D0D0C] text-[#FFFDF8] hover:bg-[#0D0D0C]/80"
+                        ? "bg-[#0D0D0C] text-[#FFFDFA] hover:bg-[#0D0D0C]/80"
                         : "border border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-[#0D0D0C] hover:bg-[#0D0D0C]/[0.05]"
                     }`}
                     title={bill.isCleared ? "Mark as pending" : "Mark as cleared"}

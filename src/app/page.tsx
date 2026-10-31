@@ -32,7 +32,7 @@ export default function DashboardPage() {
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-8 sm:py-10 space-y-8">
         {/* Dynamic Overbudget Alert (in soft editorial card) */}
         {budgetStatus.status === "danger" && summary.totalBudget > 0 && (
-          <div className="p-5 rounded-[24px] bg-[#FFFDF8] border border-rose-300 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="p-5 rounded-[24px] bg-[#FFFDFA] border border-rose-300 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
               <div className="w-10 h-10 rounded-full border border-rose-200 flex items-center justify-center text-rose-600 shrink-0 bg-rose-50">
                 <AlertCircle className="w-5 h-5 stroke-[1.5]" />
@@ -54,7 +54,7 @@ export default function DashboardPage() {
 
             <button
               onClick={() => setBudgetModalOpen(true)}
-              className="px-4 py-2 rounded-full border border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-xs font-medium text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDF8] transition-all self-start sm:self-auto"
+              className="px-4 py-2 rounded-full border border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-xs font-medium text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] transition-all self-start sm:self-auto"
             >
               Adjust Budget
             </button>

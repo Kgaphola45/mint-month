@@ -101,7 +101,7 @@ export default function SettingsPage() {
       </div>
 
       {importStatus && (
-        <div className="p-4 rounded-[20px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.12] text-[#0D0D0C] text-xs font-medium flex items-center gap-2.5 shadow-sm">
+        <div className="p-4 rounded-[20px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.12] text-[#0D0D0C] text-xs font-medium flex items-center gap-2.5 shadow-sm">
           <Check className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{importStatus}</span>
         </div>
@@ -109,10 +109,10 @@ export default function SettingsPage() {
 
       {/* Account Overview Card */}
       {currentUser && (
-        <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <div className="p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-5">
           <div className="flex items-center gap-4">
             <div
-              className="w-13 h-13 rounded-full flex items-center justify-center text-sm font-semibold text-[#FFFDF8] shadow-sm shrink-0"
+              className="w-13 h-13 rounded-full flex items-center justify-center text-sm font-semibold text-[#FFFDFA] shadow-sm shrink-0"
               style={{ backgroundColor: currentUser.avatarColor || "#0D0D0C" }}
             >
               {currentUser.name
@@ -151,7 +151,7 @@ export default function SettingsPage() {
       )}
 
       {/* 1. Currency Configuration */}
-      <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-5">
+      <div className="p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-5">
         <div>
           <h3 className="text-[16px] font-normal text-[#0D0D0C]/56">
             Currency
@@ -163,7 +163,7 @@ export default function SettingsPage() {
 
         <div className="p-5 rounded-[20px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] flex items-center justify-between">
           <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FFFDF8] text-[#0D0D0C] font-medium text-base flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FFFDFA] text-[#0D0D0C] font-medium text-base flex items-center justify-center">
               R
             </div>
             <div>
@@ -175,14 +175,14 @@ export default function SettingsPage() {
               </span>
             </div>
           </div>
-          <span className="px-3 py-1 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FFFDF8] text-[#0D0D0C] text-xs font-medium flex items-center gap-1.5 shadow-sm">
+          <span className="px-3 py-1 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FFFDFA] text-[#0D0D0C] text-xs font-medium flex items-center gap-1.5 shadow-sm">
             <Check className="w-3.5 h-3.5" /> Active
           </span>
         </div>
       </div>
 
       {/* 2. Category Management */}
-      <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+      <div className="p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div>
           <h3 className="text-[16px] font-normal text-[#0D0D0C]/56">
             Category Manager
@@ -201,7 +201,7 @@ export default function SettingsPage() {
       </div>
 
       {/* 3. Data Backup & Export / Import */}
-      <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-5">
+      <div className="p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-5">
         <div>
           <h3 className="text-[16px] font-normal text-[#0D0D0C]/56">
             Export & Backup Data
@@ -267,8 +267,8 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* 4. Payday & Debit Order Digest (via Resend) */}
-      <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-4">
+      {/* 4. Payday & Debit Order Digest (via Outlook) */}
+      <div className="p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full border border-[#0D0D0C]/[0.1] flex items-center justify-center text-[#0D0D0C]">
@@ -279,14 +279,14 @@ export default function SettingsPage() {
                 Payday & Debit Order Digest
               </h3>
               <p className="text-xs text-[#0D0D0C]/42 mt-0.5">
-                Automated monthly cashflow summary delivered via Resend
+                Automated monthly cashflow summary delivered via Outlook
               </p>
             </div>
           </div>
 
           <button
             onClick={() => setDigestModalOpen(true)}
-            className="px-4 py-2 rounded-full bg-[#0D0D0C] text-[#FFFDF8] text-xs font-medium hover:opacity-90 transition-all shadow-sm self-start sm:self-auto flex items-center gap-2"
+            className="px-4 py-2 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-xs font-medium hover:opacity-90 transition-all shadow-sm self-start sm:self-auto flex items-center gap-2"
           >
             <Mail className="w-3.5 h-3.5 stroke-[1.5]" />
             <span>Send Test Digest</span>
@@ -299,12 +299,12 @@ export default function SettingsPage() {
 
         <div className="p-4 rounded-[18px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] flex items-center justify-between text-xs text-[#0D0D0C]/70">
           <span>Delivery Provider:</span>
-          <span className="font-medium text-[#0D0D0C]">Resend (onboarding@resend.dev)</span>
+          <span className="font-medium text-[#0D0D0C]">Outlook SMTP (smtp.office365.com)</span>
         </div>
       </div>
 
       {/* 5. Privacy & Zero-Knowledge Architecture */}
-      <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-4">
+      <div className="p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full border border-[#0D0D0C]/[0.1] flex items-center justify-center text-[#0D0D0C]">
             <ShieldCheck className="w-4 h-4 stroke-[1.5]" />
@@ -332,7 +332,7 @@ export default function SettingsPage() {
       </div>
 
       {/* 5. Danger Zone: Reset Data */}
-      <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-rose-300 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+      <div className="p-8 rounded-[24px] bg-[#FFFDFA] border border-rose-300 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div>
           <h3 className="text-sm font-medium text-rose-800">
             Reset All Workspace Data
@@ -369,7 +369,7 @@ export default function SettingsPage() {
 
       {/* 6. Danger Zone: Permanently Delete Account */}
       {currentUser && (
-        <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-rose-400 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <div className="p-8 rounded-[24px] bg-[#FFFDFA] border border-rose-400 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-5">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Trash2 className="w-4 h-4 text-rose-600" />

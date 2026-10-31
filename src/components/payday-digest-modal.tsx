@@ -140,13 +140,13 @@ export function PaydayDigestModal({ open, onClose }: PaydayDigestModalProps) {
   return (
     <div className="fixed inset-0 bg-[#0D0D0C]/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div
-        className="bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] rounded-[28px] w-full max-w-lg shadow-[0_24px_48px_rgba(0,0,0,0.14)] p-6 sm:p-7 max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+        className="bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] rounded-[28px] w-full max-w-lg shadow-[0_24px_48px_rgba(0,0,0,0.14)] p-6 sm:p-7 max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-start justify-between pb-4 border-b border-[#0D0D0C]/[0.08]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#0D0D0C] text-[#FFFDF8] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-full bg-[#0D0D0C] text-[#FFFDFA] flex items-center justify-center shrink-0">
               <Mail className="w-5 h-5 stroke-[1.5]" />
             </div>
             <div>
@@ -180,19 +180,6 @@ export function PaydayDigestModal({ open, onClose }: PaydayDigestModalProps) {
               </div>
               <p className="text-[#0D0D0C]/75 text-[11px] pl-6">
                 Sent to <strong className="text-[#0D0D0C] font-semibold">{recipientEmail}</strong>. Please check your inbox and Junk folder.
-              </p>
-            </div>
-          )}
-
-          {/* Sandbox Notice Banner */}
-          {successResult && successResult.sandbox && (
-            <div className="p-4 rounded-[20px] bg-[#F6DE68]/30 border border-[#F6DE68]/70 text-xs text-[#0D0D0C] space-y-1.5 animate-in fade-in">
-              <div className="flex items-center gap-2 font-medium">
-                <Info className="w-4 h-4 shrink-0 text-[#0D0D0C]" />
-                <span>Resend Sandbox Mode</span>
-              </div>
-              <p className="text-[#0D0D0C]/80 text-[11px] leading-relaxed">
-                With Resend&apos;s free domain (<code className="font-mono bg-black/[0.05] px-1 py-0.5 rounded">onboarding@resend.dev</code>), live delivery is restricted to your account email: <strong>{successResult.allowedEmail}</strong>.
               </p>
             </div>
           )}
@@ -299,12 +286,9 @@ export function PaydayDigestModal({ open, onClose }: PaydayDigestModalProps) {
                   placeholder="you@domain.co.za"
                   value={recipientEmail}
                   onChange={(e) => setRecipientEmail(e.target.value)}
-                  className="w-full h-11 pl-11 pr-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] text-sm text-[#0D0D0C] placeholder:text-[#0D0D0C]/35 focus:outline-none focus:border-[#0D0D0C] focus:bg-[#FFFDF8] transition-all"
+                  className="w-full h-11 pl-11 pr-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] text-sm text-[#0D0D0C] placeholder:text-[#0D0D0C]/35 focus:outline-none focus:border-[#0D0D0C] focus:bg-[#FFFDFA] transition-all"
                 />
               </div>
-              <p className="text-[11px] text-[#0D0D0C]/50 pl-2">
-                Tip: Resend test mode delivers to <code className="font-mono text-[11px]">emmanuelkgaphola@outlook.com</code>.
-              </p>
             </div>
 
             <div className="flex items-center gap-3 pt-1">
@@ -319,7 +303,7 @@ export function PaydayDigestModal({ open, onClose }: PaydayDigestModalProps) {
               <button
                 type="submit"
                 disabled={loading || !recipientEmail.trim()}
-                className="w-2/3 h-11 rounded-full bg-[#0D0D0C] text-[#FFFDF8] text-xs font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-2/3 h-11 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-xs font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-3.5 h-3.5 stroke-[2]" />
                 <span>{loading ? "Delivering..." : "Send Financial Digest"}</span>

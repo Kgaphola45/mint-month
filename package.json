@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "dev:clean": "npx kill-port 3000 && next dev"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -22,6 +23,7 @@
     "react-dom": "^18.3.1",
     "recharts": "^2.13.0",
     "tailwind-merge": "^2.5.4",
+    "zod": "^4.6.7",
     "zustand": "^4.5.5"
   },
   "devDependencies": {

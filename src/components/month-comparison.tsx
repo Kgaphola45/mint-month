@@ -167,7 +167,7 @@ export function MonthComparison() {
   return (
     <div className="space-y-8">
       {/* Overview Head-to-Head Card */}
-      <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-6">
+      <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-[16px] font-normal text-[#0D0D0C]/56">
@@ -253,7 +253,7 @@ export function MonthComparison() {
       </div>
 
       {/* 2. Cumulative Spending Burn-Rate Pace Curve */}
-      <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-6">
+      <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
@@ -308,7 +308,7 @@ export function MonthComparison() {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] rounded-[16px] p-3.5 shadow-xl text-xs space-y-2 min-w-[190px]">
+                      <div className="bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] rounded-[16px] p-3.5 shadow-xl text-xs space-y-2 min-w-[190px]">
                         <div className="font-medium text-[#0D0D0C] pb-1 border-b border-[#0D0D0C]/[0.08]">
                           {data.label} ({formatMonthYear(selectedMonth)})
                         </div>
@@ -391,7 +391,7 @@ export function MonthComparison() {
       {/* 3. Grid: Cashflow Architecture (50/30/20) + Day-of-Week Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Cashflow Architecture (50/30/20) */}
-        <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-5">
+        <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <span className="text-[14px] font-normal text-[#0D0D0C]/56">
@@ -487,7 +487,7 @@ export function MonthComparison() {
         </div>
 
         {/* Day-of-Week Spending Heatmap & Distribution */}
-        <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-5">
+        <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <span className="text-[14px] font-normal text-[#0D0D0C]/56">
@@ -535,7 +535,7 @@ export function MonthComparison() {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
                       return (
-                        <div className="bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] rounded-[14px] p-3 shadow-xl text-xs space-y-1">
+                        <div className="bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] rounded-[14px] p-3 shadow-xl text-xs space-y-1">
                           <div className="font-medium text-[#0D0D0C]">
                             {data.dayName}
                           </div>
@@ -572,7 +572,7 @@ export function MonthComparison() {
       {/* 4. Grid: Top 5 Outflow Drivers & Payment Method Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top 5 Outflow Drivers */}
-        <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-5">
+        <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-5">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[14px] font-normal text-[#0D0D0C]/56">
@@ -603,7 +603,7 @@ export function MonthComparison() {
                       #{idx + 1}
                     </span>
                     <div
-                      className="w-8 h-8 rounded-full border border-[#0D0D0C]/[0.08] flex items-center justify-center shrink-0 bg-[#FFFDF8]"
+                      className="w-8 h-8 rounded-full border border-[#0D0D0C]/[0.08] flex items-center justify-center shrink-0 bg-[#FFFDFA]"
                       style={{ color: cat.color || "#0D0D0C" }}
                     >
                       <CategoryIcon iconName={cat.icon} className="w-4 h-4 stroke-[1.5]" />
@@ -638,7 +638,7 @@ export function MonthComparison() {
         </div>
 
         {/* Payment Channels Distribution */}
-        <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-5">
+        <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-5">
           <div>
             <span className="text-[14px] font-normal text-[#0D0D0C]/56">
               Payment Channels
@@ -685,7 +685,7 @@ export function MonthComparison() {
       </div>
 
       {/* 5. 6-Month Historical Spending Trajectory */}
-      <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+      <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-[16px] font-normal text-[#0D0D0C]/56">
@@ -725,7 +725,7 @@ export function MonthComparison() {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] rounded-[14px] p-3 shadow-xl text-xs space-y-1.5">
+                      <div className="bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] rounded-[14px] p-3 shadow-xl text-xs space-y-1.5">
                         <div className="font-medium text-[#0D0D0C]">
                           {data.label}
                         </div>
@@ -758,7 +758,7 @@ export function MonthComparison() {
                 dataKey="spent"
                 stroke="#0D0D0C"
                 strokeWidth={2.5}
-                dot={{ r: 4, fill: "#0D0D0C", strokeWidth: 2, stroke: "#FFFDF8" }}
+                dot={{ r: 4, fill: "#0D0D0C", strokeWidth: 2, stroke: "#FFFDFA" }}
                 activeDot={{ r: 6 }}
               />
               <Line
@@ -776,7 +776,7 @@ export function MonthComparison() {
       </div>
 
       {/* 6. Category Delta Breakdown */}
-      <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+      <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
         <div className="mb-6">
           <h3 className="text-[16px] font-normal text-[#0D0D0C]/56">
             Category Spending Shifts
@@ -796,7 +796,7 @@ export function MonthComparison() {
               >
                 <div className="flex items-center gap-3.5 min-w-0">
                   <div
-                    className="w-9 h-9 rounded-full border border-[#0D0D0C]/[0.08] flex items-center justify-center shrink-0 bg-[#FFFDF8]"
+                    className="w-9 h-9 rounded-full border border-[#0D0D0C]/[0.08] flex items-center justify-center shrink-0 bg-[#FFFDFA]"
                     style={{ color: item.category.color || "#0D0D0C" }}
                   >
                     <CategoryIcon iconName={item.category.icon} className="w-4 h-4 stroke-[1.5]" />

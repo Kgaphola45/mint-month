@@ -161,7 +161,7 @@ export default function TransactionsPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={handleDownloadCSV}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDF8] text-xs font-medium transition-all shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] text-xs font-medium transition-all shadow-sm"
             title="Download CSV"
           >
             <Download className="w-3.5 h-3.5 stroke-[1.8]" />
@@ -169,7 +169,7 @@ export default function TransactionsPage() {
           </button>
           <button
             onClick={() => setQuickAddOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 text-[#FFFDF8] text-xs font-medium transition-all shadow-sm active:scale-95"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 text-[#FFFDFA] text-xs font-medium transition-all shadow-sm active:scale-95"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2]" />
             <span>Add Expense</span>
@@ -178,7 +178,7 @@ export default function TransactionsPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="p-6 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-4">
+      <div className="p-6 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-4">
         {/* Top Row: Search + Scope toggle */}
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <div className="relative flex-1 w-full">
@@ -198,7 +198,7 @@ export default function TransactionsPage() {
               onClick={() => setMonthScope("selected")}
               className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
                 monthScope === "selected"
-                  ? "bg-[#0D0D0C] text-[#FFFDF8] shadow-sm"
+                  ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-sm"
                   : "text-[#0D0D0C]/56 hover:text-[#0D0D0C]"
               }`}
             >
@@ -208,7 +208,7 @@ export default function TransactionsPage() {
               onClick={() => setMonthScope("all")}
               className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
                 monthScope === "all"
-                  ? "bg-[#0D0D0C] text-[#FFFDF8] shadow-sm"
+                  ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-sm"
                   : "text-[#0D0D0C]/56 hover:text-[#0D0D0C]"
               }`}
             >
@@ -287,7 +287,7 @@ export default function TransactionsPage() {
       </div>
 
       {/* Transactions List */}
-      <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] divide-y divide-[#0D0D0C]/[0.05]">
+      <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] divide-y divide-[#0D0D0C]/[0.05]">
         {filteredExpenses.length === 0 ? (
           <div className="py-16 flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 rounded-full border border-[#0D0D0C]/[0.12] flex items-center justify-center text-[#0D0D0C]/60 mb-5">
@@ -320,7 +320,7 @@ export default function TransactionsPage() {
                 {/* Left: Category Icon + Details */}
                 <div className="flex items-center gap-3.5 min-w-0">
                   <div
-                    className="w-10 h-10 rounded-full border border-[#0D0D0C]/[0.08] flex items-center justify-center shrink-0 bg-[#FFFDF8]"
+                    className="w-10 h-10 rounded-full border border-[#0D0D0C]/[0.08] flex items-center justify-center shrink-0 bg-[#FFFDFA]"
                     style={{ color: category.color || "#0D0D0C" }}
                   >
                     <CategoryIcon iconName={category.icon} className="w-4 h-4 stroke-[1.5]" />
@@ -361,7 +361,7 @@ export default function TransactionsPage() {
 
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {isDeleting ? (
-                      <div className="flex items-center gap-1 bg-[#FFFDF8] border border-[#0D0D0C]/[0.12] rounded-full p-1 shadow-sm">
+                      <div className="flex items-center gap-1 bg-[#FFFDFA] border border-[#0D0D0C]/[0.12] rounded-full p-1 shadow-sm">
                         <button
                           onClick={() => handleDelete(expense.id)}
                           className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-medium"

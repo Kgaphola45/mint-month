@@ -1,20 +1,54 @@
 import { NextRequest, NextResponse } from "next/server";
-import { transporter, getFromAddress } from "@/lib/nodemailer";
-import { serverDb, checkRateLimit } from "@/lib/server-db";
+import { z } from "zod";
+import { transporter } from "@/lib/nodemailer";
+import { serverDb } from "@/lib/server-db";
+
+// In-memory rate limiter: Map<email, { count: number, resetTime: number }>
+interface RateLimitEntry {
+  count: number;
+  resetTime: number;
+}
+const rateLimiter = new Map<string, RateLimitEntry>();
+
+function checkRateLimit(email: string): { allowed: boolean; remaining: number } {
+  const normalized = email.trim().toLowerCase();
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000; // 15 minutes
+  const maxRequests = 3;
+
+  const entry = rateLimiter.get(normalized);
+
+  if (!entry || now > entry.resetTime) {
+    rateLimiter.set(normalized, { count: 1, resetTime: now + windowMs });
+    return { allowed: true, remaining: maxRequests - 1 };
+  }
+
+  if (entry.count >= maxRequests) {
+    return { allowed: false, remaining: 0 };
+  }
+
+  entry.count += 1;
+  return { allowed: true, remaining: maxRequests - entry.count };
+}
+
+const forgotPasswordSchema = z.object({
+  email: z.string().trim().email("Please provide a valid email address"),
+});
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email } = body || {};
+    const parseResult = forgotPasswordSchema.safeParse(body);
 
-    if (!email || typeof email !== "string" || !email.includes("@")) {
+    if (!parseResult.success) {
       return NextResponse.json(
-        { ok: false, error: "Valid email is required" },
+        { ok: false, error: parseResult.error.issues[0]?.message || "Invalid email" },
         { status: 400 }
       );
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const { email } = parseResult.data;
+    const normalizedEmail = email.toLowerCase();
 
     // 1. Rate limiting (max 3 requests per 15 min per email)
     const rate = checkRateLimit(normalizedEmail);
@@ -31,19 +65,18 @@ export async function POST(req: NextRequest) {
     // 2. Generate 6-digit OTP
     const rawOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // 3. Hash OTP with SHA-256 (Never store plain OTP)
+    // 3. Hash OTP with SHA-256 before saving to DB
     const otpHash = serverDb.hashOtp(rawOtp);
 
-    // 4. Save to DB with expiresAt = now + 10 minutes
+    // 4. Save to DB with 10 min expiry (used = false)
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
     serverDb.createPasswordReset(normalizedEmail, otpHash, expiresAt);
 
-    // 5. Send email via Outlook Nodemailer
+    // 5. Send email via Gmail transport
     try {
       await transporter.sendMail({
-        from: getFromAddress(),
         to: normalizedEmail,
-        subject: `Your Mint Month code: ${rawOtp}`,
+        subject: `Your Mint Month reset code: ${rawOtp}`,
         html: `
 <!DOCTYPE html>
 <html>
@@ -57,7 +90,7 @@ export async function POST(req: NextRequest) {
     <table width="100%" border="0" cellspacing="0" cellpadding="0">
       <tr>
         <td align="center">
-          <table width="100%" max-width="500" border="0" cellspacing="0" cellpadding="0" style="max-width: 500px; background-color: #FFFDF8; border: 1px solid rgba(13, 13, 12, 0.08); border-radius: 24px; padding: 36px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);">
+          <table width="100%" max-width="500" border="0" cellspacing="0" cellpadding="0" style="max-width: 500px; background-color: #FFFDFA; border: 1px solid rgba(13, 13, 12, 0.08); border-radius: 24px; padding: 36px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);">
             <tr>
               <td>
                 <table border="0" cellspacing="0" cellpadding="0">
@@ -72,10 +105,10 @@ export async function POST(req: NextRequest) {
             </tr>
             <tr>
               <td style="padding-top: 24px;">
-                <h1 style="font-size: 42px; font-weight: 600; letter-spacing: -0.03em; margin: 0; color: #0D0D0C; line-height: 1;">
+                <h1 style="font-size: 42px; font-weight: 600; letter-spacing: -0.032em; margin: 0; color: #0D0D0C; line-height: 1;">
                   ${rawOtp}
                 </h1>
-                <p style="color: #0D0D0C8F; font-size: 14px; margin: 12px 0 0 0;">
+                <p style="color: rgba(13, 13, 12, 0.56); font-size: 14px; margin: 12px 0 0 0;">
                   Expires in 10 minutes. Track in your terms.
                 </p>
               </td>
@@ -102,17 +135,25 @@ export async function POST(req: NextRequest) {
         sent: true,
         email: normalizedEmail,
       });
-    } catch (sendError: unknown) {
-      const errorMsg = sendError instanceof Error ? sendError.message : String(sendError);
-      console.error("Nodemailer Outlook send error:", errorMsg);
+    } catch {
+      // Never log OTP or passwords
+      console.error("EMAIL_FAILED_USE_DEV_BYPASS");
 
-      // Return ok: true with sent: false and devOtp in non-production so user testing is never blocked
+      const isProd = process.env.NODE_ENV === "production";
+      if (isProd) {
+        return NextResponse.json(
+          { ok: false, error: "Email service failed" },
+          { status: 500 }
+        );
+      }
+
+      // In dev mode, return devBypassOtp for local testing
       return NextResponse.json({
         ok: true,
         sent: false,
         email: normalizedEmail,
+        devBypassOtp: rawOtp,
         devOtp: rawOtp,
-        error: errorMsg,
       });
     }
   } catch {

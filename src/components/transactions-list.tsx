@@ -41,7 +41,7 @@ export function TransactionsList({
   // Empty state: cream card + thin line-art illustration (1px stroke) + white space + black pill button
   if (monthExpenses.length === 0) {
     return (
-      <div className="p-12 sm:p-16 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center min-h-[340px] text-center">
+      <div className="p-12 sm:p-16 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center min-h-[340px] text-center">
         <div className="w-16 h-16 rounded-full border border-[#0D0D0C]/[0.12] flex items-center justify-center text-[#0D0D0C]/60 mb-5">
           <Receipt className="w-8 h-8 stroke-[1]" />
         </div>
@@ -53,7 +53,7 @@ export function TransactionsList({
         </p>
         <button
           onClick={() => setQuickAddOpen(true)}
-          className="inline-flex items-center gap-2 h-12 px-7 rounded-full bg-[#0D0D0C] text-[#FFFDF8] text-sm font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm"
+          className="inline-flex items-center gap-2 h-12 px-7 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-sm font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm"
         >
           + Add First Expense
         </button>
@@ -72,7 +72,7 @@ export function TransactionsList({
   };
 
   return (
-    <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+    <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-[16px] font-normal text-[#0D0D0C]/56">
@@ -107,7 +107,7 @@ export function TransactionsList({
               <div className="flex items-center gap-3.5 min-w-0">
                 {/* Thin category icon circle */}
                 <div
-                  className="w-10 h-10 rounded-full border border-[#0D0D0C]/[0.08] flex items-center justify-center shrink-0 bg-[#FFFDF8]"
+                  className="w-10 h-10 rounded-full border border-[#0D0D0C]/[0.08] flex items-center justify-center shrink-0 bg-[#FFFDFA]"
                   style={{ color: category.color || "#0D0D0C" }}
                 >
                   <CategoryIcon iconName={category.icon} className="w-4 h-4 stroke-[1.5]" />
@@ -151,7 +151,7 @@ export function TransactionsList({
                 {/* Edit & Delete Actions */}
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   {isConfirming ? (
-                    <div className="flex items-center gap-1 bg-[#FFFDF8] border border-[#0D0D0C]/[0.12] rounded-full p-1 shadow-sm">
+                    <div className="flex items-center gap-1 bg-[#FFFDFA] border border-[#0D0D0C]/[0.12] rounded-full p-1 shadow-sm">
                       <button
                         onClick={() => handleDelete(expense.id)}
                         className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-medium"

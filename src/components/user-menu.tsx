@@ -46,13 +46,13 @@ export function UserMenu() {
       <div className="flex items-center gap-2">
         <button
           onClick={() => setAuthModalOpen(true, "login")}
-          className="h-10 px-4 rounded-full border border-[#0D0D0C]/[0.12] text-xs font-medium text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDF8] transition-all"
+          className="h-10 px-4 rounded-full border border-[#0D0D0C]/[0.12] text-xs font-medium text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] transition-all"
         >
           Sign In
         </button>
         <button
           onClick={() => setAuthModalOpen(true, "register")}
-          className="h-10 px-4 rounded-full bg-[#0D0D0C] text-[#FFFDF8] text-xs font-medium hover:opacity-90 transition-all shadow-sm hidden sm:inline-flex items-center"
+          className="h-10 px-4 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-xs font-medium hover:opacity-90 transition-all shadow-sm hidden sm:inline-flex items-center"
         >
           Register
         </button>
@@ -93,12 +93,12 @@ export function UserMenu() {
       {/* Profile Pill Trigger */}
       <button
         onClick={() => setMenuOpen(!menuOpen)}
-        className="flex items-center gap-2 p-1.5 pr-3 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FFFDF8] hover:bg-[#FBF6EF] text-[#0D0D0C] transition-all shadow-sm active:scale-95"
+        className="flex items-center gap-2 p-1.5 pr-3 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FFFDFA] hover:bg-[#FBF6EF] text-[#0D0D0C] transition-all shadow-sm active:scale-95"
         aria-expanded={menuOpen}
         aria-label="User profile menu"
       >
         <div
-          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium text-[#FFFDF8] shrink-0"
+          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium text-[#FFFDFA] shrink-0"
           style={{ backgroundColor: currentUser.avatarColor || "#0D0D0C" }}
         >
           {initials}
@@ -111,12 +111,12 @@ export function UserMenu() {
 
       {/* Dropdown Menu */}
       {menuOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] rounded-[22px] shadow-[0_16px_36px_rgba(0,0,0,0.1)] p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute right-0 mt-2 w-64 bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] rounded-[22px] shadow-[0_16px_36px_rgba(0,0,0,0.1)] p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
           {/* User profile card */}
           <div className="p-3 rounded-[16px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] mb-2">
             <div className="flex items-center gap-2.5">
               <div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold text-[#FFFDF8] shrink-0 shadow-sm"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold text-[#FFFDFA] shrink-0 shadow-sm"
                 style={{ backgroundColor: currentUser.avatarColor || "#0D0D0C" }}
               >
                 {initials}
@@ -156,7 +156,7 @@ export function UserMenu() {
                       onClick={() => handleSwitch(u.id)}
                       className={`w-full p-2 rounded-[14px] text-xs flex items-center justify-between transition-colors ${
                         isCurrent
-                          ? "bg-[#0D0D0C] text-[#FFFDF8] font-medium"
+                          ? "bg-[#0D0D0C] text-[#FFFDFA] font-medium"
                           : "text-[#0D0D0C]/75 hover:bg-[#FBF6EF] hover:text-[#0D0D0C]"
                       }`}
                     >
@@ -164,11 +164,11 @@ export function UserMenu() {
                         <div
                           className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${
                             isCurrent
-                              ? "bg-[#FFFDF8] text-[#0D0D0C]"
-                              : "text-[#FFFDF8]"
+                              ? "bg-[#FFFDFA] text-[#0D0D0C]"
+                              : "text-[#FFFDFA]"
                           }`}
                           style={{
-                            backgroundColor: isCurrent ? "#FFFDF8" : u.avatarColor || "#0D0D0C",
+                            backgroundColor: isCurrent ? "#FFFDFA" : u.avatarColor || "#0D0D0C",
                           }}
                         >
                           {uInitials}

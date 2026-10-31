@@ -1,7 +1,30 @@
 # Mint Month 🌿
 
 > **A minimal, privacy-first expense tracker for every month.**
-> Linear + Apple Wallet inspired aesthetic, organized strictly by month.
+> Editorial Vela-inspired aesthetic, organized strictly by month.
+
+---
+
+## 📧 Email Setup - Free Gmail
+
+Mint Month uses Nodemailer with free personal Gmail SMTP (no domain verification or paid tier required):
+
+1. **Enable 2-Step Verification**:
+   - Go to your [Google Account Security](https://myaccount.google.com/security).
+   - Under "How you sign in to Google", ensure **2-Step Verification** is enabled.
+
+2. **Generate an App Password**:
+   - Search for **App passwords** in the search bar at the top of your Google Account (or visit [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)).
+   - Name your app (e.g. `Mint Month`) and click **Create**.
+   - Copy the generated 16-character password (e.g. `abcd efgh ijkl mnop`).
+
+3. **Configure Environment Variables**:
+   - Create `.env.local` (or configure your Vercel Project Environment Variables):
+     ```env
+     GMAIL_USER=your_email@gmail.com
+     GMAIL_APP_PASSWORD=your_16_char_app_password
+     ```
+   - In development mode, if email credentials are not yet configured or fail, the application provides a local `devBypassOtp` automatically so you can test all verification flows without disruption.
 
 ---
 
@@ -12,46 +35,39 @@
   - One-click quick amounts (`+100`, `+500`, `+1000`, etc.)
   - Large currency amount display with live formatted currency
   - Category picker with colored icon tags
-  - Payment method selector (`UPI`, `Card`, `Cash`, `Bank`)
+  - Payment method selector (`Card`, `Cash`, `EFT`, `Other`)
   - Micro-confetti celebrations upon logging expenses
 - **Smart Monthly Budget Management**:
   - Set total monthly budget caps
   - Set category-specific spending limits
-  - Live color-coded progress bars:
-    - 🟢 Green: `< 75%` (Safe)
-    - 🟡 Yellow: `75% - 90%` (Warning)
-    - 🔴 Red: `> 90%` (Critical / Over-budget alert banner)
-- **Recurring Expenses**:
+  - Live color-coded progress bars
+- **Recurring Expenses & Debit Orders**:
   - Flag any expense as **Monthly Recurring** (e.g. Rent, WiFi, Netflix, Gym)
   - Automatically projects into future months on the identical calendar day
-- **Interactive Visual Charts**:
-  - **Category Breakdown Donut Chart**: Hover to view category percentage, amount, and transaction counts with dynamic central indicator.
-  - **Daily Spending Flow Bar Chart**: Highlights peak expenditure days and daily average reference lines.
-- **Month Comparison & Trends**:
-  - Side-by-side head-to-head comparison of Selected Month vs Previous Month.
-  - Category delta shifts (increases and decreases).
-  - 6-month historical trend line chart showing spending trajectories against budgets.
+  - Mark debit orders as cleared with instant visual feedback
+- **Payday Planner & Safe-to-Spend**:
+  - Quarantines fixed bills and commitments before payday
+  - Calculates exact guilt-free daily allowance
+  - Send financial digests directly to your email
+- **Editorial Vela Aesthetic**:
+  - Cream background `#FBF6EF` with `#FFFDFA` cards
+  - SVG fractal noise grain overlay
+  - Clean Inter Tight typography with tight tracking for figures
 - **Full Transaction Management**:
-  - Filter by category, payment method, recurring status, and date scope (selected month vs all-time).
-  - Real-time search across notes, categories, and amounts.
-  - Sort by date or amount.
+  - Filter by category, payment method, recurring status, and date scope
+  - Real-time search across notes, categories, and amounts
 - **Settings & Privacy-First Architecture**:
-  - Currency switcher (default **INR ₹**, USD $, EUR €, GBP £, JPY ¥, CAD, AUD).
-  - Category manager: create and customize custom categories with 25+ Lucide icons and 15 curated colors.
-  - Full CSV export (Excel/Sheets compatible).
-  - Full JSON backup & restore.
-  - Reset to initial 3-month sample data.
-- **Apple Wallet + Linear Aesthetic**:
-  - Deep obsidian dark mode & crisp paper light mode (`next-themes`).
-  - Smooth fluid micro-interactions powered by `framer-motion`.
-  - Rounded corners (`rounded-2xl`, `rounded-3xl`), soft ambient shadows, and glassmorphism.
-  - Mobile-first responsive with frosted-glass bottom navigation bar.
+  - Currency switcher (ZAR R, USD $, EUR €, GBP £, INR ₹, etc.)
+  - Category manager: create and customize custom categories
+  - Full CSV export and JSON backup & restore
 
 ---
 
 ## 🛠 Tech Stack
 
 - **Framework**: Next.js 14 App Router
+- **Email Service**: Nodemailer (Free Gmail SMTP transport)
+- **Validation**: Zod
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Icons**: Lucide React
@@ -59,7 +75,6 @@
 - **Charts**: Recharts
 - **Date Utilities**: `date-fns`
 - **Animations**: `framer-motion` & `canvas-confetti`
-- **Storage**: Offline-First LocalStorage adapter with Supabase-ready schema
 
 ---
 
@@ -70,7 +85,11 @@
    npm install
    ```
 
-2. **Run development server**:
+2. **Clean port & start development server**:
+   ```bash
+   npm run dev:clean
+   ```
+   Or standard:
    ```bash
    npm run dev
    ```
@@ -79,41 +98,6 @@
 
 ---
 
-## 🗄 Data Model & Supabase Readiness
-
-The storage adapter (`src/lib/storage.ts`) implements a clean interface ready for Supabase or any REST/GraphQL backend:
-
-```sql
-CREATE TABLE categories (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  color TEXT NOT NULL,
-  icon TEXT NOT NULL,
-  is_custom BOOLEAN DEFAULT false
-);
-
-CREATE TABLE expenses (
-  id TEXT PRIMARY KEY,
-  amount NUMERIC NOT NULL,
-  category_id TEXT REFERENCES categories(id),
-  note TEXT,
-  date DATE NOT NULL,
-  payment_method TEXT NOT NULL,
-  is_recurring BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE budgets (
-  id TEXT PRIMARY KEY,
-  month TEXT NOT NULL UNIQUE, -- 'YYYY-MM'
-  total NUMERIC NOT NULL,
-  categories JSONB DEFAULT '{}'::jsonb
-);
-```
-
----
-
 ## 🔒 Privacy
 
 Mint Month does not transmit your personal financial records to third-party ad networks or tracking servers. All records live locally in your browser storage until you choose to export or sync.
-

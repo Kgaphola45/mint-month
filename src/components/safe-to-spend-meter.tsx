@@ -71,7 +71,7 @@ export function SafeToSpendMeter() {
   const StatusIcon = statusConfig.icon;
 
   return (
-    <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-6">
+    <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-6">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#0D0D0C]/[0.06]">
         <div>
@@ -102,7 +102,7 @@ export function SafeToSpendMeter() {
 
           <button
             onClick={() => setPaydayModalOpen(true)}
-            className="h-9 px-4 rounded-full border border-[#0D0D0C]/[0.12] hover:bg-[#0D0D0C] hover:text-[#FFFDF8] text-xs font-medium inline-flex items-center gap-1.5 transition-all text-[#0D0D0C] shadow-sm"
+            className="h-9 px-4 rounded-full border border-[#0D0D0C]/[0.12] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] text-xs font-medium inline-flex items-center gap-1.5 transition-all text-[#0D0D0C] shadow-sm"
           >
             <SlidersHorizontal className="w-3 h-3 stroke-[1.5]" />
             <span>Configure Salary</span>
@@ -110,7 +110,7 @@ export function SafeToSpendMeter() {
 
           <button
             onClick={() => setDigestModalOpen(true)}
-            className="h-9 px-4 rounded-full bg-[#0D0D0C] text-[#FFFDF8] hover:opacity-90 text-xs font-medium inline-flex items-center gap-1.5 transition-all shadow-sm"
+            className="h-9 px-4 rounded-full bg-[#0D0D0C] text-[#FFFDFA] hover:opacity-90 text-xs font-medium inline-flex items-center gap-1.5 transition-all shadow-sm"
           >
             <Mail className="w-3.5 h-3.5 stroke-[1.5]" />
             <span>Email Digest</span>
@@ -159,7 +159,7 @@ export function SafeToSpendMeter() {
         </div>
 
         {/* Total Safe Discretionary Pool Pill */}
-        <div className="lg:text-right shrink-0 p-4 rounded-[18px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08]">
+        <div className="lg:text-right shrink-0 p-4 rounded-[18px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08]">
           <span className="text-xs text-[#0D0D0C]/50 block">Remaining Safe Cushion</span>
           <span className="text-2xl sm:text-3xl font-medium tracking-tight text-[#0D0D0C] mt-0.5 block">
             {formatCurrency(safe.safeToSpendRemaining, currency)}

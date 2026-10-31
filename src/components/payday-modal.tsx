@@ -68,7 +68,7 @@ export function PaydayModal() {
   return (
     <div className="fixed inset-0 bg-[#0D0D0C]/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div
-        className="bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] rounded-[28px] w-full max-w-lg shadow-[0_24px_48px_rgba(0,0,0,0.12)] max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+        className="bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] rounded-[28px] w-full max-w-lg shadow-[0_24px_48px_rgba(0,0,0,0.12)] max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -114,7 +114,7 @@ export function PaydayModal() {
                 placeholder="25000"
                 value={salaryInput}
                 onChange={(e) => setSalaryInput(e.target.value)}
-                className="w-full h-12 pl-8 pr-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] text-sm font-medium text-[#0D0D0C] placeholder:text-[#0D0D0C]/35 focus:outline-none focus:border-[#0D0D0C] focus:bg-[#FFFDF8] transition-all"
+                className="w-full h-12 pl-8 pr-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] text-sm font-medium text-[#0D0D0C] placeholder:text-[#0D0D0C]/35 focus:outline-none focus:border-[#0D0D0C] focus:bg-[#FFFDFA] transition-all"
               />
             </div>
             <p className="text-[11px] text-[#0D0D0C]/50 pl-2">
@@ -135,7 +135,7 @@ export function PaydayModal() {
                 required
                 value={paydayInput}
                 onChange={(e) => setPaydayInput(parseInt(e.target.value, 10) || 25)}
-                className="w-24 h-12 px-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] text-sm font-medium text-[#0D0D0C] focus:outline-none focus:border-[#0D0D0C] focus:bg-[#FFFDF8] transition-all text-center"
+                className="w-24 h-12 px-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] text-sm font-medium text-[#0D0D0C] focus:outline-none focus:border-[#0D0D0C] focus:bg-[#FFFDFA] transition-all text-center"
               />
               <span className="text-xs text-[#0D0D0C]/60">
                 th of every month (standard SA salary cycle is 25th)
@@ -200,7 +200,7 @@ export function PaydayModal() {
           </div>
 
           {/* Toggle: Set as default for every month */}
-          <label className="flex items-center gap-3 p-3.5 rounded-[18px] border border-[#0D0D0C]/[0.08] bg-[#FFFDF8] cursor-pointer hover:bg-[#FBF6EF]/50 transition-colors">
+          <label className="flex items-center gap-3 p-3.5 rounded-[18px] border border-[#0D0D0C]/[0.08] bg-[#FFFDFA] cursor-pointer hover:bg-[#FBF6EF]/50 transition-colors">
             <input
               type="checkbox"
               checked={applyDefault}
@@ -229,7 +229,7 @@ export function PaydayModal() {
 
             <button
               type="submit"
-              className="h-12 px-7 rounded-full bg-[#0D0D0C] text-[#FFFDF8] text-sm font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm inline-flex items-center gap-2"
+              className="h-12 px-7 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-sm font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm inline-flex items-center gap-2"
             >
               <Check className="w-4 h-4 stroke-[2]" />
               <span>Save & Calculate</span>

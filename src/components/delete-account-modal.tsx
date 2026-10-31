@@ -50,7 +50,7 @@ export function DeleteAccountModal({ open, onClose }: DeleteAccountModalProps) {
   return (
     <div className="fixed inset-0 bg-[#0D0D0C]/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div
-        className="bg-[#FFFDF8] border border-rose-300 rounded-[28px] w-full max-w-md shadow-[0_24px_48px_rgba(0,0,0,0.14)] p-6 sm:p-7 space-y-6 animate-in fade-in zoom-in-95 duration-150"
+        className="bg-[#FFFDFA] border border-rose-300 rounded-[28px] w-full max-w-md shadow-[0_24px_48px_rgba(0,0,0,0.14)] p-6 sm:p-7 space-y-6 animate-in fade-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -110,7 +110,7 @@ export function DeleteAccountModal({ open, onClose }: DeleteAccountModalProps) {
               placeholder={userEmail}
               value={confirmInput}
               onChange={(e) => setConfirmInput(e.target.value)}
-              className="w-full h-11 px-4 rounded-full border border-rose-300 bg-[#FBF6EF] text-sm text-[#0D0D0C] placeholder:text-[#0D0D0C]/30 focus:outline-none focus:border-rose-600 focus:bg-[#FFFDF8] transition-all"
+              className="w-full h-11 px-4 rounded-full border border-rose-300 bg-[#FBF6EF] text-sm text-[#0D0D0C] placeholder:text-[#0D0D0C]/30 focus:outline-none focus:border-rose-600 focus:bg-[#FFFDFA] transition-all"
             />
           </div>
 

@@ -1,24 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import { transporter, getFromAddress } from "@/lib/nodemailer";
+import { z } from "zod";
+import { transporter } from "@/lib/nodemailer";
+
+const welcomeSchema = z.object({
+  email: z.string().trim().email("Valid email is required"),
+  name: z.string().optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, name } = body || {};
+    const parseResult = welcomeSchema.safeParse(body);
 
-    if (!email || typeof email !== "string" || !email.includes("@")) {
+    if (!parseResult.success) {
       return NextResponse.json(
-        { ok: false, error: "Valid email is required" },
+        { ok: false, error: parseResult.error.issues[0]?.message || "Valid email is required" },
         { status: 400 }
       );
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const { email, name } = parseResult.data;
+    const normalizedEmail = email.toLowerCase();
     const displayName = (name && typeof name === "string" ? name.trim() : "Valued Member");
 
     try {
       await transporter.sendMail({
-        from: getFromAddress(),
         to: normalizedEmail,
         subject: `Welcome to Mint Month, ${displayName} — Your vault is active`,
         html: `
@@ -33,7 +39,7 @@ export async function POST(req: NextRequest) {
   <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #FBF6EF; padding: 40px 20px;">
     <tr>
       <td align="center">
-        <table width="100%" max-width="520" border="0" cellspacing="0" cellpadding="0" style="max-width: 520px; background-color: #FFFDF8; border: 1px solid rgba(13, 13, 12, 0.08); border-radius: 24px; padding: 40px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);">
+        <table width="100%" max-width="520" border="0" cellspacing="0" cellpadding="0" style="max-width: 520px; background-color: #FFFDFA; border: 1px solid rgba(13, 13, 12, 0.08); border-radius: 24px; padding: 40px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);">
           <!-- Header -->
           <tr>
             <td>
@@ -104,13 +110,21 @@ export async function POST(req: NextRequest) {
         ok: true,
         sent: true,
       });
-    } catch (sendError: unknown) {
-      const errorMsg = sendError instanceof Error ? sendError.message : String(sendError);
-      console.error("Nodemailer Outlook send error (welcome):", errorMsg);
+    } catch {
+      console.error("EMAIL_FAILED_USE_DEV_BYPASS");
+
+      const isProd = process.env.NODE_ENV === "production";
+      if (isProd) {
+        return NextResponse.json(
+          { ok: false, error: "Email service failed" },
+          { status: 500 }
+        );
+      }
+
       return NextResponse.json({
         ok: true,
         sent: false,
-        error: errorMsg,
+        devBypassOtp: true,
       });
     }
   } catch {

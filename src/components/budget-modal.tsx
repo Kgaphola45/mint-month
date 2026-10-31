@@ -132,7 +132,7 @@ export function BudgetModal() {
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-xl max-h-[90vh] bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] rounded-[28px] shadow-2xl flex flex-col overflow-hidden z-10">
+      <div className="relative w-full max-w-xl max-h-[90vh] bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] rounded-[28px] shadow-2xl flex flex-col overflow-hidden z-10">
         {/* Header */}
         <div className="px-7 pt-6 pb-4 flex items-center justify-between border-b border-[#0D0D0C]/[0.06]">
           <div className="flex items-center gap-3">
@@ -176,7 +176,7 @@ export function BudgetModal() {
             <button
               type="button"
               onClick={handleMakeAllRecurring}
-              className="px-3 py-1.5 rounded-full border border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDF8] font-medium text-xs shrink-0 transition-all"
+              className="px-3 py-1.5 rounded-full border border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] font-medium text-xs shrink-0 transition-all"
             >
               Repeat All
             </button>
@@ -201,7 +201,7 @@ export function BudgetModal() {
                 placeholder={sumCategoryLimits > 0 ? sumCategoryLimits.toString() : "e.g. 15000"}
                 value={totalBudget}
                 onChange={(e) => setTotalBudget(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 text-2xl font-medium tracking-tight rounded-[16px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] focus:outline-none focus:border-[#0D0D0C] text-[#0D0D0C]"
+                className="w-full pl-10 pr-4 py-3 text-2xl font-medium tracking-tight rounded-[16px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] focus:outline-none focus:border-[#0D0D0C] text-[#0D0D0C]"
               />
             </div>
 
@@ -244,7 +244,7 @@ export function BudgetModal() {
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
                         <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-[#0D0D0C]/[0.08] bg-[#FFFDF8]"
+                          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-[#0D0D0C]/[0.08] bg-[#FFFDFA]"
                           style={{ color: cat.color || "#0D0D0C" }}
                         >
                           <CategoryIcon iconName={cat.icon} className="w-4 h-4 stroke-[1.5]" />
@@ -266,8 +266,8 @@ export function BudgetModal() {
                           onClick={() => handleToggleRecurring(cat.id)}
                           className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${
                             isRecurring
-                              ? "bg-[#0D0D0C] text-[#FFFDF8]"
-                              : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/60 hover:text-[#0D0D0C] bg-[#FFFDF8]"
+                              ? "bg-[#0D0D0C] text-[#FFFDFA]"
+                              : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/60 hover:text-[#0D0D0C] bg-[#FFFDFA]"
                           }`}
                           title="Toggle to make this budget appear in every month"
                         >
@@ -288,7 +288,7 @@ export function BudgetModal() {
                             placeholder="Limit"
                             value={catLimits[cat.id] || ""}
                             onChange={(e) => handleLimitChange(cat.id, e.target.value)}
-                            className="w-full pl-7 pr-3 py-1.5 text-xs font-medium rounded-full bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] focus:outline-none focus:border-[#0D0D0C] text-[#0D0D0C]"
+                            className="w-full pl-7 pr-3 py-1.5 text-xs font-medium rounded-full bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] focus:outline-none focus:border-[#0D0D0C] text-[#0D0D0C]"
                           />
                         </div>
                       </div>
@@ -327,7 +327,7 @@ export function BudgetModal() {
             </button>
             <button
               type="submit"
-              className="h-12 px-7 rounded-full bg-[#0D0D0C] text-[#FFFDF8] hover:bg-[#0D0D0C]/90 text-sm font-medium transition-all shadow-sm active:scale-95"
+              className="h-12 px-7 rounded-full bg-[#0D0D0C] text-[#FFFDFA] hover:bg-[#0D0D0C]/90 text-sm font-medium transition-all shadow-sm active:scale-95"
             >
               Save Budgets
             </button>

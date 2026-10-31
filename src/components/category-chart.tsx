@@ -46,7 +46,7 @@ export function CategoryChart() {
   // Empty state: cream card + thin line-art illustration (1px stroke) + white space + black pill button
   if (activeCategories.length === 0 || totalSpent === 0) {
     return (
-      <div className="p-12 sm:p-16 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center min-h-[380px] text-center">
+      <div className="p-12 sm:p-16 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center min-h-[380px] text-center">
         <div className="w-16 h-16 rounded-full border border-[#0D0D0C]/[0.12] flex items-center justify-center text-[#0D0D0C]/60 mb-5">
           <PieChartIcon className="w-8 h-8 stroke-[1]" />
         </div>
@@ -58,7 +58,7 @@ export function CategoryChart() {
         </p>
         <button
           onClick={() => setQuickAddOpen(true)}
-          className="inline-flex items-center gap-2 h-12 px-7 rounded-full bg-[#0D0D0C] text-[#FFFDF8] text-sm font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm"
+          className="inline-flex items-center gap-2 h-12 px-7 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-sm font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm"
         >
           + Add First Expense
         </button>
@@ -77,7 +77,7 @@ export function CategoryChart() {
   const activeItem = activeIndex !== null ? chartData[activeIndex] : null;
 
   return (
-    <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between">
+    <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-[16px] font-normal text-[#0D0D0C]/56">
@@ -113,7 +113,7 @@ export function CategoryChart() {
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.color}
-                    stroke="#FFFDF8"
+                    stroke="#FFFDFA"
                     strokeWidth={2}
                     className="cursor-pointer transition-opacity hover:opacity-85"
                   />
@@ -124,7 +124,7 @@ export function CategoryChart() {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] rounded-[14px] p-3 shadow-xl">
+                      <div className="bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] rounded-[14px] p-3 shadow-xl">
                         <div className="text-xs text-[#0D0D0C]/56">{data.name}</div>
                         <div className="text-base font-medium text-[#0D0D0C] tracking-tight">
                           {formatCurrency(data.value, currency)}

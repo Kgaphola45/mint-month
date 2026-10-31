@@ -59,7 +59,7 @@ export function Navbar() {
             </Link>
 
             {/* Desktop Pill Navigation (rounded full, not boxy) */}
-            <nav className="hidden lg:flex items-center gap-1 bg-[#FFFDF8] p-1.5 rounded-full border border-[#0D0D0C]/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+            <nav className="hidden lg:flex items-center gap-1 bg-[#FFFDFA] p-1.5 rounded-full border border-[#0D0D0C]/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
               {navLinks.map((link) => {
                 const isActive = pathname === link.href;
                 return (
@@ -68,7 +68,7 @@ export function Navbar() {
                     href={link.href}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-all ${
                       isActive
-                        ? "bg-[#0D0D0C] text-[#FFFDF8] shadow-sm"
+                        ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-sm"
                         : "text-[#0D0D0C]/56 hover:text-[#0D0D0C] hover:bg-[#0D0D0C]/[0.04]"
                     }`}
                   >
@@ -89,7 +89,7 @@ export function Navbar() {
             {/* Outlined Currency Pill */}
             <Link
               href="/settings"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[#FFFDF8] hover:bg-[#FFFDF8]/80 text-[#0D0D0C] border border-[#0D0D0C]/[0.12] transition-colors shadow-sm"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[#FFFDFA] hover:bg-[#FFFDFA]/80 text-[#0D0D0C] border border-[#0D0D0C]/[0.12] transition-colors shadow-sm"
               title="Change Currency in Settings"
             >
               <span className="font-medium text-[#0D0D0C]">{currentCurrency.symbol}</span>
@@ -102,7 +102,7 @@ export function Navbar() {
             {/* Add Expense Button: 48px tall, 999px radius, black ink #0D0D0C, white text */}
             <button
               onClick={() => setQuickAddOpen(true)}
-              className="h-12 px-6 rounded-full bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 active:scale-95 text-[#FFFDF8] font-medium text-xs sm:text-sm shadow-sm transition-all flex items-center gap-2"
+              className="h-12 px-6 rounded-full bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 active:scale-95 text-[#FFFDFA] font-medium text-xs sm:text-sm shadow-sm transition-all flex items-center gap-2"
             >
               <Plus className="w-4 h-4 stroke-[2]" />
               <span className="hidden sm:inline">Add Expense</span>
@@ -113,7 +113,7 @@ export function Navbar() {
       </header>
 
       {/* Mobile Floating Pill Navigation */}
-      <div className="lg:hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-40 bg-[#FFFDF8]/95 backdrop-blur-xl border border-[#0D0D0C]/[0.1] rounded-full p-1.5 shadow-xl flex items-center gap-1">
+      <div className="lg:hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-40 bg-[#FFFDFA]/95 backdrop-blur-xl border border-[#0D0D0C]/[0.1] rounded-full p-1.5 shadow-xl flex items-center gap-1">
         {navLinks.map((link) => {
           const Icon = link.icon;
           const isActive = pathname === link.href;
@@ -123,7 +123,7 @@ export function Navbar() {
               href={link.href}
               className={`p-2.5 rounded-full transition-all ${
                 isActive
-                  ? "bg-[#0D0D0C] text-[#FFFDF8]"
+                  ? "bg-[#0D0D0C] text-[#FFFDFA]"
                   : "text-[#0D0D0C]/56 hover:text-[#0D0D0C]"
               }`}
               title={link.label}

@@ -71,7 +71,7 @@ export function AuthModal() {
       });
 
       if (res.success) {
-        // Trigger Welcome / Account Confirmation email via Resend
+        // Trigger Welcome / Account Confirmation email via Outlook
         fetch("/api/auth/welcome", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -90,7 +90,7 @@ export function AuthModal() {
   return (
     <div className="fixed inset-0 bg-[#0D0D0C]/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div
-        className="bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] rounded-[28px] w-full max-w-md shadow-[0_24px_48px_rgba(0,0,0,0.12)] max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+        className="bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] rounded-[28px] w-full max-w-md shadow-[0_24px_48px_rgba(0,0,0,0.12)] max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -125,7 +125,7 @@ export function AuthModal() {
             }}
             className={`flex-1 py-2 text-xs font-medium rounded-full transition-all ${
               mode === "login"
-                ? "bg-[#0D0D0C] text-[#FFFDF8] shadow-sm"
+                ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-sm"
                 : "text-[#0D0D0C]/60 hover:text-[#0D0D0C]"
             }`}
           >
@@ -139,7 +139,7 @@ export function AuthModal() {
             }}
             className={`flex-1 py-2 text-xs font-medium rounded-full transition-all ${
               mode === "register"
-                ? "bg-[#0D0D0C] text-[#FFFDF8] shadow-sm"
+                ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-sm"
                 : "text-[#0D0D0C]/60 hover:text-[#0D0D0C]"
             }`}
           >
@@ -169,7 +169,7 @@ export function AuthModal() {
                   placeholder="e.g. Emmanuel Kgaphola"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full h-12 pl-11 pr-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] text-sm text-[#0D0D0C] placeholder:text-[#0D0D0C]/35 focus:outline-none focus:border-[#0D0D0C] focus:bg-[#FFFDF8] transition-all"
+                  className="w-full h-12 pl-11 pr-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] text-sm text-[#0D0D0C] placeholder:text-[#0D0D0C]/35 focus:outline-none focus:border-[#0D0D0C] focus:bg-[#FFFDFA] transition-all"
                 />
               </div>
             </div>
@@ -187,7 +187,7 @@ export function AuthModal() {
                 placeholder="you@domain.co.za"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-12 pl-11 pr-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] text-sm text-[#0D0D0C] placeholder:text-[#0D0D0C]/35 focus:outline-none focus:border-[#0D0D0C] focus:bg-[#FFFDF8] transition-all"
+                className="w-full h-12 pl-11 pr-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] text-sm text-[#0D0D0C] placeholder:text-[#0D0D0C]/35 focus:outline-none focus:border-[#0D0D0C] focus:bg-[#FFFDFA] transition-all"
               />
             </div>
           </div>
@@ -215,7 +215,7 @@ export function AuthModal() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-12 pl-11 pr-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] text-sm text-[#0D0D0C] placeholder:text-[#0D0D0C]/35 focus:outline-none focus:border-[#0D0D0C] focus:bg-[#FFFDF8] transition-all"
+                className="w-full h-12 pl-11 pr-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] text-sm text-[#0D0D0C] placeholder:text-[#0D0D0C]/35 focus:outline-none focus:border-[#0D0D0C] focus:bg-[#FFFDFA] transition-all"
               />
             </div>
           </div>
@@ -233,7 +233,7 @@ export function AuthModal() {
                   placeholder="25000"
                   value={monthlySalary}
                   onChange={(e) => setMonthlySalary(e.target.value)}
-                  className="w-full h-12 pl-11 pr-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] text-sm text-[#0D0D0C] placeholder:text-[#0D0D0C]/35 focus:outline-none focus:border-[#0D0D0C] focus:bg-[#FFFDF8] transition-all"
+                  className="w-full h-12 pl-11 pr-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] text-sm text-[#0D0D0C] placeholder:text-[#0D0D0C]/35 focus:outline-none focus:border-[#0D0D0C] focus:bg-[#FFFDFA] transition-all"
                 />
               </div>
               <p className="text-[11px] text-[#0D0D0C]/50 pl-2">
@@ -246,7 +246,7 @@ export function AuthModal() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-12 mt-2 rounded-full bg-[#0D0D0C] text-[#FFFDF8] text-sm font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm flex items-center justify-center gap-2"
+            className="w-full h-12 mt-2 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-sm font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm flex items-center justify-center gap-2"
           >
             <span>{mode === "login" ? "Sign In" : "Create Account"}</span>
             <ArrowRight className="w-4 h-4 stroke-[2]" />

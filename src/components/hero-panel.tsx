@@ -83,7 +83,7 @@ export function HeroPanel() {
               </button>
               <button
                 onClick={() => setQuickAddOpen(true)}
-                className="h-12 px-6 rounded-full bg-[#0D0D0C] text-[#FFFDF8] hover:bg-[#0D0D0C]/90 text-sm font-medium flex items-center gap-2 active:scale-95 transition-all shadow-sm"
+                className="h-12 px-6 rounded-full bg-[#0D0D0C] text-[#FFFDFA] hover:bg-[#0D0D0C]/90 text-sm font-medium flex items-center gap-2 active:scale-95 transition-all shadow-sm"
               >
                 <Plus className="w-4 h-4 stroke-[2]" />
                 <span>Add Expense</span>

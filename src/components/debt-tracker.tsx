@@ -61,7 +61,7 @@ export function DebtTracker() {
   };
 
   return (
-    <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-6">
+    <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-6">
       {/* Header & New Button */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#0D0D0C]/[0.06]">
         <div>
@@ -83,7 +83,7 @@ export function DebtTracker() {
 
         <button
           onClick={handleAdd}
-          className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full bg-[#0D0D0C] text-[#FFFDF8] text-sm font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm self-start md:self-auto shrink-0"
+          className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-sm font-medium hover:opacity-90 active:scale-95 transition-all shadow-sm self-start md:self-auto shrink-0"
         >
           <Plus className="w-4 h-4 stroke-[2]" />
           <span>New Instalment Plan</span>
@@ -101,7 +101,7 @@ export function DebtTracker() {
           </p>
           <button
             onClick={handleAdd}
-            className="h-10 px-5 rounded-full bg-[#0D0D0C] text-[#FFFDF8] text-xs sm:text-sm font-medium hover:opacity-90 transition-all"
+            className="h-10 px-5 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-xs sm:text-sm font-medium hover:opacity-90 transition-all"
           >
             + Add First Plan
           </button>
@@ -163,7 +163,7 @@ export function DebtTracker() {
           {summary.nextPayoffName && summary.nextPayoffMonths !== undefined && (
             <div className="p-4 sm:p-4.5 rounded-[20px] bg-[#F4EBC6]/60 border border-[#F4EBC6] flex items-center justify-between gap-3 text-sm">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#0D0D0C] text-[#FFFDF8] flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-full bg-[#0D0D0C] text-[#FFFDFA] flex items-center justify-center shrink-0">
                   <Sparkles className="w-4 h-4 stroke-[1.5]" />
                 </div>
                 <div>
@@ -175,7 +175,7 @@ export function DebtTracker() {
                   </p>
                 </div>
               </div>
-              <span className="hidden sm:inline-flex text-xs font-medium text-[#0D0D0C] px-3 py-1 rounded-full bg-[#FFFDF8] border border-[#0D0D0C]/[0.1]">
+              <span className="hidden sm:inline-flex text-xs font-medium text-[#0D0D0C] px-3 py-1 rounded-full bg-[#FFFDFA] border border-[#0D0D0C]/[0.1]">
                 {summary.nextPayoffMonths} mo to go
               </span>
             </div>
@@ -207,7 +207,7 @@ export function DebtTracker() {
                     <div>
                       <div className="flex items-center gap-2">
                         {category && (
-                          <span className="text-[11px] font-normal px-2 py-0.5 rounded-full border border-[#0D0D0C]/[0.08] bg-[#FFFDF8] text-[#0D0D0C]/70">
+                          <span className="text-[11px] font-normal px-2 py-0.5 rounded-full border border-[#0D0D0C]/[0.08] bg-[#FFFDFA] text-[#0D0D0C]/70">
                             {category.name}
                           </span>
                         )}
@@ -273,7 +273,7 @@ export function DebtTracker() {
                   <div className="mt-4 pt-3 border-t border-[#0D0D0C]/[0.06] flex items-center justify-between gap-2">
                     <button
                       onClick={() => handleEdit(debt)}
-                      className="p-1.5 rounded-full border border-[#0D0D0C]/[0.08] hover:bg-[#FFFDF8] text-[#0D0D0C]/60 hover:text-[#0D0D0C] transition-all text-xs inline-flex items-center gap-1.5 px-3"
+                      className="p-1.5 rounded-full border border-[#0D0D0C]/[0.08] hover:bg-[#FFFDFA] text-[#0D0D0C]/60 hover:text-[#0D0D0C] transition-all text-xs inline-flex items-center gap-1.5 px-3"
                     >
                       <Pencil className="w-3 h-3 stroke-[1.5]" />
                       <span>Edit</span>
@@ -283,7 +283,7 @@ export function DebtTracker() {
                       {debt.paidInstalments > 0 && (
                         <button
                           onClick={() => decrementDebtInstalment(debt.id)}
-                          className="p-1.5 rounded-full border border-[#0D0D0C]/[0.08] hover:bg-[#FFFDF8] text-[#0D0D0C]/50 hover:text-[#0D0D0C] transition-all"
+                          className="p-1.5 rounded-full border border-[#0D0D0C]/[0.08] hover:bg-[#FFFDFA] text-[#0D0D0C]/50 hover:text-[#0D0D0C] transition-all"
                           title="Undo one payment"
                         >
                           <RotateCcw className="w-3.5 h-3.5 stroke-[1.5]" />
@@ -293,7 +293,7 @@ export function DebtTracker() {
                       {!isPaid ? (
                         <button
                           onClick={() => handleQuickPay(debt)}
-                          className="h-8 px-3.5 rounded-full bg-[#0D0D0C] text-[#FFFDF8] text-xs font-medium hover:opacity-90 active:scale-95 transition-all inline-flex items-center gap-1.5 shadow-sm"
+                          className="h-8 px-3.5 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-xs font-medium hover:opacity-90 active:scale-95 transition-all inline-flex items-center gap-1.5 shadow-sm"
                         >
                           <span>+1 Month Paid</span>
                         </button>

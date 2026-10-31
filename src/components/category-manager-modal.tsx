@@ -89,7 +89,7 @@ export function CategoryManagerModal({
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-lg bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] rounded-[28px] shadow-2xl overflow-hidden z-10 flex flex-col max-h-[85vh]">
+      <div className="relative w-full max-w-lg bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] rounded-[28px] shadow-2xl overflow-hidden z-10 flex flex-col max-h-[85vh]">
         {/* Header */}
         <div className="px-7 py-5 flex items-center justify-between border-b border-[#0D0D0C]/[0.06] shrink-0">
           <div className="flex items-center gap-3">
@@ -140,7 +140,7 @@ export function CategoryManagerModal({
                   placeholder="e.g., Gym, Pets, Donations..."
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-full bg-[#FFFDF8] border border-[#0D0D0C]/[0.1] text-xs text-[#0D0D0C] focus:outline-none focus:border-[#0D0D0C]"
+                  className="w-full px-3.5 py-2 rounded-full bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] text-xs text-[#0D0D0C] focus:outline-none focus:border-[#0D0D0C]"
                   autoFocus
                 />
               </div>
@@ -150,7 +150,7 @@ export function CategoryManagerModal({
                 <label className="block text-xs font-normal text-[#0D0D0C]/56 mb-1.5">
                   Select Icon
                 </label>
-                <div className="grid grid-cols-6 sm:grid-cols-8 gap-1.5 max-h-32 overflow-y-auto p-1 bg-[#FFFDF8] rounded-[16px] border border-[#0D0D0C]/[0.06]">
+                <div className="grid grid-cols-6 sm:grid-cols-8 gap-1.5 max-h-32 overflow-y-auto p-1 bg-[#FFFDFA] rounded-[16px] border border-[#0D0D0C]/[0.06]">
                   {AVAILABLE_ICONS.map((ic) => (
                     <button
                       key={ic}
@@ -158,7 +158,7 @@ export function CategoryManagerModal({
                       onClick={() => setIcon(ic)}
                       className={`p-2 rounded-[12px] flex items-center justify-center transition-all ${
                         icon === ic
-                          ? "bg-[#0D0D0C] text-[#FFFDF8]"
+                          ? "bg-[#0D0D0C] text-[#FFFDFA]"
                           : "text-[#0D0D0C]/60 hover:bg-[#FBF6EF] hover:text-[#0D0D0C]"
                       }`}
                     >
@@ -199,7 +199,7 @@ export function CategoryManagerModal({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-medium text-[#FFFDF8] bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 rounded-full shadow-sm"
+                  className="px-5 py-2 text-xs font-medium text-[#FFFDFA] bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 rounded-full shadow-sm"
                 >
                   Save Category
                 </button>
@@ -224,11 +224,11 @@ export function CategoryManagerModal({
               {categories.map((cat) => (
                 <div
                   key={cat.id}
-                  className="p-3.5 flex items-center justify-between gap-3 hover:bg-[#FFFDF8]/70 transition-colors"
+                  className="p-3.5 flex items-center justify-between gap-3 hover:bg-[#FFFDFA]/70 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-[#0D0D0C]/[0.08] bg-[#FFFDF8]"
+                      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-[#0D0D0C]/[0.08] bg-[#FFFDFA]"
                       style={{ color: cat.color || "#0D0D0C" }}
                     >
                       <CategoryIcon iconName={cat.icon} className="w-4 h-4 stroke-[1.5]" />

@@ -84,7 +84,7 @@ export default function BudgetsPage() {
         <div>
           <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-[#0D0D0C] flex items-center gap-3">
             <span>Budget Tracker</span>
-            <span className="text-xs font-normal px-3 py-1 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FFFDF8] text-[#0D0D0C]">
+            <span className="text-xs font-normal px-3 py-1 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FFFDFA] text-[#0D0D0C]">
               Rands Only (ZAR)
             </span>
           </h1>
@@ -96,7 +96,7 @@ export default function BudgetsPage() {
         <div className="flex items-center gap-2.5 flex-wrap">
           <button
             onClick={handleApplyToAllMonths}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDF8] text-xs font-medium transition-all active:scale-95 shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] text-xs font-medium transition-all active:scale-95 shadow-sm"
             title="Make current budget repeat in all future and past months"
           >
             <Repeat className="w-3.5 h-3.5" />
@@ -105,7 +105,7 @@ export default function BudgetsPage() {
 
           <button
             onClick={() => setBudgetModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 text-[#FFFDF8] text-xs font-medium transition-all shadow-sm active:scale-95"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 text-[#FFFDFA] text-xs font-medium transition-all shadow-sm active:scale-95"
           >
             <Edit3 className="w-3.5 h-3.5" />
             <span>Set Limits</span>
@@ -114,7 +114,7 @@ export default function BudgetsPage() {
       </div>
 
       {appliedNotice && (
-        <div className="p-4 rounded-[20px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.15] text-[#0D0D0C] text-xs font-medium flex items-center gap-2.5 shadow-sm">
+        <div className="p-4 rounded-[20px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.15] text-[#0D0D0C] text-xs font-medium flex items-center gap-2.5 shadow-sm">
           <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>Success: Current monthly category budgets are now set to automatically repeat every month.</span>
         </div>
@@ -122,7 +122,7 @@ export default function BudgetsPage() {
 
       {/* Critical Overspending Alert */}
       {overbudgetCategories.length > 0 && (
-        <div className="p-5 rounded-[24px] bg-[#FFFDF8] border border-rose-300 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex items-start gap-3.5">
+        <div className="p-5 rounded-[24px] bg-[#FFFDFA] border border-rose-300 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex items-start gap-3.5">
           <div className="p-2 rounded-full border border-rose-200 bg-rose-50 text-rose-600 shrink-0 mt-0.5">
             <ShieldAlert className="w-4 h-4" />
           </div>
@@ -139,7 +139,7 @@ export default function BudgetsPage() {
       )}
 
       {/* Total Monthly Cap Card + Sorted Counter & Every-Month badge */}
-      <div className="p-8 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-6">
+      <div className="p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2.5 flex-wrap">
@@ -175,7 +175,7 @@ export default function BudgetsPage() {
                 <div
                   className={`w-7 h-7 rounded-full flex items-center justify-center ${
                     allSorted
-                      ? "bg-[#0D0D0C] text-[#FFFDF8]"
+                      ? "bg-[#0D0D0C] text-[#FFFDFA]"
                       : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/60"
                   }`}
                 >
@@ -264,9 +264,9 @@ export default function BudgetsPage() {
             return (
               <div
                 key={item.category.id}
-                className={`p-6 rounded-[24px] bg-[#FFFDF8] border transition-all duration-200 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between ${
+                className={`p-6 rounded-[24px] bg-[#FFFDFA] border transition-all duration-200 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between ${
                   isSorted
-                    ? "border-[#0D0D0C] bg-[#FFFDF8]"
+                    ? "border-[#0D0D0C] bg-[#FFFDFA]"
                     : isRecurring
                     ? "border-[#0D0D0C]/30"
                     : status.isOver
@@ -278,7 +278,7 @@ export default function BudgetsPage() {
                   <div className="flex items-center justify-between gap-3 mb-4">
                     <div className="flex items-center gap-3 min-w-0">
                       <div
-                        className="w-10 h-10 rounded-full border border-[#0D0D0C]/[0.08] flex items-center justify-center shrink-0 bg-[#FFFDF8]"
+                        className="w-10 h-10 rounded-full border border-[#0D0D0C]/[0.08] flex items-center justify-center shrink-0 bg-[#FFFDFA]"
                         style={{ color: item.category.color || "#0D0D0C" }}
                       >
                         <CategoryIcon iconName={item.category.icon} className="w-4 h-4 stroke-[1.5]" />
@@ -316,7 +316,7 @@ export default function BudgetsPage() {
                         onClick={() => handleToggleRecurring(item.category.id, item.budget)}
                         className={`p-2 rounded-full text-xs transition-all ${
                           isRecurring
-                            ? "bg-[#0D0D0C] text-[#FFFDF8]"
+                            ? "bg-[#0D0D0C] text-[#FFFDFA]"
                             : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/60 hover:text-[#0D0D0C] hover:bg-[#FBF6EF]"
                         }`}
                         title={
@@ -334,7 +334,7 @@ export default function BudgetsPage() {
                         onClick={() => handleToggleSorted(item.category.id, isSorted)}
                         className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95 ${
                           isSorted
-                            ? "bg-[#0D0D0C] text-[#FFFDF8]"
+                            ? "bg-[#0D0D0C] text-[#FFFDFA]"
                             : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/70 hover:border-[#0D0D0C] hover:text-[#0D0D0C]"
                         }`}
                         title={isSorted ? "Mark as unsorted" : "Mark as sorted / paid"}

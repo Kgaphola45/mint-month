@@ -7,7 +7,7 @@
 @layer base {
   :root {
     --cream: #FBF6EF;
-    --cream-card: #FFFDF8;
+    --cream-card: #FFFDFA;
     --ink: #0D0D0C;
     --ink-sec: rgba(13, 13, 12, 0.56);
     --ink-hint: rgba(13, 13, 12, 0.42);
@@ -17,7 +17,7 @@
     --background: 38 48% 96%; /* #FBF6EF */
     --foreground: 60 7% 5%;   /* #0D0D0C */
 
-    --card: 43 100% 99%;      /* #FFFDF8 */
+    --card: 43 100% 99%;      /* #FFFDFA */
     --card-foreground: 60 7% 5%;
 
     --popover: 43 100% 99%;
@@ -48,7 +48,7 @@
   /* Override dark mode completely to enforce cream & ink editorial theme */
   .dark {
     --cream: #FBF6EF;
-    --cream-card: #FFFDF8;
+    --cream-card: #FFFDFA;
     --ink: #0D0D0C;
     --ink-sec: rgba(13, 13, 12, 0.56);
     --ink-hint: rgba(13, 13, 12, 0.42);
@@ -151,7 +151,7 @@
 
 .btn-vela-outline:hover {
   background: #0D0D0C;
-  color: #FFFDF8;
+  color: #FFFDFA;
   border-color: #0D0D0C;
 }
 
@@ -179,7 +179,7 @@
   border-radius: 1rem !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06) !important;
   border: 1px solid rgba(13, 13, 12, 0.08) !important;
-  background-color: #FFFDF8 !important;
+  background-color: #FFFDFA !important;
   color: #0D0D0C !important;
   font-family: 'Inter Tight', sans-serif !important;
 }

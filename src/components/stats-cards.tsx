@@ -53,7 +53,7 @@ export function StatsCards() {
             e.stopPropagation();
             setBudgetModalOpen(true);
           }}
-          className="px-3 py-1 rounded-[7px] border-[1.4px] border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-xs font-medium text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDF8] transition-all"
+          className="px-3 py-1 rounded-[7px] border-[1.4px] border-[#0D0D0C]/20 hover:border-[#0D0D0C] text-xs font-medium text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] transition-all"
         >
           Edit
         </button>
@@ -112,7 +112,7 @@ export function StatsCards() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: i * 0.05 }}
             onClick={card.onClick}
-            className={`group relative p-6 rounded-[24px] bg-[#FFFDF8] border border-[#0D0D0C]/[0.08] hover:border-[#0D0D0C]/20 transition-all duration-200 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between ${
+            className={`group relative p-6 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] hover:border-[#0D0D0C]/20 transition-all duration-200 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between ${
               card.onClick ? "cursor-pointer" : ""
             }`}
           >
