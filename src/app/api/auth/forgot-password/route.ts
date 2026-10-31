@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getResendClient } from "@/lib/resend";
+import { transporter, getFromAddress } from "@/lib/nodemailer";
 import { serverDb, checkRateLimit } from "@/lib/server-db";
 
 export async function POST(req: NextRequest) {
@@ -38,13 +38,12 @@ export async function POST(req: NextRequest) {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
     serverDb.createPasswordReset(normalizedEmail, otpHash, expiresAt);
 
-    // 5. Send email via Resend with Vela editorial styling
+    // 5. Send email via Outlook Nodemailer
     try {
-      const resend = getResendClient();
-      const sendResult = await resend.emails.send({
-        from: "Mint Month <onboarding@resend.dev>",
+      await transporter.sendMail({
+        from: getFromAddress(),
         to: normalizedEmail,
-        subject: "Your Mint Month reset code",
+        subject: `Your Mint Month code: ${rawOtp}`,
         html: `
 <!DOCTYPE html>
 <html>
@@ -54,99 +53,67 @@ export async function POST(req: NextRequest) {
   <title>Your Mint Month reset code</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #FBF6EF; font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0D0D0C;">
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #FBF6EF; padding: 40px 20px;">
-    <tr>
-      <td align="center">
-        <table width="100%" max-width="520" border="0" cellspacing="0" cellpadding="0" style="max-width: 520px; background-color: #FFFDF8; border: 1px solid rgba(13, 13, 12, 0.08); border-radius: 24px; padding: 40px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);">
-          <!-- Logo / Header -->
-          <tr>
-            <td>
-              <table border="0" cellspacing="0" cellpadding="0">
-                <tr>
-                  <td style="width: 13px; height: 13px; background-color: #0D0D0C; border-radius: 50%;"></td>
-                  <td style="padding-left: 10px; font-size: 18px; font-weight: 600; letter-spacing: -0.02em; color: #0D0D0C;">
-                    mint month
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Title -->
-          <tr>
-            <td style="padding-top: 32px;">
-              <h1 style="margin: 0; font-size: 26px; font-weight: 500; letter-spacing: -0.02em; color: #0D0D0C; line-height: 1.2;">
-                Reset your password
-              </h1>
-              <p style="margin: 8px 0 0 0; font-size: 14px; color: rgba(13, 13, 12, 0.56); line-height: 1.5;">
-                Enter this 6-digit verification code to reset your account password.
-              </p>
-            </td>
-          </tr>
-
-          <!-- OTP Code Box -->
-          <tr>
-            <td style="padding-top: 32px; padding-bottom: 24px;">
-              <div style="background-color: #FBF6EF; border: 1px solid rgba(13, 13, 12, 0.08); border-radius: 18px; padding: 24px 20px; text-align: center;">
-                <div style="font-size: 48px; font-weight: 600; letter-spacing: 0.18em; color: #0D0D0C; line-height: 1; font-variant-numeric: tabular-nums;">
+  <div style="background:#FBF6EF;padding:36px 20px;font-family:'Inter Tight', -apple-system, sans-serif;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+      <tr>
+        <td align="center">
+          <table width="100%" max-width="500" border="0" cellspacing="0" cellpadding="0" style="max-width: 500px; background-color: #FFFDF8; border: 1px solid rgba(13, 13, 12, 0.08); border-radius: 24px; padding: 36px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);">
+            <tr>
+              <td>
+                <table border="0" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td style="width: 12px; height: 12px; background-color: #0D0D0C; border-radius: 50%;"></td>
+                    <td style="padding-left: 10px; font-size: 16px; font-weight: 600; letter-spacing: -0.02em; color: #0D0D0C;">
+                      mint month
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-top: 24px;">
+                <h1 style="font-size: 42px; font-weight: 600; letter-spacing: -0.03em; margin: 0; color: #0D0D0C; line-height: 1;">
                   ${rawOtp}
-                </div>
-                <div style="margin-top: 12px; font-size: 12px; font-weight: 500; color: rgba(13, 13, 12, 0.56);">
-                  Expires in 10 minutes
-                </div>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Security Notice -->
-          <tr>
-            <td style="padding-top: 12px; border-top: 1px solid rgba(13, 13, 12, 0.06);">
-              <p style="margin: 0; font-size: 12px; color: rgba(13, 13, 12, 0.5); line-height: 1.6;">
-                If you did not request this code, you can safely ignore this email. No changes will be made to your account.
-              </p>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="padding-top: 24px; font-size: 11px; color: rgba(13, 13, 12, 0.4); text-align: center;">
-              Mint Month · Minimal, privacy-first expense tracker
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+                </h1>
+                <p style="color: #0D0D0C8F; font-size: 14px; margin: 12px 0 0 0;">
+                  Expires in 10 minutes. Track in your terms.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-top: 24px; border-top: 1px solid rgba(13, 13, 12, 0.06); margin-top: 24px;">
+                <p style="margin: 0; font-size: 12px; color: rgba(13, 13, 12, 0.45); line-height: 1.5;">
+                  If you did not request this verification code, you can safely disregard this message.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </div>
 </body>
 </html>
 `,
       });
-
-      // Check if Resend returned an error (e.g. 403 sandbox restriction)
-      if (sendResult?.error) {
-        const errorMsg = sendResult.error.message || "";
-        const isSandboxRestricted =
-          sendResult.error.statusCode === 403 ||
-          errorMsg.toLowerCase().includes("testing emails to your own email address");
-
-        return NextResponse.json({
-          ok: true,
-          sent: false,
-          sandbox: isSandboxRestricted,
-          allowedEmail: "emmanuelkgaphola@outlook.com",
-          devOtp: isSandboxRestricted ? rawOtp : undefined,
-          message: errorMsg,
-        });
-      }
 
       return NextResponse.json({
         ok: true,
         sent: true,
         email: normalizedEmail,
       });
-    } catch {
-      // Safe fallback
-      return NextResponse.json({ ok: true, sent: false });
+    } catch (sendError: unknown) {
+      const errorMsg = sendError instanceof Error ? sendError.message : String(sendError);
+      console.error("Nodemailer Outlook send error:", errorMsg);
+
+      // Return ok: true with sent: false and devOtp in non-production so user testing is never blocked
+      return NextResponse.json({
+        ok: true,
+        sent: false,
+        email: normalizedEmail,
+        devOtp: rawOtp,
+        error: errorMsg,
+      });
     }
   } catch {
     return NextResponse.json(

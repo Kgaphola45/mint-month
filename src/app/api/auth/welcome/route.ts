@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getResendClient } from "@/lib/resend";
+import { transporter, getFromAddress } from "@/lib/nodemailer";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,9 +17,8 @@ export async function POST(req: NextRequest) {
     const displayName = (name && typeof name === "string" ? name.trim() : "Valued Member");
 
     try {
-      const resend = getResendClient();
-      const sendResult = await resend.emails.send({
-        from: "Mint Month <onboarding@resend.dev>",
+      await transporter.sendMail({
+        from: getFromAddress(),
         to: normalizedEmail,
         subject: `Welcome to Mint Month, ${displayName} — Your vault is active`,
         html: `
@@ -101,27 +100,18 @@ export async function POST(req: NextRequest) {
 `,
       });
 
-      if (sendResult?.error) {
-        const errorMsg = sendResult.error.message || "";
-        const isSandbox =
-          sendResult.error.statusCode === 403 ||
-          errorMsg.toLowerCase().includes("testing emails to your own email address");
-
-        return NextResponse.json({
-          ok: true,
-          sent: false,
-          sandbox: isSandbox,
-          allowedEmail: "emmanuelkgaphola@outlook.com",
-          message: errorMsg,
-        });
-      }
-
       return NextResponse.json({
         ok: true,
         sent: true,
       });
-    } catch {
-      return NextResponse.json({ ok: true, sent: false });
+    } catch (sendError: unknown) {
+      const errorMsg = sendError instanceof Error ? sendError.message : String(sendError);
+      console.error("Nodemailer Outlook send error (welcome):", errorMsg);
+      return NextResponse.json({
+        ok: true,
+        sent: false,
+        error: errorMsg,
+      });
     }
   } catch {
     return NextResponse.json(
@@ -130,4 +120,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
