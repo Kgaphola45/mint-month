@@ -32,6 +32,7 @@ import {
   fetchSupabaseDebtContracts,
   upsertSupabaseDebtContract,
   deleteSupabaseDebtContract,
+  pushLocalDataToSupabase,
 } from "@/lib/supabase-sync";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 
@@ -88,6 +89,7 @@ interface ExpenseStore {
   register: (input: RegisterInput) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
   isSyncingSupabase: boolean;
   syncSupabaseData: (userId?: string) => Promise<void>;
+  pushAllToSupabase: () => Promise<{ success: boolean; pushedCount: number; error?: string }>;
   logout: () => void;
   switchUser: (userId: string) => void;
   deleteAccount: (userId?: string) => Promise<{ success: boolean; error?: string }>;
@@ -328,6 +330,22 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     } finally {
       set({ isSyncingSupabase: false });
     }
+  },
+
+  
+  pushAllToSupabase: async () => {
+    const currentUser = get().currentUser;
+    if (!currentUser?.id || !isSupabaseConfigured()) {
+      return { success: false, pushedCount: 0, error: "Please sign in to push records to Supabase." };
+    }
+    return await pushLocalDataToSupabase(
+      {
+        expenses: get().expenses,
+        budgets: get().budgets,
+        debts: get().debts,
+      },
+      currentUser.id
+    );
   },
 
   login: async (input) => {

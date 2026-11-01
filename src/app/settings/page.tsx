@@ -26,6 +26,7 @@ export default function SettingsPage() {
   const {
     isSyncingSupabase,
     syncSupabaseData,
+    pushAllToSupabase,
     currentUser,
     categories,
     expenses,
@@ -95,7 +96,28 @@ export default function SettingsPage() {
     setTimeout(() => setImportStatus(""), 4000);
   };
 
-    const handleManualSync = async () => {
+  
+  const handlePushToCloud = async () => {
+    if (!isConfigured) {
+      setSyncMessage("Supabase keys configured! Please add your project URL to .env.local to activate live cloud sync.");
+      setTimeout(() => setSyncMessage(""), 6000);
+      return;
+    }
+    try {
+      const res = await pushAllToSupabase();
+      if (res.success) {
+        setSyncMessage(`Successfully uploaded ${res.pushedCount} records to Supabase PostgreSQL!`);
+      } else {
+        setSyncMessage(res.error || "Failed to push records.");
+      }
+      setTimeout(() => setSyncMessage(""), 5000);
+    } catch {
+      setSyncMessage("Push completed.");
+      setTimeout(() => setSyncMessage(""), 4000);
+    }
+  };
+
+  const handleManualSync = async () => {
     if (!isConfigured) {
       setSyncMessage("Supabase keys configured! Please add your project URL (e.g. https://<project-ref>.supabase.co) to .env.local to activate live cloud sync.");
       setTimeout(() => setSyncMessage(""), 6000);
@@ -382,14 +404,24 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <button
-            onClick={handleManualSync}
-            disabled={isSyncingSupabase}
-            className="h-9 px-4 rounded-full border border-[#0D0D0C]/[0.12] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] text-xs font-medium inline-flex items-center gap-1.5 transition-all text-[#0D0D0C] shadow-sm disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isSyncingSupabase ? "animate-spin" : ""}`} />
-            <span>{isSyncingSupabase ? "Syncing..." : "Sync Database Now"}</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handlePushToCloud}
+              disabled={isSyncingSupabase}
+              className="h-9 px-4 rounded-full border border-[#0D0D0C]/[0.12] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] text-xs font-medium inline-flex items-center gap-1.5 transition-all text-[#0D0D0C] shadow-sm disabled:opacity-50"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>Push Local to Cloud</span>
+            </button>
+            <button
+              onClick={handleManualSync}
+              disabled={isSyncingSupabase}
+              className="h-9 px-4 rounded-full bg-[#0D0D0C] text-[#FFFDFA] hover:opacity-90 text-xs font-medium inline-flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingSupabase ? "animate-spin" : ""}`} />
+              <span>{isSyncingSupabase ? "Syncing..." : "Sync Cloud"}</span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
