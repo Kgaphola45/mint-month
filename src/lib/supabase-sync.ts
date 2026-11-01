@@ -469,3 +469,70 @@ export async function deleteSupabaseDebtContract(
   return !error;
 }
 
+
+// ==========================================
+// 6. BULK LOCAL-TO-CLOUD DATA PUSH
+// ==========================================
+
+export async function pushLocalDataToSupabase(
+  data: {
+    expenses: Expense[];
+    budgets: Budget[];
+    debts: DebtInstalment[];
+  },
+  userId: string
+): Promise<{ success: boolean; pushedCount: number; error?: string }> {
+  const supabase = getSupabaseClient();
+  if (!supabase)
+    return { success: false, pushedCount: 0, error: "Supabase not configured" };
+
+  try {
+    let count = 0;
+    // 1. Transactions
+    if (data.expenses && data.expenses.length > 0) {
+      const txRows = data.expenses.map((e) => ({
+        id: isUUID(e.id) ? e.id : undefined,
+        user_id: userId,
+        amount: e.amount,
+        category: e.categoryId,
+        note: e.note || "",
+        payment_method: e.paymentMethod || "Card",
+        date: e.date,
+        is_recurring: Boolean(e.isRecurring),
+      }));
+      const { error: txErr } = await supabase.from("transactions").upsert(txRows as any);
+      if (!txErr) count += txRows.length;
+    }
+
+    // 2. Budgets
+    if (data.budgets && data.budgets.length > 0) {
+      const budgetRows = data.budgets.map((b) => ({
+        user_id: userId,
+        month: b.month,
+        total: b.total,
+        categories: b.categories as any,
+      }));
+      const { error: bgErr } = await supabase.from("budgets").upsert(budgetRows as any);
+      if (!bgErr) count += budgetRows.length;
+    }
+
+    // 3. Debts
+    if (data.debts && data.debts.length > 0) {
+      const debtRows = data.debts.map((d) => ({
+        id: isUUID(d.id) ? d.id : undefined,
+        user_id: userId,
+        name: d.name,
+        total_amount: d.totalAmount || d.monthlyAmount * d.totalInstalments,
+        monthly_instalment: d.monthlyAmount,
+        remaining_balance: Math.max(0, (d.totalAmount || 0) - d.paidInstalments * d.monthlyAmount),
+        months_left: Math.max(0, d.totalInstalments - d.paidInstalments),
+      }));
+      const { error: debtErr } = await supabase.from("debt_contracts").upsert(debtRows as any);
+      if (!debtErr) count += debtRows.length;
+    }
+
+    return { success: true, pushedCount: count };
+  } catch (err: any) {
+    return { success: false, pushedCount: 0, error: err?.message || "Failed to push" };
+  }
+}
