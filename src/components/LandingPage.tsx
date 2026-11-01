@@ -578,21 +578,21 @@ export function LandingPage() {
             <span>© 2026</span>
           </div>
 
-          <div className="flex items-center gap-6">
-            <button
-              onClick={() => setAuthModalOpen(true, "login")}
-              className="hover:text-[#0D0D0C] transition-colors"
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => setAuthModalOpen(true, "register")}
-              className="hover:text-[#0D0D0C] transition-colors"
-            >
-              Register
-            </button>
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+            <Link href="/privacy" className="hover:text-[#0D0D0C] transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-[#0D0D0C] transition-colors">
+              Terms of Service
+            </Link>
+            <Link href="/legal/popia" className="hover:text-[#0D0D0C] transition-colors">
+              POPIA
+            </Link>
+            <Link href="/legal/disclaimer" className="hover:text-[#0D0D0C] transition-colors">
+              Disclaimer
+            </Link>
             <Link href="/settings" className="hover:text-[#0D0D0C] transition-colors">
-              Privacy & Settings
+              Settings
             </Link>
           </div>
         </div>
