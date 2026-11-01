@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { AlertCircle } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, getBudgetStatus } from "@/lib/utils";
@@ -13,15 +13,95 @@ import { CategoryChart } from "@/components/category-chart";
 import { DailyChart } from "@/components/daily-chart";
 import { TransactionsList } from "@/components/transactions-list";
 import { EditorialStoryBanner } from "@/components/editorial-story-banner";
+import { LandingPage } from "@/components/LandingPage";
+import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
 export default function DashboardPage() {
   const {
+    currentUser,
+    isAuthenticated,
+    isLoaded,
     selectedMonth,
     getMonthSummary,
     currency,
     setBudgetModalOpen,
   } = useExpenseStore();
 
+  const [supabaseChecked, setSupabaseChecked] = useState(false);
+  const [hasSupabaseUser, setHasSupabaseUser] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkAuth() {
+      if (!isSupabaseConfigured()) {
+        if (isMounted) setSupabaseChecked(true);
+        return;
+      }
+
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        if (isMounted) setSupabaseChecked(true);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        if (isMounted) {
+          if (!error && data?.user) {
+            setHasSupabaseUser(true);
+          } else {
+            setHasSupabaseUser(false);
+          }
+          setSupabaseChecked(true);
+        }
+      } catch {
+        if (isMounted) {
+          setHasSupabaseUser(false);
+          setSupabaseChecked(true);
+        }
+      }
+    }
+
+    checkAuth();
+
+    const supabase = getSupabaseClient();
+    let authListener: { unsubscribe: () => void } | null = null;
+    if (supabase) {
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (isMounted) {
+          setHasSupabaseUser(Boolean(session?.user));
+        }
+      });
+      authListener = data?.subscription || null;
+    }
+
+    return () => {
+      isMounted = false;
+      authListener?.unsubscribe();
+    };
+  }, []);
+
+  const isLoggedIn = Boolean(hasSupabaseUser || currentUser || isAuthenticated);
+
+  // If store is still initializing or checking initial Supabase session
+  if (
+    !isLoaded ||
+    (isSupabaseConfigured() && !supabaseChecked && !currentUser && !isAuthenticated)
+  ) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 rounded-full border-2 border-[#0D0D0C] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  // If user is not logged in, render the Vela-editorial Landing Page
+  if (!isLoggedIn) {
+    return <LandingPage />;
+  }
+
+  // Authenticated Dashboard
   const summary = getMonthSummary(selectedMonth);
   const budgetStatus = getBudgetStatus(summary.totalSpent, summary.totalBudget);
 
@@ -46,9 +126,9 @@ export default function DashboardPage() {
                 <h4 className="text-sm font-medium text-[#0D0D0C]">
                   {summary.remaining < 0
                     ? `Monthly limit exceeded by ${formatCurrency(
-                      Math.abs(summary.remaining),
-                      currency
-                    )}`
+                        Math.abs(summary.remaining),
+                        currency
+                      )}`
                     : `Budget alert: ${budgetStatus.percentage}% of your monthly cap used`}
                 </h4>
                 <p className="text-xs text-[#0D0D0C]/56 mt-0.5">
@@ -86,13 +166,13 @@ export default function DashboardPage() {
           <RecurringTimeline />
         </section>
 
-        {/* 6. Visual Charts Grid (Category Donut & Daily Bar Flow) */}
+        {/* 7. Visual Charts Grid (Category Donut & Daily Bar Flow) */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <CategoryChart />
           <DailyChart />
         </section>
 
-        {/* 7. Recent Transactions List */}
+        {/* 8. Recent Transactions List */}
         <section>
           <TransactionsList limit={6} showViewAll={true} />
         </section>

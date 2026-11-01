@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { Navbar } from "./navbar";
 import { QuickAddModal } from "./quick-add-modal";
@@ -12,23 +13,57 @@ import { PurchaseSimulatorModal } from "./purchase-simulator-modal";
 import { EditorialStoryModal } from "./editorial-story-modal";
 import { CommandPalette } from "./command-palette";
 import { PaydayDigestModal } from "./payday-digest-modal";
+import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { initStore, isLoaded, digestModalOpen, setDigestModalOpen } = useExpenseStore();
+  const pathname = usePathname();
+  const {
+    initStore,
+    isLoaded,
+    digestModalOpen,
+    setDigestModalOpen,
+    currentUser,
+    isAuthenticated,
+  } = useExpenseStore();
+
+  const [hasSupabaseSession, setHasSupabaseSession] = useState(false);
 
   useEffect(() => {
     initStore();
+
+    if (!isSupabaseConfigured()) return;
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (!error && data?.user) {
+        setHasSupabaseSession(true);
+      }
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setHasSupabaseSession(Boolean(session?.user));
+      }
+    );
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
   }, [initStore]);
+
+  const isLoggedIn = Boolean(currentUser || isAuthenticated || hasSupabaseSession);
+  const isLanding = pathname === "/" && !isLoggedIn;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FBF6EF] text-[#0D0D0C] relative selection:bg-[#0D0D0C]/10 selection:text-[#0D0D0C]">
       {/* Fine SVG fractal noise grain overlay */}
       <div className="fine-grain-overlay" aria-hidden="true" />
 
-      {/* 80px tall hairline navbar */}
-      <Navbar />
+      {/* 80px tall hairline navbar - only rendered when authenticated or on subpages */}
+      {!isLanding && <Navbar />}
 
-      <main className="flex-1 w-full pb-24 lg:pb-16">
+      <main className={`flex-1 w-full ${isLanding ? "" : "pb-24 lg:pb-16"}`}>
         {isLoaded ? (
           children
         ) : (

@@ -17,52 +17,7 @@ const STORAGE_KEYS = {
   INITIALIZED: "mint_month_initialized_v2",
 };
 
-export const DEFAULT_DEBTS: DebtInstalment[] = [
-  {
-    id: "debt-payjustnow",
-    name: "PayJustNow",
-    totalInstalments: 3,
-    paidInstalments: 2,
-    monthlyAmount: 550,
-    totalAmount: 1650,
-    categoryId: "cat-debt",
-    notes: "3-month interest-free split (1 payment remaining)",
-    isPaidOff: false,
-  },
-  {
-    id: "debt-phone-contract",
-    name: "Phone Contract",
-    totalInstalments: 24,
-    paidInstalments: 11,
-    monthlyAmount: 899,
-    totalAmount: 21576,
-    categoryId: "cat-debt",
-    notes: "24-month device & contract (13 months remaining)",
-    isPaidOff: false,
-  },
-  {
-    id: "debt-laptop-contract",
-    name: "Laptop Contract",
-    totalInstalments: 24,
-    paidInstalments: 14,
-    monthlyAmount: 1199,
-    totalAmount: 28776,
-    categoryId: "cat-debt",
-    notes: "Workstation laptop finance (10 months remaining)",
-    isPaidOff: false,
-  },
-  {
-    id: "debt-tfg",
-    name: "TFG Clothing Account",
-    totalInstalments: 6,
-    paidInstalments: 4,
-    monthlyAmount: 650,
-    totalAmount: 3900,
-    categoryId: "cat-clothing",
-    notes: "6-month interest-free store plan (2 instalments left)",
-    isPaidOff: false,
-  },
-];
+export const DEFAULT_DEBTS: DebtInstalment[] = [];
 
 export interface StorageAdapter {
   getExpenses(): Expense[];
@@ -115,7 +70,6 @@ export class LocalStorageAdapter implements StorageAdapter {
 
     const initialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
     if (!initialized) {
-      const seed = generateSeedData();
       const defaultRecurring: Record<string, number> = {
         "cat-subscriptions": 250,
         "cat-debt": 3500,
@@ -127,11 +81,11 @@ export class LocalStorageAdapter implements StorageAdapter {
       };
 
       localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(DEFAULT_CATEGORIES));
-      localStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify(seed.expenses));
-      localStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(seed.budgets));
+      localStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify([]));
       localStorage.setItem(STORAGE_KEYS.RECURRING_BUDGETS, JSON.stringify(defaultRecurring));
       localStorage.setItem(STORAGE_KEYS.CLEARED_RECURRING, JSON.stringify({}));
-      localStorage.setItem(STORAGE_KEYS.DEBTS, JSON.stringify(DEFAULT_DEBTS));
+      localStorage.setItem(STORAGE_KEYS.DEBTS, JSON.stringify([]));
       localStorage.setItem(STORAGE_KEYS.CURRENCY, "ZAR");
       localStorage.setItem(STORAGE_KEYS.INITIALIZED, "true");
     }
@@ -398,9 +352,9 @@ export class LocalStorageAdapter implements StorageAdapter {
     try {
       const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.DEBTS));
       if (raw) return JSON.parse(raw);
-      return DEFAULT_DEBTS;
+      return [];
     } catch {
-      return DEFAULT_DEBTS;
+      return [];
     }
   }
 
