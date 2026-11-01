@@ -57,3 +57,4 @@ export const useBudgetStore = <T>(
     return selector(slice);
   });
 };
+
