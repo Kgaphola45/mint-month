@@ -99,7 +99,7 @@
       will-change: opacity;
     }
 
-    /* 1. Message: lemon cream */
+    /* 1. Track: lemon cream */
     .gradient-layer.layer-0 {
       background:
         radial-gradient(circle at 86% 76%, rgba(246, 222, 104, 0.95) 0%, rgba(246, 222, 104, 0) 58%),
@@ -107,7 +107,7 @@
         linear-gradient(180deg, #F2ECDF 0%, #F4EBC6 100%);
     }
 
-    /* 2. Browse: peach & apricot */
+    /* 2. Budget: peach & apricot */
     .gradient-layer.layer-1 {
       background:
         radial-gradient(circle at 86% 76%, rgba(249, 150, 84, 0.92) 0%, rgba(249, 150, 84, 0) 58%),
@@ -115,7 +115,7 @@
         linear-gradient(180deg, #F8DCC7 0%, #F9CBA9 100%);
     }
 
-    /* 3. Transact: warm sage mint */
+    /* 3. Spend: warm sage mint */
     .gradient-layer.layer-2 {
       background:
         radial-gradient(circle at 86% 76%, rgba(150, 206, 150, 0.92) 0%, rgba(150, 206, 150, 0) 58%),
@@ -123,7 +123,7 @@
         linear-gradient(180deg, #E9EBE0 0%, #DFE9D4 100%);
     }
 
-    /* 4. Build web: rose lilac */
+    /* 4. Save: rose lilac */
     .gradient-layer.layer-3 {
       background:
         radial-gradient(circle at 86% 76%, rgba(222, 150, 200, 0.92) 0%, rgba(222, 150, 200, 0) 58%),
@@ -381,10 +381,10 @@
     }
 
     /* Word specific tints */
-    .slot-0 { --tint: #E9C22E; } /* Message */
-    .slot-1 { --tint: #F2772F; } /* Browse */
-    .slot-2 { --tint: #3FB874; } /* Transact */
-    .slot-3 { --tint: #C564C4; } /* Build web */
+    .slot-0 { --tint: #E9C22E; } /* Track */
+    .slot-1 { --tint: #F2772F; } /* Budget */
+    .slot-2 { --tint: #3FB874; } /* Spend */
+    .slot-3 { --tint: #C564C4; } /* Save */
 
     /* ==========================================================================
        Row at top 578u (Store buttons + 2-line caption)
@@ -773,40 +773,40 @@
         <div class="headline-line-1">
           <div class="slots-container" id="slotsContainer">
 
-            <!-- Slot 0: Message -->
+            <!-- Slot 0: Track -->
             <div class="word-slot slot-0" id="slot0">
               <span class="icon-wrapper" id="iconWrap0" style="--mask-url: url('https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/83de7c35-dd91-4e56-bfb8-0ffafc83d0e0.webp');">
-                <img class="icon-img" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/83de7c35-dd91-4e56-bfb8-0ffafc83d0e0.webp" alt="Message icon" />
+                <img class="icon-img" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/83de7c35-dd91-4e56-bfb8-0ffafc83d0e0.webp" alt="Track icon" />
                 <span class="icon-tint"></span>
               </span>
-              <span class="slot-word-text" id="wordText0">Message</span>
+              <span class="slot-word-text" id="wordText0">Track</span>
             </div>
 
-            <!-- Slot 1: Browse -->
+            <!-- Slot 1: Budget -->
             <div class="word-slot slot-1" id="slot1">
               <span class="icon-wrapper" id="iconWrap1" style="--mask-url: url('https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/4d952211-0474-48cc-af48-58f68b3b7525.webp');">
-                <img class="icon-img" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/4d952211-0474-48cc-af48-58f68b3b7525.webp" alt="Browse icon" />
+                <img class="icon-img" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/4d952211-0474-48cc-af48-58f68b3b7525.webp" alt="Budget icon" />
                 <span class="icon-tint"></span>
               </span>
-              <span class="slot-word-text" id="wordText1">Browse</span>
+              <span class="slot-word-text" id="wordText1">Budget</span>
             </div>
 
-            <!-- Slot 2: Transact -->
+            <!-- Slot 2: Spend -->
             <div class="word-slot slot-2" id="slot2">
               <span class="icon-wrapper" id="iconWrap2" style="--mask-url: url('https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/e2e91fca-5b3f-4e0e-a437-8a581592e407.webp');">
-                <img class="icon-img" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/e2e91fca-5b3f-4e0e-a437-8a581592e407.webp" alt="Transact icon" />
+                <img class="icon-img" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/e2e91fca-5b3f-4e0e-a437-8a581592e407.webp" alt="Spend icon" />
                 <span class="icon-tint"></span>
               </span>
-              <span class="slot-word-text" id="wordText2">Transact</span>
+              <span class="slot-word-text" id="wordText2">Spend</span>
             </div>
 
-            <!-- Slot 3: Build web -->
+            <!-- Slot 3: Save -->
             <div class="word-slot slot-3" id="slot3">
               <span class="icon-wrapper" id="iconWrap3" style="--mask-url: url('https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/6b32bb47-4ad6-4938-a637-c997b373c68b.webp');">
-                <img class="icon-img" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/6b32bb47-4ad6-4938-a637-c997b373c68b.webp" alt="Build web icon" />
+                <img class="icon-img" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/6b32bb47-4ad6-4938-a637-c997b373c68b.webp" alt="Save icon" />
                 <span class="icon-tint"></span>
               </span>
-              <span class="slot-word-text" id="wordText3">Build web</span>
+              <span class="slot-word-text" id="wordText3">Save</span>
             </div>
 
           </div>
@@ -871,16 +871,16 @@
 
         <div class="stats-metrics">
           <div class="stat-item">
-            <div class="stat-number">11.5M+</div>
-            <div class="stat-label">Active accounts</div>
+            <div class="stat-number">R280/day</div>
+            <div class="stat-label">Guilt-Free Safe-to-Spend</div>
           </div>
           <div class="stat-item">
-            <div class="stat-number">$0.0002</div>
-            <div class="stat-label">Average cost per transaction</div>
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Local-First & Client-Side Encrypted</div>
           </div>
           <div class="stat-item">
-            <div class="stat-number">80+</div>
-            <div class="stat-label">Dapps integrations</div>
+            <div class="stat-number">0</div>
+            <div class="stat-label">Bank credentials required</div>
           </div>
         </div>
 
