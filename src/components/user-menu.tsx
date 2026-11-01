@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LogOut,
   UserPlus,
@@ -14,6 +15,7 @@ import { useExpenseStore } from "@/store/useExpenseStore";
 import { DeleteAccountModal } from "@/components/delete-account-modal";
 
 export function UserMenu() {
+  const pathname = usePathname();
   const {
     currentUser,
     isAuthenticated,
@@ -37,6 +39,11 @@ export function UserMenu() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Close dropdown when route/pathname changes
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   // ONE auth button when logged out: Sign In only (Register link is inside Sign In modal/page)
   if (!isAuthenticated || !currentUser) {

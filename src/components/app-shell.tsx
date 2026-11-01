@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { Navbar } from "./navbar";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { getSupabaseCurrentUser } from "@/lib/supabase-sync";
+import { storage } from "@/lib/storage";
 
 // Dynamically import heavy modals & overlays to eliminate them from initial bundle
 const CommandPalette = dynamic(
@@ -65,15 +67,48 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const supabase = getSupabaseClient();
     if (!supabase) return;
 
-    supabase.auth.getUser().then(({ data, error }) => {
+    // Verify Supabase session and ensure currentUser is populated
+    supabase.auth.getUser().then(async ({ data, error }) => {
       if (!error && data?.user) {
         setHasSupabaseSession(true);
+        const state = useExpenseStore.getState();
+        if (!state.currentUser) {
+          const supaUser = await getSupabaseCurrentUser();
+          if (supaUser) {
+            storage.setCurrentUser(supaUser);
+            useExpenseStore.setState({
+              currentUser: supaUser,
+              isAuthenticated: true,
+            });
+            state.syncSupabaseData(supaUser.id);
+          }
+        }
       }
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (event, session) => {
         setHasSupabaseSession(Boolean(session?.user));
+        if (session?.user) {
+          const state = useExpenseStore.getState();
+          if (!state.currentUser || state.currentUser.id !== session.user.id) {
+            const supaUser = await getSupabaseCurrentUser();
+            if (supaUser) {
+              storage.setCurrentUser(supaUser);
+              useExpenseStore.setState({
+                currentUser: supaUser,
+                isAuthenticated: true,
+              });
+              state.syncSupabaseData(supaUser.id);
+            }
+          }
+        } else if (event === "SIGNED_OUT") {
+          storage.logoutUser();
+          useExpenseStore.setState({
+            currentUser: null,
+            isAuthenticated: false,
+          });
+        }
       }
     );
 

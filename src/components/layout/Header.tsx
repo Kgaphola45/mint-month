@@ -204,6 +204,44 @@ export function Header() {
                 </button>
               </div>
 
+              {/* User Profile Card in Drawer if authenticated */}
+              {currentUser && (
+                <div className="p-3.5 rounded-2xl bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold text-[#FFFDFA] shrink-0 shadow-sm"
+                      style={{ backgroundColor: currentUser.avatarColor || "#0D0D0C" }}
+                    >
+                      {currentUser.name
+                        ? currentUser.name
+                            .split(" ")
+                            .filter(Boolean)
+                            .map((p) => p[0])
+                            .slice(0, 2)
+                            .join("")
+                            .toUpperCase()
+                        : "U"}
+                    </div>
+                    <div className="truncate">
+                      <span className="text-xs font-medium text-[#0D0D0C] block truncate">
+                        {currentUser.name}
+                      </span>
+                      <span className="text-[10px] text-[#0D0D0C]/50 block truncate">
+                        {currentUser.email}
+                      </span>
+                    </div>
+                  </div>
+                  <Link
+                    href="/settings"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="p-1.5 rounded-full hover:bg-[#0D0D0C]/5 text-[#0D0D0C]/60 hover:text-[#0D0D0C] shrink-0 transition-colors"
+                    title="Settings"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </Link>
+                </div>
+              )}
+
               {/* Month Switcher in Drawer */}
               <div className="p-3 rounded-2xl bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] flex items-center justify-between">
                 <span className="text-xs text-[#0D0D0C]/60 font-medium">Cycle:</span>
