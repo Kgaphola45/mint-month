@@ -14,16 +14,20 @@
     --ink-border: rgba(13, 13, 12, 0.08);
 
     /* HSL mappings for shadcn / tailwind base */
-    --background: 38 48% 96%; /* #FBF6EF */
-    --foreground: 60 7% 5%;   /* #0D0D0C */
+    --background: 38 48% 96%;
+    /* #FBF6EF */
+    --foreground: 60 7% 5%;
+    /* #0D0D0C */
 
-    --card: 43 100% 99%;      /* #FFFDFA */
+    --card: 43 100% 99%;
+    /* #FFFDFA */
     --card-foreground: 60 7% 5%;
 
     --popover: 43 100% 99%;
     --popover-foreground: 60 7% 5%;
 
-    --primary: 60 7% 5%;      /* #0D0D0C */
+    --primary: 60 7% 5%;
+    /* #0D0D0C */
     --primary-foreground: 43 100% 99%;
 
     --secondary: 38 25% 92%;
@@ -222,7 +226,7 @@
   .shadow-2xl,
   .shadow-xl,
   .shadow-sm,
-  .shadow-[0_24px_64px_rgba(0,0,0,0.18)] {
+  .shadow-[0_24px_64px_rgba(0, 0, 0, 0.18)] {
     box-shadow: none !important;
   }
 

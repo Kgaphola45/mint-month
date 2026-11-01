@@ -10,22 +10,14 @@ import {
   Download,
   Printer,
   Sparkles,
-  Calendar,
-  ShieldCheck,
-  TrendingDown,
-  TrendingUp,
-  CreditCard,
-  Lock,
-  Wallet,
-  ArrowRight,
   CheckCircle2,
-  Share2,
-  FileText,
+  Lock,
+  CreditCard,
+  Wallet,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, formatMonthYear } from "@/lib/utils";
 import { CURRENCIES } from "@/lib/currencies";
-import { CategoryIcon } from "./category-icon";
 
 export function EditorialStoryModal() {
   const {

@@ -34,7 +34,6 @@ import {
   Zap,
   BarChart3,
   Flame,
-  BookOpen,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, formatMonthYear, getTodayDateStr } from "@/lib/utils";
@@ -59,8 +58,6 @@ export function MonthComparison() {
     getCategoryById,
     incomes,
     currency,
-    setStoryModalOpen,
-    setStoryMonth,
   } = useExpenseStore();
 
   const [activeTab, setActiveTab] = useState<"all" | "pace" | "patterns" | "outflows">("all");

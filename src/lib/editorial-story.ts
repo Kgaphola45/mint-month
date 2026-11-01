@@ -251,8 +251,6 @@ export function computeEditorialStory(params: ComputeStoryParams): EditorialStor
   }
 
   // 2. Slide 2 Calculations: Category Shifts
-  const catMap = new Map(categories.map((c) => [c.id, c]));
-
   const currentCatSpendMap = new Map<string, number>();
   for (const exp of monthExpenses) {
     currentCatSpendMap.set(
