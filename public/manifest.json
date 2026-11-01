@@ -1,7 +1,7 @@
 {
-  "name": "Mint Month - Monthly Expense Tracker",
+  "name": "Mint Month — Monthly Expense Tracker",
   "short_name": "Mint Month",
-  "description": "A minimal, privacy-first expense tracker for every month.",
+  "description": "A minimal, privacy-first expense tracker and cashflow planner for every month.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FBF6EF",
@@ -10,12 +10,14 @@
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
