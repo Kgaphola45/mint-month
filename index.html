@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vela — In Your Terms</title>
+  <title>Mint Month — In Your Terms</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
@@ -222,6 +222,48 @@
       fill: none;
       vertical-align: middle;
       opacity: 0.7;
+    }
+
+    
+    .nav-btn-launch {
+      height: calc(48 * var(--u));
+      padding: 0 calc(28 * var(--u));
+      border-radius: 9999px;
+      border: 1.4px solid var(--ink);
+      background: var(--ink);
+      color: #FFFDF8;
+      font-family: var(--font);
+      font-size: calc(16 * var(--u));
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      text-decoration: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: calc(8 * var(--u));
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 16px rgba(13, 13, 12, 0.08);
+    }
+
+    .nav-btn-launch:hover {
+      background: transparent;
+      color: var(--ink);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(13, 13, 12, 0.12);
+    }
+
+    .nav-btn-launch:active {
+      transform: scale(0.98);
+    }
+
+    .launch-arrow {
+      font-size: calc(18 * var(--u));
+      transition: transform 0.2s ease;
+    }
+
+    .nav-btn-launch:hover .launch-arrow {
+      transform: translateX(calc(3 * var(--u)));
     }
 
     .nav-btn-join {
@@ -695,9 +737,9 @@
 
       <!-- Top Navigation (80u tall) -->
       <header class="nav">
-        <a href="#" class="nav-left" aria-label="Vela Home">
+        <a href="/" class="nav-left" aria-label="Mint Month Home">
           <span class="nav-dot"></span>
-          <span class="nav-logo">vela</span>
+          <span class="nav-logo">mint month</span>
         </a>
 
         <div class="nav-right">
