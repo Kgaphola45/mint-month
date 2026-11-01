@@ -18,6 +18,22 @@ import { storage } from "@/lib/storage";
 import { DEFAULT_CATEGORIES } from "@/lib/constants";
 import { getCurrentMonthStr, getMonthStats, getTodayDateStr } from "@/lib/utils";
 import { computeEditorialStory, EditorialStoryData } from "@/lib/editorial-story";
+import {
+  supabaseSignIn,
+  supabaseSignUp,
+  supabaseSignOut,
+  fetchSupabaseTransactions,
+  insertSupabaseTransaction,
+  updateSupabaseTransaction,
+  deleteSupabaseTransaction,
+  fetchSupabaseBudgets,
+  upsertSupabaseBudget,
+  upsertSupabaseDebitOrder,
+  fetchSupabaseDebtContracts,
+  upsertSupabaseDebtContract,
+  deleteSupabaseDebtContract,
+} from "@/lib/supabase-sync";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 interface ExpenseStore {
   selectedMonth: string; // 'YYYY-MM'

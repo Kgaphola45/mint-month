@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import { getSupabaseAdminClient } from "./supabase/client";
 
 export interface PasswordResetRecord {
   id: string;
@@ -108,6 +109,24 @@ export const serverDb = {
 
     memoryDb.passwordResets.push(record);
     saveDb();
+
+    // Async sync to Supabase password_resets table
+    const supabase = getSupabaseAdminClient();
+    if (supabase) {
+      supabase
+        .from("password_resets")
+        .insert({
+          email: record.email,
+          otp_hash: record.otpHash,
+          expires_at: record.expiresAt,
+          used: false,
+        })
+        .then(() => {})
+        .catch((err) => {
+          console.error("Supabase password_resets error:", err);
+        });
+    }
+
     return record;
   },
 
@@ -137,6 +156,16 @@ export const serverDb = {
     if (record) {
       record.used = true;
       saveDb();
+
+      const supabase = getSupabaseAdminClient();
+      if (supabase) {
+        supabase
+          .from("password_resets")
+          .update({ used: true })
+          .eq("otp_hash", record.otpHash)
+          .then(() => {})
+          .catch(() => {});
+      }
     }
   },
 
@@ -208,4 +237,3 @@ export const serverDb = {
     return true;
   },
 };
-
