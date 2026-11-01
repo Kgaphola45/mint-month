@@ -1,20 +1,19 @@
 import { Expense, Category, Budget, DebtInstalment, User } from "@/types";
 import { DEFAULT_CATEGORIES } from "./constants";
-import { generateSeedData } from "./dummy-data";
 
 const STORAGE_KEYS = {
-  EXPENSES: "mint_month_expenses_v2",
-  CATEGORIES: "mint_month_categories_v2",
-  BUDGETS: "mint_month_budgets_v2",
-  RECURRING_BUDGETS: "mint_month_recurring_budgets_v2",
-  CLEARED_RECURRING: "mint_month_cleared_recurring_v2",
-  DEBTS: "mint_month_debts_v2",
-  INCOMES: "mint_month_incomes_v2",
-  PAYDAY: "mint_month_payday_v2",
-  CURRENCY: "mint_month_currency_v2",
-  USERS: "mint_month_users_v2",
-  CURRENT_USER: "mint_month_current_user_v2",
-  INITIALIZED: "mint_month_initialized_v2",
+  EXPENSES: "mint_month_expenses_v3",
+  CATEGORIES: "mint_month_categories_v3",
+  BUDGETS: "mint_month_budgets_v3",
+  RECURRING_BUDGETS: "mint_month_recurring_budgets_v3",
+  CLEARED_RECURRING: "mint_month_cleared_recurring_v3",
+  DEBTS: "mint_month_debts_v3",
+  INCOMES: "mint_month_incomes_v3",
+  PAYDAY: "mint_month_payday_v3",
+  CURRENCY: "mint_month_currency_v3",
+  USERS: "mint_month_users_v3",
+  CURRENT_USER: "mint_month_current_user_v3",
+  INITIALIZED: "mint_month_initialized_v3",
 };
 
 export const DEFAULT_DEBTS: DebtInstalment[] = [];
@@ -34,6 +33,7 @@ export interface StorageAdapter {
   saveDebts(debts: DebtInstalment[]): void;
   getCurrency(): string;
   saveCurrency(currency: string): void;
+  initializeUserWorkspace(user: User): void;
   resetAll(): void;
 }
 
@@ -64,31 +64,57 @@ export class LocalStorageAdapter implements StorageAdapter {
   public ensureInitialized(): void {
     if (!this.isClient()) return;
 
+    // Purge legacy dummy data from v1/v2 storage in user's browser
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("mint_month_") && (k.includes("_v1") || k.includes("_v2"))) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch {}
+
     if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
       localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([]));
     }
 
     const initialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
     if (!initialized) {
-      const defaultRecurring: Record<string, number> = {
-        "cat-subscriptions": 250,
-        "cat-debt": 3500,
-        "cat-airtime-data": 1500,
-        "cat-groceries": 3800,
-        "cat-transport": 2000,
-        "cat-personal-care": 2000,
-        "cat-clothing": 800,
-      };
-
       localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(DEFAULT_CATEGORIES));
       localStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify([]));
       localStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify([]));
-      localStorage.setItem(STORAGE_KEYS.RECURRING_BUDGETS, JSON.stringify(defaultRecurring));
+      localStorage.setItem(STORAGE_KEYS.RECURRING_BUDGETS, JSON.stringify({}));
       localStorage.setItem(STORAGE_KEYS.CLEARED_RECURRING, JSON.stringify({}));
       localStorage.setItem(STORAGE_KEYS.DEBTS, JSON.stringify([]));
       localStorage.setItem(STORAGE_KEYS.CURRENCY, "ZAR");
       localStorage.setItem(STORAGE_KEYS.INITIALIZED, "true");
     }
+  }
+
+  public initializeUserWorkspace(user: User): void {
+    if (!this.isClient() || !user?.id) return;
+    this.setCurrentUser(user);
+
+    const userCategoryKey = this.getKey(STORAGE_KEYS.CATEGORIES);
+    const userExpensesKey = this.getKey(STORAGE_KEYS.EXPENSES);
+    const userBudgetsKey = this.getKey(STORAGE_KEYS.BUDGETS);
+    const userDebtsKey = this.getKey(STORAGE_KEYS.DEBTS);
+    const userRecurringKey = this.getKey(STORAGE_KEYS.RECURRING_BUDGETS);
+    const userClearedKey = this.getKey(STORAGE_KEYS.CLEARED_RECURRING);
+    const userIncomesKey = this.getKey(STORAGE_KEYS.INCOMES);
+
+    localStorage.setItem(userCategoryKey, JSON.stringify(DEFAULT_CATEGORIES));
+    localStorage.setItem(userExpensesKey, JSON.stringify([]));
+    localStorage.setItem(userBudgetsKey, JSON.stringify([]));
+    localStorage.setItem(userDebtsKey, JSON.stringify([]));
+    localStorage.setItem(userRecurringKey, JSON.stringify({}));
+    localStorage.setItem(userClearedKey, JSON.stringify({}));
+    localStorage.setItem(
+      userIncomesKey,
+      JSON.stringify({ default: user.monthlySalary || 25000 })
+    );
   }
 
   // --- User Account & Auth Methods ---
@@ -149,7 +175,7 @@ export class LocalStorageAdapter implements StorageAdapter {
       id: `usr_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`,
       name: name.trim(),
       email: normalizedEmail,
-      passwordHash: password, // Ready for bcrypt / Supabase Auth
+      passwordHash: password,
       avatarColor: avatarPalette[Math.floor(Math.random() * avatarPalette.length)],
       monthlySalary: monthlySalary && monthlySalary > 0 ? monthlySalary : 25000,
       paydayDay: 25,
@@ -158,25 +184,7 @@ export class LocalStorageAdapter implements StorageAdapter {
 
     const updatedUsers = [...existingUsers, newUser];
     this.saveUsers(updatedUsers);
-    this.setCurrentUser(newUser);
-
-    // Initialize user's separate fresh workspace
-    const userCategoryKey = this.getKey(STORAGE_KEYS.CATEGORIES);
-    const userExpensesKey = this.getKey(STORAGE_KEYS.EXPENSES);
-    const userBudgetsKey = this.getKey(STORAGE_KEYS.BUDGETS);
-    const userDebtsKey = this.getKey(STORAGE_KEYS.DEBTS);
-    const userRecurringKey = this.getKey(STORAGE_KEYS.RECURRING_BUDGETS);
-    const userIncomesKey = this.getKey(STORAGE_KEYS.INCOMES);
-
-    localStorage.setItem(userCategoryKey, JSON.stringify(DEFAULT_CATEGORIES));
-    localStorage.setItem(userExpensesKey, JSON.stringify([]));
-    localStorage.setItem(userBudgetsKey, JSON.stringify([]));
-    localStorage.setItem(userDebtsKey, JSON.stringify([]));
-    localStorage.setItem(userRecurringKey, JSON.stringify({}));
-    localStorage.setItem(
-      userIncomesKey,
-      JSON.stringify({ default: newUser.monthlySalary || 25000 })
-    );
+    this.initializeUserWorkspace(newUser);
 
     return { success: true, user: newUser };
   }
@@ -203,74 +211,11 @@ export class LocalStorageAdapter implements StorageAdapter {
     return { success: true, user };
   }
 
-  updateUserPassword(email: string, newPassword: string): boolean {
-    if (!this.isClient()) return false;
-    const normalized = email.trim().toLowerCase();
-    const users = this.getUsers();
-    let updated = false;
-    const newUsers = users.map((u) => {
-      if (u.email.toLowerCase() === normalized) {
-        updated = true;
-        return { ...u, passwordHash: newPassword };
-      }
-      return u;
-    });
-    if (updated) {
-      this.saveUsers(newUsers);
-      const current = this.getCurrentUser();
-      if (current && current.email.toLowerCase() === normalized) {
-        this.setCurrentUser({ ...current, passwordHash: newPassword });
-      }
-    }
-    return updated;
-  }
-
   logoutUser(): void {
-    if (!this.isClient()) return;
     this.setCurrentUser(null);
   }
 
-  deleteUserAccount(userId: string): boolean {
-    if (!this.isClient()) return false;
-
-    const users = this.getUsers();
-    const target = users.find((u) => u.id === userId);
-    if (!target) return false;
-
-    // 1. Remove user from saved users list
-    const updatedUsers = users.filter((u) => u.id !== userId);
-    this.saveUsers(updatedUsers);
-
-    // 2. Remove all user-scoped records from localStorage
-    const userKeys = [
-      `${STORAGE_KEYS.EXPENSES}_${userId}`,
-      `${STORAGE_KEYS.CATEGORIES}_${userId}`,
-      `${STORAGE_KEYS.BUDGETS}_${userId}`,
-      `${STORAGE_KEYS.RECURRING_BUDGETS}_${userId}`,
-      `${STORAGE_KEYS.CLEARED_RECURRING}_${userId}`,
-      `${STORAGE_KEYS.DEBTS}_${userId}`,
-      `${STORAGE_KEYS.INCOMES}_${userId}`,
-      `${STORAGE_KEYS.PAYDAY}_${userId}`,
-    ];
-
-    userKeys.forEach((key) => {
-      try {
-        localStorage.removeItem(key);
-      } catch {
-        // ignore errors
-      }
-    });
-
-    // 3. If currently logged in as this user, log out
-    const current = this.getCurrentUser();
-    if (current && current.id === userId) {
-      this.logoutUser();
-    }
-
-    return true;
-  }
-
-  // --- Data Access Methods with User Scoping ---
+  // --- Core Expense & Data Methods ---
 
   getExpenses(): Expense[] {
     if (!this.isClient()) return [];
@@ -365,13 +310,18 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   getIncomes(): Record<string, number> {
     const user = this.getCurrentUser();
-    const defaultVal = user?.monthlySalary || 25000;
-    if (!this.isClient()) return { default: defaultVal };
+    const defaultIncome = user?.monthlySalary || 25000;
+    if (!this.isClient()) return { default: defaultIncome };
     try {
       const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.INCOMES));
-      return raw ? JSON.parse(raw) : { default: defaultVal };
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (!parsed.default) parsed.default = defaultIncome;
+        return parsed;
+      }
+      return { default: defaultIncome };
     } catch {
-      return { default: defaultVal };
+      return { default: defaultIncome };
     }
   }
 

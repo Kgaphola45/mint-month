@@ -266,6 +266,10 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       currency,
       isLoaded: true,
     });
+
+    if (currentUser && isSupabaseConfigured()) {
+      get().syncSupabaseData(currentUser.id);
+    }
   },
 
   setSelectedMonth: (month: string) => {
@@ -313,18 +317,18 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         fetchSupabaseDebtContracts(targetUserId),
       ]);
 
-      if (txs && txs.length > 0) {
-        set({ expenses: txs });
-        storage.saveExpenses(txs);
-      }
-      if (bgs && bgs.length > 0) {
-        set({ budgets: bgs });
-        storage.saveBudgets(bgs);
-      }
-      if (debts && debts.length > 0) {
-        set({ debts });
-        storage.saveDebts(debts);
-      }
+      const validTxs = txs || [];
+      const validBgs = bgs || [];
+      const validDebts = debts || [];
+
+      set({
+        expenses: validTxs,
+        budgets: validBgs,
+        debts: validDebts,
+      });
+      storage.saveExpenses(validTxs);
+      storage.saveBudgets(validBgs);
+      storage.saveDebts(validDebts);
     } catch (err) {
       console.error('Supabase sync error:', err);
     } finally {
@@ -375,8 +379,19 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     if (isSupabaseConfigured()) {
       const supa = await supabaseSignUp(input.name, input.email, input.password, input.monthlySalary);
       if (supa.success && supa.user) {
-        storage.setCurrentUser(supa.user);
-        set({ currentUser: supa.user, isAuthenticated: true, authModalOpen: false });
+        storage.initializeUserWorkspace(supa.user);
+        set({
+          currentUser: supa.user,
+          isAuthenticated: true,
+          expenses: [],
+          budgets: [],
+          debts: [],
+          recurringBudgets: {},
+          clearedRecurring: {},
+          incomes: { default: input.monthlySalary || 25000 },
+          authModalOpen: false,
+        });
+        await get().syncSupabaseData(supa.user.id);
         return { success: true };
       }
     }
@@ -387,13 +402,19 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       input.monthlySalary
     );
     if (res.success && res.user) {
+      storage.initializeUserWorkspace(res.user);
       set({
         currentUser: res.user,
         isAuthenticated: true,
+        expenses: [],
+        budgets: [],
+        debts: [],
+        recurringBudgets: {},
+        clearedRecurring: {},
+        incomes: { default: input.monthlySalary || 25000 },
         users: storage.getUsers(),
         authModalOpen: false,
       });
-      get().initStore();
       return { success: true };
     }
     return { success: false, error: res.error || "Registration failed" };
@@ -407,6 +428,11 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     set({
       currentUser: null,
       isAuthenticated: false,
+      expenses: [],
+      budgets: [],
+      debts: [],
+      recurringBudgets: {},
+      clearedRecurring: {},
     });
     get().initStore();
   },
