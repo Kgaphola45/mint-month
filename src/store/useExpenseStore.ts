@@ -17,6 +17,7 @@ import {
 import { storage } from "@/lib/storage";
 import { DEFAULT_CATEGORIES } from "@/lib/constants";
 import { getCurrentMonthStr, getMonthStats, getTodayDateStr } from "@/lib/utils";
+import { computeEditorialStory, EditorialStoryData } from "@/lib/editorial-story";
 
 interface ExpenseStore {
   selectedMonth: string; // 'YYYY-MM'
@@ -44,6 +45,8 @@ interface ExpenseStore {
   debtModalOpen: boolean;
   paydayModalOpen: boolean;
   simulatorModalOpen: boolean;
+  storyModalOpen: boolean;
+  storyMonth: string;
   editingExpense: Expense | null;
   editingDebt: DebtInstalment | null;
 
@@ -58,6 +61,8 @@ interface ExpenseStore {
   setDebtModalOpen: (open: boolean) => void;
   setPaydayModalOpen: (open: boolean) => void;
   setSimulatorModalOpen: (open: boolean) => void;
+  setStoryModalOpen: (open: boolean) => void;
+  setStoryMonth: (month: string) => void;
   setAuthModalOpen: (open: boolean, mode?: "login" | "register") => void;
   login: (input: LoginInput) => { success: boolean; error?: string };
   register: (input: RegisterInput) => { success: boolean; error?: string };
@@ -137,6 +142,7 @@ interface ExpenseStore {
   }>;
   getCategoryById: (id: string) => Category;
   getSafeToSpend: (month?: string) => SafeToSpendSummary;
+  getEditorialStory: (month?: string) => EditorialStoryData;
 }
 
 export const useExpenseStore = create<ExpenseStore>((set, get) => ({
@@ -163,6 +169,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   debtModalOpen: false,
   paydayModalOpen: false,
   simulatorModalOpen: false,
+  storyModalOpen: false,
+  storyMonth: format(subMonths(new Date(), 1), "yyyy-MM"),
   editingExpense: null,
   editingDebt: null,
 
@@ -259,6 +267,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   setDebtModalOpen: (open: boolean) => set({ debtModalOpen: open }),
   setPaydayModalOpen: (open: boolean) => set({ paydayModalOpen: open }),
   setSimulatorModalOpen: (open: boolean) => set({ simulatorModalOpen: open }),
+  setStoryModalOpen: (open: boolean) => set({ storyModalOpen: open }),
+  setStoryMonth: (month: string) => set({ storyMonth: month }),
   setAuthModalOpen: (open: boolean, mode: "login" | "register" = "login") =>
     set({ authModalOpen: open, authModalMode: mode }),
 
@@ -1276,5 +1286,20 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       status,
       fixedCommitmentsCount,
     };
+  },
+
+  getEditorialStory: (month?: string) => {
+    const targetMonth =
+      month || get().storyMonth || format(subMonths(new Date(), 1), "yyyy-MM");
+    return computeEditorialStory({
+      targetMonth,
+      expenses: get().expenses,
+      categories: get().categories,
+      budgets: get().budgets,
+      recurringBudgets: get().recurringBudgets,
+      debts: get().debts,
+      incomes: get().incomes,
+      currency: get().currency,
+    });
   },
 }));

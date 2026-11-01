@@ -9,6 +9,7 @@ import { DebtModal } from "./debt-modal";
 import { PaydayModal } from "./payday-modal";
 import { AuthModal } from "./auth-modal";
 import { PurchaseSimulatorModal } from "./purchase-simulator-modal";
+import { EditorialStoryModal } from "./editorial-story-modal";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { initStore, isLoaded } = useExpenseStore();
@@ -40,6 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <DebtModal />
       <PaydayModal />
       <PurchaseSimulatorModal />
+      <EditorialStoryModal />
       <AuthModal />
     </div>
   );

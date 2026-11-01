@@ -183,3 +183,52 @@
   color: #0D0D0C !important;
   font-family: 'Inter Tight', sans-serif !important;
 }
+
+
+/* Publication-Grade Print Styles for Monthly Editorial Financial Story */
+@media print {
+  @page {
+    margin: 1.2cm;
+    size: auto;
+  }
+
+  body {
+    background: #FBF6EF !important;
+    color: #0D0D0C !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Hide app navigation and decor */
+  header,
+  nav,
+  .fine-grain-overlay,
+  button,
+  select,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Reset modal positioning so it flows naturally onto paper */
+  .fixed {
+    position: static !important;
+    inset: auto !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .shadow-2xl,
+  .shadow-xl,
+  .shadow-sm,
+  .shadow-[0_24px_64px_rgba(0,0,0,0.18)] {
+    box-shadow: none !important;
+  }
+
+  .max-h-[95vh],
+  .max-h-[92vh] {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}

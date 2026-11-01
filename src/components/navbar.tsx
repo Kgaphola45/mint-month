@@ -11,6 +11,7 @@ import {
   Settings,
   Plus,
   Sparkles,
+  BookOpen,
 } from "lucide-react";
 import { MonthPicker } from "./month-picker";
 import { UserMenu } from "./user-menu";
@@ -19,10 +20,18 @@ import { CURRENCIES } from "@/lib/currencies";
 
 export function Navbar() {
   const pathname = usePathname();
-  const { setQuickAddOpen, setSimulatorModalOpen, currency } = useExpenseStore();
+  const {
+    setQuickAddOpen,
+    setSimulatorModalOpen,
+    setStoryModalOpen,
+    currency,
+  } = useExpenseStore();
   const currentCurrency = CURRENCIES[currency] || CURRENCIES.ZAR;
 
-  // Global keyboard shortcut: Cmd/Ctrl + K or 'n' opens quick add, 'a' opens simulator
+  // Global keyboard shortcuts:
+  // - Cmd/Ctrl + K or 'n': Quick Add
+  // - 'a': Purchase Simulator
+  // - 'w': Editorial Story (Monthly Wrapped)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -42,11 +51,19 @@ export function Navbar() {
       ) {
         e.preventDefault();
         setSimulatorModalOpen(true);
+      } else if (
+        (e.key === "w" || e.key === "W") &&
+        !isInput &&
+        !e.metaKey &&
+        !e.ctrlKey
+      ) {
+        e.preventDefault();
+        setStoryModalOpen(true);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [setQuickAddOpen, setSimulatorModalOpen]);
+  }, [setQuickAddOpen, setSimulatorModalOpen, setStoryModalOpen]);
 
   const navLinks = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -97,7 +114,7 @@ export function Navbar() {
           </div>
 
           {/* Right Action Items */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             {/* Outlined Currency Pill */}
             <Link
               href="/settings"
@@ -107,6 +124,17 @@ export function Navbar() {
               <span className="font-medium text-[#0D0D0C]">{currentCurrency.symbol}</span>
               <span className="text-[11px] text-[#0D0D0C]/56">{currentCurrency.code}</span>
             </Link>
+
+            {/* Monthly Editorial Story / Wrapped Pill */}
+            <button
+              onClick={() => setStoryModalOpen(true)}
+              className="hidden xl:flex items-center gap-1.5 h-12 px-4 rounded-full border border-[#0D0D0C]/[0.15] bg-[#FFFDFA] hover:bg-[#FBF6EF] text-xs font-medium text-[#0D0D0C] shadow-sm transition-all"
+              title="Monthly Editorial Story Review (Hotkey: W)"
+            >
+              <BookOpen className="w-4 h-4 text-[#0D0D0C]/70" />
+              <span>Editorial Story</span>
+              <kbd className="ml-1 text-[10px] font-mono bg-[#0D0D0C]/[0.06] px-1.5 py-0.5 rounded text-[#0D0D0C]/60">W</kbd>
+            </button>
 
             {/* "Can I Afford It?" Purchase Simulator Pill */}
             <button
@@ -125,7 +153,7 @@ export function Navbar() {
             {/* Add Expense Button: 48px tall, 999px radius, black ink #0D0D0C, white text */}
             <button
               onClick={() => setQuickAddOpen(true)}
-              className="h-12 px-6 rounded-full bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 active:scale-95 text-[#FFFDFA] font-medium text-xs sm:text-sm shadow-sm transition-all flex items-center gap-2"
+              className="h-12 px-5 sm:px-6 rounded-full bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 active:scale-95 text-[#FFFDFA] font-medium text-xs sm:text-sm shadow-sm transition-all flex items-center gap-2"
             >
               <Plus className="w-4 h-4 stroke-[2]" />
               <span className="hidden sm:inline">Add Expense</span>

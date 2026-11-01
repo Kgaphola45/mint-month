@@ -11,6 +11,7 @@ import { RecurringTimeline } from "@/components/recurring-timeline";
 import { CategoryChart } from "@/components/category-chart";
 import { DailyChart } from "@/components/daily-chart";
 import { TransactionsList } from "@/components/transactions-list";
+import { EditorialStoryBanner } from "@/components/editorial-story-banner";
 
 export default function DashboardPage() {
   const {
@@ -30,6 +31,9 @@ export default function DashboardPage() {
 
       {/* 2. Main Dashboard Content Strip */}
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-8 sm:py-10 space-y-8">
+        {/* Month-End Editorial Story Banner (Presented early in the month or on the 1st) */}
+        <EditorialStoryBanner />
+
         {/* Dynamic Overbudget Alert (in soft editorial card) */}
         {budgetStatus.status === "danger" && summary.totalBudget > 0 && (
           <div className="p-5 rounded-[24px] bg-[#FFFDFA] border border-rose-300 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -76,13 +80,13 @@ export default function DashboardPage() {
           <RecurringTimeline />
         </section>
 
-        {/* 5. Visual Charts Grid (Category Donut & Daily Bar Flow) */}
+        {/* 6. Visual Charts Grid (Category Donut & Daily Bar Flow) */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <CategoryChart />
           <DailyChart />
         </section>
 
-        {/* 6. Recent Transactions List */}
+        {/* 7. Recent Transactions List */}
         <section>
           <TransactionsList limit={6} showViewAll={true} />
         </section>
