@@ -7,6 +7,7 @@ import { formatCurrency, getBudgetStatus } from "@/lib/utils";
 import { HeroPanel } from "@/components/hero-panel";
 import { StatsCards } from "@/components/stats-cards";
 import { SafeToSpendMeter } from "@/components/safe-to-spend-meter";
+import { PaydayWhatIfWidget } from "@/components/payday-what-if-widget";
 import { RecurringTimeline } from "@/components/recurring-timeline";
 import { CategoryChart } from "@/components/category-chart";
 import { DailyChart } from "@/components/daily-chart";
@@ -75,7 +76,12 @@ export default function DashboardPage() {
           <SafeToSpendMeter />
         </section>
 
-        {/* 5. Upcoming Recurring Bills & Debit Orders Timeline */}
+        {/* 5. Payday Countdown & What-If Runway Widget */}
+        <section>
+          <PaydayWhatIfWidget />
+        </section>
+
+        {/* 6. Upcoming Recurring Bills & Debit Orders Timeline */}
         <section>
           <RecurringTimeline />
         </section>
