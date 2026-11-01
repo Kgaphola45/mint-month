@@ -181,21 +181,6 @@ export function MonthComparison() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 flex-wrap self-start sm:self-auto">
-            <button
-              onClick={() => {
-                setStoryMonth(selectedMonth);
-                setStoryModalOpen(true);
-              }}
-              className="px-3.5 py-1.5 rounded-full text-xs font-medium border border-[#0D0D0C]/[0.12] bg-[#FBF6EF] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] text-[#0D0D0C] flex items-center gap-1.5 transition-all shadow-sm"
-              title="View 3-Slide Monthly Editorial Story"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>Editorial Story</span>
-            </button>
-            </p>
-          </div>
-
           <div
             className={`px-3.5 py-1.5 rounded-full text-xs font-medium border flex items-center gap-1.5 ${
               isSpendingLess
