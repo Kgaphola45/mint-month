@@ -23,6 +23,7 @@ export function SafeToSpendMeter() {
     currency,
     getSafeToSpend,
     setPaydayModalOpen,
+    setSimulatorModalOpen,
   } = useExpenseStore();
 
   const [digestModalOpen, setDigestModalOpen] = useState(false);
@@ -99,6 +100,16 @@ export function SafeToSpendMeter() {
               {safe.daysUntilPayday > 0 ? ` · in ${safe.daysUntilPayday}d` : " · today"}
             </span>
           </div>
+
+          <button
+            onClick={() => setSimulatorModalOpen(true)}
+            className="h-9 px-4 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FFFDFA] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] text-xs font-medium inline-flex items-center gap-1.5 transition-all text-[#0D0D0C] shadow-sm group"
+            title="Purchase Decision Simulator (Hotkey: A)"
+          >
+            <Sparkles className="w-3.5 h-3.5 stroke-[1.5] text-[#0D0D0C]/70 group-hover:text-[#FFFDFA]" />
+            <span>Can I Afford It?</span>
+            <kbd className="text-[10px] font-mono bg-[#0D0D0C]/[0.06] group-hover:bg-[#FFFDFA]/20 group-hover:text-[#FFFDFA] px-1.5 py-0.5 rounded text-[#0D0D0C]/60">A</kbd>
+          </button>
 
           <button
             onClick={() => setPaydayModalOpen(true)}
@@ -289,4 +300,3 @@ export function SafeToSpendMeter() {
     </div>
   );
 }
-

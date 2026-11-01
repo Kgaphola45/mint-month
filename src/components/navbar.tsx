@@ -10,6 +10,7 @@ import {
   ArrowLeftRight,
   Settings,
   Plus,
+  Sparkles,
 } from "lucide-react";
 import { MonthPicker } from "./month-picker";
 import { UserMenu } from "./user-menu";
@@ -18,23 +19,34 @@ import { CURRENCIES } from "@/lib/currencies";
 
 export function Navbar() {
   const pathname = usePathname();
-  const { setQuickAddOpen, currency } = useExpenseStore();
+  const { setQuickAddOpen, setSimulatorModalOpen, currency } = useExpenseStore();
   const currentCurrency = CURRENCIES[currency] || CURRENCIES.ZAR;
 
-  // Global keyboard shortcut: Cmd/Ctrl + K or 'n' opens quick add
+  // Global keyboard shortcut: Cmd/Ctrl + K or 'n' opens quick add, 'a' opens simulator
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput = ["INPUT", "TEXTAREA", "SELECT"].includes(target?.tagName);
+
       if (
         (e.key === "k" && (e.metaKey || e.ctrlKey)) ||
-        (e.key === "n" && !["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName))
+        (e.key === "n" && !isInput && !e.metaKey && !e.ctrlKey)
       ) {
         e.preventDefault();
         setQuickAddOpen(true);
+      } else if (
+        (e.key === "a" || e.key === "A") &&
+        !isInput &&
+        !e.metaKey &&
+        !e.ctrlKey
+      ) {
+        e.preventDefault();
+        setSimulatorModalOpen(true);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [setQuickAddOpen]);
+  }, [setQuickAddOpen, setSimulatorModalOpen]);
 
   const navLinks = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -95,6 +107,17 @@ export function Navbar() {
               <span className="font-medium text-[#0D0D0C]">{currentCurrency.symbol}</span>
               <span className="text-[11px] text-[#0D0D0C]/56">{currentCurrency.code}</span>
             </Link>
+
+            {/* "Can I Afford It?" Purchase Simulator Pill */}
+            <button
+              onClick={() => setSimulatorModalOpen(true)}
+              className="hidden md:flex items-center gap-1.5 h-12 px-4 rounded-full border border-[#0D0D0C]/[0.15] bg-[#FFFDFA] hover:bg-[#FBF6EF] text-xs font-medium text-[#0D0D0C] shadow-sm transition-all"
+              title="Purchase Decision Simulator (Hotkey: A)"
+            >
+              <Sparkles className="w-4 h-4 text-[#0D0D0C]/70" />
+              <span>Can I Afford It?</span>
+              <kbd className="ml-1 text-[10px] font-mono bg-[#0D0D0C]/[0.06] px-1.5 py-0.5 rounded text-[#0D0D0C]/60">A</kbd>
+            </button>
 
             {/* User Profile / Account Switcher Menu */}
             <UserMenu />
