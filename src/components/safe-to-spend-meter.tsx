@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, formatMonthYear } from "@/lib/utils";
-import { PaydayDigestModal } from "@/components/payday-digest-modal";
 
 export function SafeToSpendMeter() {
   const {
@@ -24,9 +23,8 @@ export function SafeToSpendMeter() {
     getSafeToSpend,
     setPaydayModalOpen,
     setSimulatorModalOpen,
+    setDigestModalOpen,
   } = useExpenseStore();
-
-  const [digestModalOpen, setDigestModalOpen] = useState(false);
 
   const safe = getSafeToSpend(selectedMonth);
 
@@ -291,12 +289,6 @@ export function SafeToSpendMeter() {
           <strong>{formatCurrency(safe.fixedCommitments, currency)}</strong> is permanently protected and excluded from your daily allowance.
         </span>
       </div>
-
-      {/* Payday & Debit Order Digest Modal */}
-      <PaydayDigestModal
-        open={digestModalOpen}
-        onClose={() => setDigestModalOpen(false)}
-      />
     </div>
   );
 }

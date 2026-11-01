@@ -16,7 +16,7 @@ import {
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { CategoryManagerModal } from "@/components/category-manager-modal";
 import { DeleteAccountModal } from "@/components/delete-account-modal";
-import { PaydayDigestModal } from "@/components/payday-digest-modal";
+
 
 export default function SettingsPage() {
   const {
@@ -28,11 +28,12 @@ export default function SettingsPage() {
     exportDataJSON,
     importDataJSON,
     resetToDefaults,
+    setDigestModalOpen,
   } = useExpenseStore();
 
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [digestModalOpen, setDigestModalOpen] = useState(false);
+
   const [confirmReset, setConfirmReset] = useState(false);
   const [importStatus, setImportStatus] = useState<string>("");
 
@@ -404,11 +405,10 @@ export default function SettingsPage() {
         onClose={() => setDeleteModalOpen(false)}
       />
 
-      {/* Payday & Debit Order Digest Modal */}
-      <PaydayDigestModal
-        open={digestModalOpen}
-        onClose={() => setDigestModalOpen(false)}
-      />
+
+
+
+
     </div>
   );
 }

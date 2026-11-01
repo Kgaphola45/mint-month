@@ -12,6 +12,8 @@ import {
   Plus,
   Sparkles,
   BookOpen,
+  Search,
+  Command,
 } from "lucide-react";
 import { MonthPicker } from "./month-picker";
 import { UserMenu } from "./user-menu";
@@ -24,12 +26,14 @@ export function Navbar() {
     setQuickAddOpen,
     setSimulatorModalOpen,
     setStoryModalOpen,
+    setCommandPaletteOpen,
     currency,
   } = useExpenseStore();
   const currentCurrency = CURRENCIES[currency] || CURRENCIES.ZAR;
 
   // Global keyboard shortcuts:
-  // - Cmd/Ctrl + K or 'n': Quick Add
+  // - Cmd/Ctrl + K: Linear Command Palette
+  // - 'n': Quick Add
   // - 'a': Purchase Simulator
   // - 'w': Editorial Story (Monthly Wrapped)
   useEffect(() => {
@@ -37,10 +41,10 @@ export function Navbar() {
       const target = e.target as HTMLElement;
       const isInput = ["INPUT", "TEXTAREA", "SELECT"].includes(target?.tagName);
 
-      if (
-        (e.key === "k" && (e.metaKey || e.ctrlKey)) ||
-        (e.key === "n" && !isInput && !e.metaKey && !e.ctrlKey)
-      ) {
+      if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setCommandPaletteOpen(true);
+      } else if (e.key === "n" && !isInput && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         setQuickAddOpen(true);
       } else if (
@@ -63,7 +67,7 @@ export function Navbar() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [setQuickAddOpen, setSimulatorModalOpen, setStoryModalOpen]);
+  }, [setQuickAddOpen, setSimulatorModalOpen, setStoryModalOpen, setCommandPaletteOpen]);
 
   const navLinks = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -95,10 +99,11 @@ export function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`px-4 py-2 rounded-full text-xs font-medium transition-all ${isActive
-                      ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-sm"
-                      : "text-[#0D0D0C]/56 hover:text-[#0D0D0C] hover:bg-[#0D0D0C]/[0.04]"
-                      }`}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-all ${
+                      isActive
+                        ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-sm"
+                        : "text-[#0D0D0C]/56 hover:text-[#0D0D0C] hover:bg-[#0D0D0C]/[0.04]"
+                    }`}
                   >
                     <span>{link.label}</span>
                   </Link>
@@ -113,7 +118,20 @@ export function Navbar() {
           </div>
 
           {/* Right Action Items */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            {/* Linear Command Palette Trigger Button */}
+            <button
+              onClick={() => setCommandPaletteOpen(true)}
+              className="flex items-center gap-2 h-10 px-3.5 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FFFDFA] hover:bg-[#FBF6EF] text-xs text-[#0D0D0C]/60 hover:text-[#0D0D0C] transition-all shadow-sm"
+              title="Open Command Palette (⌘K / Ctrl+K)"
+            >
+              <Search className="w-3.5 h-3.5 text-[#0D0D0C]/40" />
+              <span className="hidden xl:inline text-[11px] font-normal text-[#0D0D0C]/70">Commands</span>
+              <kbd className="text-[10px] font-mono bg-[#0D0D0C]/[0.06] text-[#0D0D0C]/60 px-1.5 py-0.5 rounded">
+                ⌘K
+              </kbd>
+            </button>
+
             {/* Outlined Currency Pill */}
             <Link
               href="/settings"
@@ -127,23 +145,23 @@ export function Navbar() {
             {/* Monthly Editorial Story / Wrapped Pill */}
             <button
               onClick={() => setStoryModalOpen(true)}
-              className="hidden xl:flex items-center gap-1.5 h-12 px-4 rounded-full border border-[#0D0D0C]/[0.15] bg-[#FFFDFA] hover:bg-[#FBF6EF] text-xs font-medium text-[#0D0D0C] shadow-sm transition-all"
+              className="hidden 2xl:flex items-center gap-1.5 h-10 px-3.5 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FFFDFA] hover:bg-[#FBF6EF] text-xs font-medium text-[#0D0D0C] shadow-sm transition-all"
               title="Monthly Editorial Story Review (Hotkey: W)"
             >
-              <BookOpen className="w-4 h-4 text-[#0D0D0C]/70" />
+              <BookOpen className="w-3.5 h-3.5 text-[#0D0D0C]/70" />
               <span>Editorial Story</span>
-              <kbd className="ml-1 text-[10px] font-mono bg-[#0D0D0C]/[0.06] px-1.5 py-0.5 rounded text-[#0D0D0C]/60">W</kbd>
+              <kbd className="ml-0.5 text-[10px] font-mono bg-[#0D0D0C]/[0.06] px-1.5 py-0.5 rounded text-[#0D0D0C]/60">W</kbd>
             </button>
 
             {/* "Can I Afford It?" Purchase Simulator Pill */}
             <button
               onClick={() => setSimulatorModalOpen(true)}
-              className="hidden md:flex items-center gap-1.5 h-12 px-4 rounded-full border border-[#0D0D0C]/[0.15] bg-[#FFFDFA] hover:bg-[#FBF6EF] text-xs font-medium text-[#0D0D0C] shadow-sm transition-all"
+              className="hidden md:flex items-center gap-1.5 h-10 px-3.5 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FFFDFA] hover:bg-[#FBF6EF] text-xs font-medium text-[#0D0D0C] shadow-sm transition-all"
               title="Purchase Decision Simulator (Hotkey: A)"
             >
-              <Sparkles className="w-4 h-4 text-[#0D0D0C]/70" />
+              <Sparkles className="w-3.5 h-3.5 text-[#0D0D0C]/70" />
               <span>Can I Afford It?</span>
-              <kbd className="ml-1 text-[10px] font-mono bg-[#0D0D0C]/[0.06] px-1.5 py-0.5 rounded text-[#0D0D0C]/60">A</kbd>
+              <kbd className="ml-0.5 text-[10px] font-mono bg-[#0D0D0C]/[0.06] px-1.5 py-0.5 rounded text-[#0D0D0C]/60">A</kbd>
             </button>
 
             {/* User Profile / Account Switcher Menu */}
@@ -152,7 +170,7 @@ export function Navbar() {
             {/* Add Expense Button: 48px tall, 999px radius, black ink #0D0D0C, white text */}
             <button
               onClick={() => setQuickAddOpen(true)}
-              className="h-12 px-5 sm:px-6 rounded-full bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 active:scale-95 text-[#FFFDFA] font-medium text-xs sm:text-sm shadow-sm transition-all flex items-center gap-2"
+              className="h-10 px-4 sm:px-5 rounded-full bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 active:scale-95 text-[#FFFDFA] font-medium text-xs sm:text-sm shadow-sm transition-all flex items-center gap-1.5"
             >
               <Plus className="w-4 h-4 stroke-[2]" />
               <span className="hidden sm:inline">Add Expense</span>
@@ -171,16 +189,26 @@ export function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className={`p-2.5 rounded-full transition-all ${isActive
-                ? "bg-[#0D0D0C] text-[#FFFDFA]"
-                : "text-[#0D0D0C]/56 hover:text-[#0D0D0C]"
-                }`}
+              className={`p-2.5 rounded-full transition-all ${
+                isActive
+                  ? "bg-[#0D0D0C] text-[#FFFDFA]"
+                  : "text-[#0D0D0C]/56 hover:text-[#0D0D0C]"
+              }`}
               title={link.label}
             >
               <Icon className="w-4 h-4 stroke-[1.8]" />
             </Link>
           );
         })}
+
+        {/* Mobile Command Palette Button */}
+        <button
+          onClick={() => setCommandPaletteOpen(true)}
+          className="p-2.5 rounded-full text-[#0D0D0C]/56 hover:text-[#0D0D0C] hover:bg-[#0D0D0C]/[0.05] transition-all"
+          title="Open Command Palette"
+        >
+          <Search className="w-4 h-4 stroke-[1.8]" />
+        </button>
       </div>
     </>
   );

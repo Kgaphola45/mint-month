@@ -766,13 +766,13 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       updatedBudgets = currentBudgets.map((b) =>
         b.month === month
           ? {
-              ...b,
-              recurringCategories: newRecurringList,
-              categories: {
-                ...b.categories,
-                ...(targetAmount > 0 && !isCurrentlyRecurring ? { [categoryId]: targetAmount } : {}),
-              },
-            }
+            ...b,
+            recurringCategories: newRecurringList,
+            categories: {
+              ...b.categories,
+              ...(targetAmount > 0 && !isCurrentlyRecurring ? { [categoryId]: targetAmount } : {}),
+            },
+          }
           : b
       );
     } else {
