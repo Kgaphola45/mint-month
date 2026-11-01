@@ -1,3 +1,4 @@
+import Link from "next/link";
 "use client";
 
 import React, { useState } from "react";
@@ -486,7 +487,53 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* 6. Danger Zone: Permanently Delete Account */}
+      {/* 6. Legal & Regulatory Governance */}
+      <div className="p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <h3 className="text-sm font-medium text-[#0D0D0C]">
+              Legal & Privacy Governance
+            </h3>
+          </div>
+          <p className="text-xs text-[#0D0D0C]/60 leading-relaxed max-w-2xl">
+            Mint Month operates under the statutory laws of the Republic of South Africa. Review our governing frameworks, data rights, and financial disclaimers:
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+          <Link
+            href="/privacy"
+            className="p-3.5 rounded-2xl bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] hover:border-[#0D0D0C]/20 transition-all text-xs font-medium text-[#0D0D0C] flex items-center justify-between group"
+          >
+            <span>Privacy Policy</span>
+            <span className="text-[#0D0D0C]/40 group-hover:translate-x-0.5 transition-transform">→</span>
+          </Link>
+          <Link
+            href="/terms"
+            className="p-3.5 rounded-2xl bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] hover:border-[#0D0D0C]/20 transition-all text-xs font-medium text-[#0D0D0C] flex items-center justify-between group"
+          >
+            <span>Terms of Service</span>
+            <span className="text-[#0D0D0C]/40 group-hover:translate-x-0.5 transition-transform">→</span>
+          </Link>
+          <Link
+            href="/legal/popia"
+            className="p-3.5 rounded-2xl bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] hover:border-[#0D0D0C]/20 transition-all text-xs font-medium text-[#0D0D0C] flex items-center justify-between group"
+          >
+            <span>POPIA Compliance</span>
+            <span className="text-[#0D0D0C]/40 group-hover:translate-x-0.5 transition-transform">→</span>
+          </Link>
+          <Link
+            href="/legal/disclaimer"
+            className="p-3.5 rounded-2xl bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] hover:border-[#0D0D0C]/20 transition-all text-xs font-medium text-[#0D0D0C] flex items-center justify-between group"
+          >
+            <span>FAIS Disclaimer</span>
+            <span className="text-[#0D0D0C]/40 group-hover:translate-x-0.5 transition-transform">→</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* 7. Danger Zone: Permanently Delete Account */}
       {currentUser && (
         <div className="p-8 rounded-[24px] bg-[#FFFDFA] border border-rose-400 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-5">
           <div className="space-y-1">
