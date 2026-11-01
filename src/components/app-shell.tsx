@@ -1,19 +1,49 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { Navbar } from "./navbar";
-import { QuickAddModal } from "./quick-add-modal";
-import { BudgetModal } from "./budget-modal";
-import { DebtModal } from "./debt-modal";
-import { PaydayModal } from "./payday-modal";
-import { AuthModal } from "./auth-modal";
-import { PurchaseSimulatorModal } from "./purchase-simulator-modal";
-import { EditorialStoryModal } from "./editorial-story-modal";
-import { CommandPalette } from "./command-palette";
-import { PaydayDigestModal } from "./payday-digest-modal";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
+
+// Dynamically import heavy modals & overlays to eliminate them from initial bundle
+const CommandPalette = dynamic(
+  () => import("./command-palette").then((m) => m.CommandPalette),
+  { ssr: false }
+);
+const PurchaseSimulatorModal = dynamic(
+  () => import("./purchase-simulator-modal").then((m) => m.PurchaseSimulatorModal),
+  { ssr: false }
+);
+const EditorialStoryModal = dynamic(
+  () => import("./editorial-story-modal").then((m) => m.EditorialStoryModal),
+  { ssr: false }
+);
+const PaydayDigestModal = dynamic(
+  () => import("./payday-digest-modal").then((m) => m.PaydayDigestModal),
+  { ssr: false }
+);
+const QuickAddModal = dynamic(
+  () => import("./quick-add-modal").then((m) => m.QuickAddModal),
+  { ssr: false }
+);
+const BudgetModal = dynamic(
+  () => import("./budget-modal").then((m) => m.BudgetModal),
+  { ssr: false }
+);
+const DebtModal = dynamic(
+  () => import("./debt-modal").then((m) => m.DebtModal),
+  { ssr: false }
+);
+const PaydayModal = dynamic(
+  () => import("./payday-modal").then((m) => m.PaydayModal),
+  { ssr: false }
+);
+const AuthModal = dynamic(
+  () => import("./auth-modal").then((m) => m.AuthModal),
+  { ssr: false }
+);
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -73,7 +103,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
       </main>
 
-      {/* Global Modals & Command Overlays */}
+      {/* Global Modals & Command Overlays (Loaded on demand) */}
       <CommandPalette />
       <QuickAddModal />
       <BudgetModal />
