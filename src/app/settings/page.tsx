@@ -267,7 +267,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* 4. Payday & Debit Order Digest (via Outlook) */}
+      {/* 4. Payday & Debit Order Digest (via Gmail) */}
       <div className="p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -279,7 +279,7 @@ export default function SettingsPage() {
                 Payday & Debit Order Digest
               </h3>
               <p className="text-xs text-[#0D0D0C]/42 mt-0.5">
-                Automated monthly cashflow summary delivered via Outlook
+                Automated monthly cashflow summary delivered via Gmail
               </p>
             </div>
           </div>
@@ -299,7 +299,7 @@ export default function SettingsPage() {
 
         <div className="p-4 rounded-[18px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] flex items-center justify-between text-xs text-[#0D0D0C]/70">
           <span>Delivery Provider:</span>
-          <span className="font-medium text-[#0D0D0C]">Outlook SMTP (smtp.office365.com)</span>
+          <span className="font-medium text-[#0D0D0C]">Gmail SMTP (smtp.gmail.com)</span>
         </div>
       </div>
 
