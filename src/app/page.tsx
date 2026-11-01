@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { AlertCircle } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, getBudgetStatus } from "@/lib/utils";
@@ -9,12 +10,38 @@ import { StatsCards } from "@/components/stats-cards";
 import { SafeToSpendMeter } from "@/components/safe-to-spend-meter";
 import { PaydayWhatIfWidget } from "@/components/payday-what-if-widget";
 import { RecurringTimeline } from "@/components/recurring-timeline";
-import { CategoryChart } from "@/components/category-chart";
-import { DailyChart } from "@/components/daily-chart";
 import { TransactionsList } from "@/components/transactions-list";
-import { EditorialStoryBanner } from "@/components/editorial-story-banner";
-import { LandingPage } from "@/components/LandingPage";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
+
+// Dynamic imports with loading skeletons for heavy visualization components
+const CategoryChart = dynamic(
+  () => import("@/components/category-chart").then((m) => m.CategoryChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-[360px] animate-pulse bg-black/5 rounded-2xl" />,
+  }
+);
+const DailyChart = dynamic(
+  () => import("@/components/daily-chart").then((m) => m.DailyChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-[360px] animate-pulse bg-black/5 rounded-2xl" />,
+  }
+);
+const EditorialStoryBanner = dynamic(
+  () => import("@/components/editorial-story-banner").then((m) => m.EditorialStoryBanner),
+  {
+    ssr: false,
+    loading: () => <div className="h-[120px] animate-pulse bg-black/5 rounded-2xl" />,
+  }
+);
+const LandingPage = dynamic(
+  () => import("@/components/LandingPage").then((m) => m.LandingPage),
+  {
+    ssr: false,
+    loading: () => <div className="min-h-screen animate-pulse bg-black/5" />,
+  }
+);
 
 export default function DashboardPage() {
   const {
