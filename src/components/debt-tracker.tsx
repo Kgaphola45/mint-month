@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import confetti from "canvas-confetti";
+import { fireConfetti } from "@/lib/confetti";
 import {
   Layers,
   Plus,
@@ -37,7 +37,7 @@ export function DebtTracker() {
     incrementDebtInstalment(debt.id);
 
     try {
-      confetti({
+      fireConfetti({
         particleCount: isNowPaidOff ? 60 : 30,
         spread: isNowPaidOff ? 70 : 45,
         origin: { y: 0.7 },

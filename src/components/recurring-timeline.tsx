@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import confetti from "canvas-confetti";
+import { fireConfetti } from "@/lib/confetti";
 import {
   CalendarClock,
   Check,
@@ -40,7 +40,7 @@ export function RecurringTimeline() {
     toggleRecurringCleared(selectedMonth, expenseId);
     if (!currentlyCleared) {
       try {
-        confetti({
+        fireConfetti({
           particleCount: 28,
           spread: 45,
           origin: { y: 0.75 },

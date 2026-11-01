@@ -1,10 +1,18 @@
 "use client";
 
 import React from "react";
+import dynamic from "next/dynamic";
 import { BookOpen } from "lucide-react";
-import { MonthComparison } from "@/components/month-comparison";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatMonthYear } from "@/lib/utils";
+
+const MonthComparison = dynamic(
+  () => import("@/components/month-comparison").then((m) => m.MonthComparison),
+  {
+    ssr: false,
+    loading: () => <div className="h-[480px] animate-pulse bg-black/5 rounded-2xl" />,
+  }
+);
 
 export default function ComparePage() {
   const { selectedMonth, setStoryMonth, setStoryModalOpen } = useExpenseStore();

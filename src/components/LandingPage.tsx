@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import confetti from "canvas-confetti";
+import { fireConfetti } from "@/lib/confetti";
 import {
   Sparkles,
   ArrowRight,
@@ -40,7 +40,7 @@ export function LandingPage() {
   const isAffordable = demoAmount <= baselineSafePool;
 
   const handleConfetti = () => {
-    confetti({
+    fireConfetti({
       particleCount: 50,
       spread: 70,
       origin: { y: 0.7 },

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import confetti from "canvas-confetti";
+import { fireConfetti } from "@/lib/confetti";
 import {
   Calendar,
   Sparkles,
@@ -73,7 +73,7 @@ export function PaydayWhatIfWidget() {
   }, []);
 
   const handleCommitTomorrow = () => {
-    confetti({
+    fireConfetti({
       particleCount: 50,
       spread: 65,
       origin: { y: 0.7 },
