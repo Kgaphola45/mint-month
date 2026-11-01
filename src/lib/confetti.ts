@@ -7,3 +7,4 @@ export async function fireConfetti(options?: any) {
     // Graceful fallback if confetti fails to load
   }
 }
+
