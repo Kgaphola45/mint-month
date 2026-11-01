@@ -10,9 +10,11 @@ import { PaydayModal } from "./payday-modal";
 import { AuthModal } from "./auth-modal";
 import { PurchaseSimulatorModal } from "./purchase-simulator-modal";
 import { EditorialStoryModal } from "./editorial-story-modal";
+import { CommandPalette } from "./command-palette";
+import { PaydayDigestModal } from "./payday-digest-modal";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { initStore, isLoaded } = useExpenseStore();
+  const { initStore, isLoaded, digestModalOpen, setDigestModalOpen } = useExpenseStore();
 
   useEffect(() => {
     initStore();
@@ -36,12 +38,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
       </main>
 
+      {/* Global Modals & Command Overlays */}
+      <CommandPalette />
       <QuickAddModal />
       <BudgetModal />
       <DebtModal />
       <PaydayModal />
       <PurchaseSimulatorModal />
       <EditorialStoryModal />
+      <PaydayDigestModal
+        open={digestModalOpen}
+        onClose={() => setDigestModalOpen(false)}
+      />
       <AuthModal />
     </div>
   );
