@@ -212,21 +212,19 @@ export function EditorialStoryModal() {
               >
                 <div className="w-full h-1.5 rounded-full bg-[#0D0D0C]/[0.1] overflow-hidden">
                   <div
-                    className={`h-full transition-all duration-300 rounded-full ${
-                      idx === currentSlide
-                        ? "bg-[#0D0D0C] w-full"
-                        : idx < currentSlide
+                    className={`h-full transition-all duration-300 rounded-full ${idx === currentSlide
+                      ? "bg-[#0D0D0C] w-full"
+                      : idx < currentSlide
                         ? "bg-[#0D0D0C]/60 w-full"
                         : "w-0"
-                    }`}
+                      }`}
                   />
                 </div>
                 <span
-                  className={`text-[11px] font-medium transition-colors ${
-                    idx === currentSlide
-                      ? "text-[#0D0D0C]"
-                      : "text-[#0D0D0C]/40 group-hover:text-[#0D0D0C]/70"
-                  }`}
+                  className={`text-[11px] font-medium transition-colors ${idx === currentSlide
+                    ? "text-[#0D0D0C]"
+                    : "text-[#0D0D0C]/40 group-hover:text-[#0D0D0C]/70"
+                    }`}
                 >
                   {labels[idx]}
                 </span>
@@ -294,9 +292,8 @@ export function EditorialStoryModal() {
                       Preserved Buffer
                     </span>
                     <div
-                      className={`text-xl sm:text-2xl font-medium tracking-tight mt-1 ${
-                        story.verdict.isUnderBudget ? "text-emerald-700" : "text-rose-700"
-                      }`}
+                      className={`text-xl sm:text-2xl font-medium tracking-tight mt-1 ${story.verdict.isUnderBudget ? "text-emerald-700" : "text-rose-700"
+                        }`}
                     >
                       {story.verdict.diffAmount >= 0 ? "+" : "-"}
                       {formatCurrency(Math.abs(story.verdict.diffAmount), currency)}
@@ -357,22 +354,21 @@ export function EditorialStoryModal() {
                         return (
                           <div
                             key={d}
-                            className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono transition-transform hover:scale-110 ${
-                              isPeak
-                                ? "bg-[#F99654] text-[#FFFDFA] font-bold shadow-sm"
-                                : isNoSpend
+                            className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono transition-transform hover:scale-110 ${isPeak
+                              ? "bg-[#F99654] text-[#FFFDFA] font-bold shadow-sm"
+                              : isNoSpend
                                 ? "bg-[#DFE9D4] text-[#0D0D0C] font-semibold"
                                 : "bg-[#0D0D0C]/[0.08] text-[#0D0D0C]/70"
-                            }`}
+                              }`}
                             title={
                               isPeak
                                 ? `Day ${d}: Peak spend ${formatCurrency(
-                                    story.verdict.peakDay?.amount || 0,
-                                    currency
-                                  )} (${story.verdict.peakDay?.topItem})`
+                                  story.verdict.peakDay?.amount || 0,
+                                  currency
+                                )} (${story.verdict.peakDay?.topItem})`
                                 : isNoSpend
-                                ? `Day ${d}: Zero spend logged`
-                                : `Day ${d}: Active spending`
+                                  ? `Day ${d}: Zero spend logged`
+                                  : `Day ${d}: Active spending`
                             }
                           >
                             {d}
@@ -524,11 +520,10 @@ export function EditorialStoryModal() {
                             </span>
                             {cat.priorAmount > 0 && (
                               <span
-                                className={`text-[10px] px-1.5 py-0.2 rounded font-medium ${
-                                  cat.isDecrease
-                                    ? "bg-[#DFE9D4] text-emerald-800"
-                                    : "bg-[#F8DCC7] text-orange-900"
-                                }`}
+                                className={`text-[10px] px-1.5 py-0.2 rounded font-medium ${cat.isDecrease
+                                  ? "bg-[#DFE9D4] text-emerald-800"
+                                  : "bg-[#F8DCC7] text-orange-900"
+                                  }`}
                               >
                                 {cat.changePercent > 0 ? `+${cat.changePercent}%` : `${cat.changePercent}%`}
                               </span>
@@ -693,11 +688,10 @@ export function EditorialStoryModal() {
                 key={idx}
                 type="button"
                 onClick={() => setCurrentSlide(idx)}
-                className={`w-2.5 h-2.5 rounded-full transition-all ${
-                  idx === currentSlide
-                    ? "bg-[#0D0D0C] scale-125"
-                    : "bg-[#0D0D0C]/20 hover:bg-[#0D0D0C]/40"
-                }`}
+                className={`w-2.5 h-2.5 rounded-full transition-all ${idx === currentSlide
+                  ? "bg-[#0D0D0C] scale-125"
+                  : "bg-[#0D0D0C]/20 hover:bg-[#0D0D0C]/40"
+                  }`}
                 aria-label={`Go to slide ${idx + 1}`}
               />
             ))}
