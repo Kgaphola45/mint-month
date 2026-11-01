@@ -191,11 +191,10 @@ export function PurchaseSimulatorModal() {
                 key={val}
                 type="button"
                 onClick={() => setAmountStr(val.toString())}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
-                  amount === val
-                    ? "bg-[#0D0D0C] text-[#FFFDFA] border-[#0D0D0C]"
-                    : "bg-[#FFFDFA] text-[#0D0D0C]/75 border-[#0D0D0C]/[0.1] hover:border-[#0D0D0C]/30 hover:bg-[#FBF6EF]"
-                }`}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${amount === val
+                  ? "bg-[#0D0D0C] text-[#FFFDFA] border-[#0D0D0C]"
+                  : "bg-[#FFFDFA] text-[#0D0D0C]/75 border-[#0D0D0C]/[0.1] hover:border-[#0D0D0C]/30 hover:bg-[#FBF6EF]"
+                  }`}
               >
                 +{currentCurrency.symbol}{val.toLocaleString()}
               </button>
@@ -269,13 +268,12 @@ export function PurchaseSimulatorModal() {
 
             {/* After */}
             <div
-              className={`p-4 rounded-[18px] border transition-all ${
-                simulatedRemaining < 0
-                  ? "bg-rose-50 border-rose-200"
-                  : simulatedDailyAllowance < 75
+              className={`p-4 rounded-[18px] border transition-all ${simulatedRemaining < 0
+                ? "bg-rose-50 border-rose-200"
+                : simulatedDailyAllowance < 75
                   ? "bg-[#ECD6E2]/40 border-[#ECD6E2]"
                   : "bg-[#FFFDFA] border-[#0D0D0C]/[0.06]"
-              }`}
+                }`}
             >
               <span className="text-[11px] uppercase tracking-wider text-[#0D0D0C]/45 font-medium block flex items-center justify-between">
                 <span>Simulated Pace</span>
@@ -286,13 +284,12 @@ export function PurchaseSimulatorModal() {
                 )}
               </span>
               <div
-                className={`text-2xl sm:text-3xl font-medium tracking-tight mt-1 font-sans ${
-                  simulatedRemaining < 0
-                    ? "text-rose-700"
-                    : simulatedDailyAllowance < 75
+                className={`text-2xl sm:text-3xl font-medium tracking-tight mt-1 font-sans ${simulatedRemaining < 0
+                  ? "text-rose-700"
+                  : simulatedDailyAllowance < 75
                     ? "text-[#0D0D0C]"
                     : "text-emerald-700"
-                }`}
+                  }`}
               >
                 {formatCurrency(Math.max(0, simulatedDailyAllowance), currency)}
                 <span className="text-xs font-normal text-[#0D0D0C]/45 ml-1">/ day</span>
@@ -317,13 +314,12 @@ export function PurchaseSimulatorModal() {
             </div>
             <div className="w-full h-2 bg-[#0D0D0C]/[0.08] rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all duration-300 ${
-                  simulatedRemaining < 0
-                    ? "bg-rose-600"
-                    : bufferPercentageUsed > 65
+                className={`h-full rounded-full transition-all duration-300 ${simulatedRemaining < 0
+                  ? "bg-rose-600"
+                  : bufferPercentageUsed > 65
                     ? "bg-[#F99654]"
                     : "bg-[#0D0D0C]"
-                }`}
+                  }`}
                 style={{ width: `${Math.min(100, bufferPercentageUsed)}%` }}
               />
             </div>
