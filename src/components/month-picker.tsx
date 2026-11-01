@@ -1,21 +1,58 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useTransition, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
   Calendar as CalendarIcon,
 } from "lucide-react";
-import { format, addMonths } from "date-fns";
+import { format, addMonths, subMonths, parse } from "date-fns";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatMonthYear, getCurrentMonthStr } from "@/lib/utils";
 
 export function MonthPicker() {
-  const { selectedMonth, setSelectedMonth, goToPreviousMonth, goToNextMonth } =
-    useExpenseStore();
+  const {
+    selectedMonth,
+    setSelectedMonth,
+    goToPreviousMonth,
+    goToNextMonth,
+    getExpensesForMonth,
+  } = useExpenseStore();
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const currentMonthStr = getCurrentMonthStr();
+
+  // Prefetch prev/next months in memory for instantaneous rendering
+  useEffect(() => {
+    try {
+      const cur = parse(selectedMonth, "yyyy-MM", new Date());
+      const prev = format(subMonths(cur, 1), "yyyy-MM");
+      const next = format(addMonths(cur, 1), "yyyy-MM");
+      getExpensesForMonth(prev);
+      getExpensesForMonth(next);
+    } catch {}
+  }, [selectedMonth, getExpensesForMonth]);
+
+  const handleSelectMonth = (m: string) => {
+    startTransition(() => {
+      setSelectedMonth(m);
+    });
+    setDropdownOpen(false);
+  };
+
+  const handlePrev = () => {
+    startTransition(() => {
+      goToPreviousMonth();
+    });
+  };
+
+  const handleNext = () => {
+    startTransition(() => {
+      goToNextMonth();
+    });
+  };
 
   // Quick jump: past 12 months + next 3 months
   const quickMonths: string[] = [];
@@ -29,7 +66,7 @@ export function MonthPicker() {
     <div className="relative flex items-center gap-1 sm:gap-1.5 shrink-0">
       {/* Small 32px circle previous button */}
       <button
-        onClick={goToPreviousMonth}
+        onClick={handlePrev}
         className="w-8 h-8 rounded-full border border-[#0D0D0C]/[0.08] bg-[#FFFDFA] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] flex items-center justify-center transition-all active:scale-95 shadow-sm text-[#0D0D0C]/70 shrink-0"
         title="Previous Month"
         aria-label="Previous Month"
@@ -37,16 +74,22 @@ export function MonthPicker() {
         <ChevronLeft className="w-3.5 h-3.5 stroke-[2]" />
       </button>
 
-      {/* Compact Month Pill */}
+      {/* Compact Month Pill with Transition Skeleton */}
       <div className="relative">
         <button
           onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="h-8 px-2.5 sm:px-3 rounded-full bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] hover:border-[#0D0D0C]/25 shadow-sm text-xs font-medium text-[#0D0D0C] transition-all active:scale-[0.98] flex items-center gap-1.5 whitespace-nowrap"
+          className="h-8 px-2.5 sm:px-3 rounded-full bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] hover:border-[#0D0D0C]/25 shadow-sm text-xs font-medium text-[#0D0D0C] transition-all active:scale-[0.98] flex items-center gap-1.5 whitespace-nowrap min-w-[105px] justify-between"
           title="Select Month"
           aria-expanded={dropdownOpen}
         >
-          <CalendarIcon className="w-3 h-3 stroke-[1.8] text-[#0D0D0C]/50" />
-          <span>{formatMonthYear(selectedMonth)}</span>
+          <div className="flex items-center gap-1.5">
+            <CalendarIcon className="w-3 h-3 stroke-[1.8] text-[#0D0D0C]/50" />
+            {isPending ? (
+              <span className="w-14 h-3 animate-pulse bg-black/10 rounded-full inline-block" />
+            ) : (
+              <span>{formatMonthYear(selectedMonth)}</span>
+            )}
+          </div>
           <span className="text-[9px] text-[#0D0D0C]/40">▾</span>
         </button>
 
@@ -68,10 +111,7 @@ export function MonthPicker() {
                   return (
                     <button
                       key={m}
-                      onClick={() => {
-                        setSelectedMonth(m);
-                        setDropdownOpen(false);
-                      }}
+                      onClick={() => handleSelectMonth(m)}
                       className={`flex items-center justify-between w-full px-3 py-1.5 text-xs rounded-full transition-colors text-left ${
                         isSelected
                           ? "bg-[#0D0D0C] text-[#FFFDFA] font-medium shadow-sm"
@@ -101,7 +141,7 @@ export function MonthPicker() {
 
       {/* Small 32px circle next button */}
       <button
-        onClick={goToNextMonth}
+        onClick={handleNext}
         className="w-8 h-8 rounded-full border border-[#0D0D0C]/[0.08] bg-[#FFFDFA] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] flex items-center justify-center transition-all active:scale-95 shadow-sm text-[#0D0D0C]/70 shrink-0"
         title="Next Month"
         aria-label="Next Month"
