@@ -35,6 +35,7 @@ export interface StorageAdapter {
   saveCurrency(currency: string): void;
   initializeUserWorkspace(user: User): void;
   updateUserPassword(email: string, newPassword: string): boolean;
+  deleteUserAccount(userId: string): boolean;
   resetAll(): void;
 }
 
@@ -236,6 +237,41 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   logoutUser(): void {
     this.setCurrentUser(null);
+  }
+
+  deleteUserAccount(userId: string): boolean {
+    if (!this.isClient()) return false;
+
+    const users = this.getUsers();
+    const target = users.find((u) => u.id === userId);
+    if (!target) return false;
+
+    const updatedUsers = users.filter((u) => u.id !== userId);
+    this.saveUsers(updatedUsers);
+
+    const userKeys = [
+      `${STORAGE_KEYS.EXPENSES}_${userId}`,
+      `${STORAGE_KEYS.CATEGORIES}_${userId}`,
+      `${STORAGE_KEYS.BUDGETS}_${userId}`,
+      `${STORAGE_KEYS.RECURRING_BUDGETS}_${userId}`,
+      `${STORAGE_KEYS.CLEARED_RECURRING}_${userId}`,
+      `${STORAGE_KEYS.DEBTS}_${userId}`,
+      `${STORAGE_KEYS.INCOMES}_${userId}`,
+      `${STORAGE_KEYS.PAYDAY}_${userId}`,
+    ];
+
+    userKeys.forEach((key) => {
+      try {
+        localStorage.removeItem(key);
+      } catch {}
+    });
+
+    const current = this.getCurrentUser();
+    if (current && current.id === userId) {
+      this.logoutUser();
+    }
+
+    return true;
   }
 
   // --- Core Expense & Data Methods ---
