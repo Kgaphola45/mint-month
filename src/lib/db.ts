@@ -97,3 +97,4 @@ export async function clearCachedTransactions(): Promise<void> {
     console.warn("IndexedDB clear failed:", err);
   }
 }
+

@@ -1,3 +1,9 @@
+import {
+  getCachedTransactions,
+  saveCachedTransactions,
+  putCachedTransaction,
+  deleteCachedTransaction,
+} from "@/lib/db";
 import { create } from "zustand";
 import { format, subMonths, addMonths, parse } from "date-fns";
 import {
@@ -206,6 +212,12 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const currentUser = storage.getCurrentUser();
     const users = storage.getUsers();
     const expenses = storage.getExpenses();
+    // Read IndexedDB cache first (<5ms)
+    getCachedTransactions().then((cached) => {
+      if (cached && cached.length > 0) {
+        set({ expenses: cached });
+      }
+    });
     const categories = storage.getCategories();
     const budgets = storage.getBudgets();
     const recurringBudgets = storage.getRecurringBudgets();
