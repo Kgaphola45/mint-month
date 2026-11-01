@@ -25,6 +25,7 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const {
+    currentUser,
     setQuickAddOpen,
     setSimulatorModalOpen,
     setStoryModalOpen,
@@ -81,7 +82,7 @@ export function Header() {
   return (
     <>
       {/* 80px tall Header with Hairline Border, Vela style */}
-      <header className="sticky top-0 z-30 w-full h-20 border-b border-[#0D0D0C]/[0.08] bg-[#FBF6EF]/90 backdrop-blur-md flex items-center overflow-hidden">
+      <header className="sticky top-0 z-40 w-full h-20 border-b border-[#0D0D0C]/[0.08] bg-[#FBF6EF]/90 backdrop-blur-md flex items-center">
         <div className="w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 max-w-full">
           {/* ZONE 1 (Left): dot + "mint month" in one line, 20px, 600 weight */}
           <div className="flex items-center shrink-0">
