@@ -5,3 +5,4 @@ self.addEventListener("activate", (event) => {
     self.registration.unregister()
   );
 });
+
