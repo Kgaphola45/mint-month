@@ -10,12 +10,10 @@ export interface BudgetStoreSlice {
   paydayDay: number;
   editingDebt: DebtInstalment | null;
   setBudget: (budget: Budget) => void;
-  updateBudgetCategory: (month: string, categoryId: string, amount: number) => void;
-  setRecurringBudget: (categoryId: string, amount: number) => void;
+  updateTotalBudget: (month: string, total: number) => void;
+  updateCategoryBudget: (month: string, categoryId: string, amount: number) => void;
   toggleCategorySorted: (month: string, categoryId: string) => void;
-  toggleCategoryRecurring: (month: string, categoryId: string) => void;
-  toggleClearedRecurring: (categoryId: string) => void;
-  clearAllRecurringForMonth: () => void;
+  toggleCategoryRecurring: (month: string, categoryId: string, amount?: number) => void;
   addDebt: (debt: Omit<DebtInstalment, "id">) => void;
   updateDebt: (id: string, updates: Partial<DebtInstalment>) => void;
   deleteDebt: (id: string) => void;
@@ -39,12 +37,10 @@ export const useBudgetStore = <T>(
       paydayDay: state.paydayDay,
       editingDebt: state.editingDebt,
       setBudget: state.setBudget,
-      updateBudgetCategory: state.updateBudgetCategory,
-      setRecurringBudget: state.setRecurringBudget,
+      updateTotalBudget: state.updateTotalBudget,
+      updateCategoryBudget: state.updateCategoryBudget,
       toggleCategorySorted: state.toggleCategorySorted,
       toggleCategoryRecurring: state.toggleCategoryRecurring,
-      toggleClearedRecurring: state.toggleClearedRecurring,
-      clearAllRecurringForMonth: state.clearAllRecurringForMonth,
       addDebt: state.addDebt,
       updateDebt: state.updateDebt,
       deleteDebt: state.deleteDebt,
@@ -57,4 +53,3 @@ export const useBudgetStore = <T>(
     return selector(slice);
   });
 };
-
