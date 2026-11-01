@@ -26,24 +26,28 @@ export function MonthPicker() {
   }
 
   return (
-    <div className="relative flex items-center gap-1 sm:gap-2">
+    <div className="relative flex items-center gap-1 sm:gap-1.5 shrink-0">
+      {/* Small 32px circle previous button */}
       <button
         onClick={goToPreviousMonth}
-        className="p-2 rounded-full border border-[#0D0D0C]/[0.08] bg-[#FFFDFA] hover:bg-[#FFFDFA]/80 text-[#0D0D0C]/56 hover:text-[#0D0D0C] transition-colors active:scale-95 shadow-sm"
+        className="w-8 h-8 rounded-full border border-[#0D0D0C]/[0.08] bg-[#FFFDFA] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] flex items-center justify-center transition-all active:scale-95 shadow-sm text-[#0D0D0C]/70 shrink-0"
         title="Previous Month"
         aria-label="Previous Month"
       >
-        <ChevronLeft className="w-3.5 h-3.5 stroke-[1.8]" />
+        <ChevronLeft className="w-3.5 h-3.5 stroke-[2]" />
       </button>
 
+      {/* Compact Month Pill */}
       <div className="relative">
         <button
           onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] hover:border-[#0D0D0C]/20 shadow-sm text-xs sm:text-sm font-medium text-[#0D0D0C] transition-all active:scale-[0.98]"
+          className="h-8 px-2.5 sm:px-3 rounded-full bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] hover:border-[#0D0D0C]/25 shadow-sm text-xs font-medium text-[#0D0D0C] transition-all active:scale-[0.98] flex items-center gap-1.5 whitespace-nowrap"
+          title="Select Month"
+          aria-expanded={dropdownOpen}
         >
-          <CalendarIcon className="w-3.5 h-3.5 stroke-[1.5] text-[#0D0D0C]/60" />
+          <CalendarIcon className="w-3 h-3 stroke-[1.8] text-[#0D0D0C]/50" />
           <span>{formatMonthYear(selectedMonth)}</span>
-          <span className="text-[10px] text-[#0D0D0C]/42 ml-0.5">▾</span>
+          <span className="text-[9px] text-[#0D0D0C]/40">▾</span>
         </button>
 
         {dropdownOpen && (
@@ -52,11 +56,11 @@ export function MonthPicker() {
               className="fixed inset-0 z-40"
               onClick={() => setDropdownOpen(false)}
             />
-            <div className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 mt-2 z-50 w-64 p-2 bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] rounded-[20px] shadow-2xl max-h-80 overflow-y-auto">
-              <div className="text-[11px] font-normal text-[#0D0D0C]/42 px-3 py-1.5 uppercase tracking-wider">
+            <div className="absolute right-0 sm:left-1/2 sm:-translate-x-1/2 mt-2 z-50 w-60 p-2 bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] rounded-[20px] shadow-2xl max-h-80 overflow-y-auto">
+              <div className="text-[10px] font-medium text-[#0D0D0C]/40 px-3 py-1.5 uppercase tracking-wider">
                 Select Month
               </div>
-              <div className="grid grid-cols-1 gap-0.5 mt-1">
+              <div className="grid grid-cols-1 gap-0.5 mt-0.5">
                 {quickMonths.map((m) => {
                   const isSelected = m === selectedMonth;
                   const isTodayMonth = m === currentMonthStr;
@@ -68,16 +72,16 @@ export function MonthPicker() {
                         setSelectedMonth(m);
                         setDropdownOpen(false);
                       }}
-                      className={`flex items-center justify-between w-full px-3.5 py-2 text-xs sm:text-sm rounded-full transition-colors text-left ${
+                      className={`flex items-center justify-between w-full px-3 py-1.5 text-xs rounded-full transition-colors text-left ${
                         isSelected
-                          ? "bg-[#0D0D0C] text-[#FFFDFA] font-medium"
+                          ? "bg-[#0D0D0C] text-[#FFFDFA] font-medium shadow-sm"
                           : "hover:bg-[#FBF6EF] text-[#0D0D0C]"
                       }`}
                     >
                       <span>{formatMonthYear(m)}</span>
                       {isTodayMonth && (
                         <span
-                          className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                          className={`text-[9px] px-1.5 py-0.5 rounded-full ${
                             isSelected
                               ? "bg-white/20 text-white"
                               : "bg-[#0D0D0C]/[0.06] text-[#0D0D0C]/60"
@@ -95,13 +99,14 @@ export function MonthPicker() {
         )}
       </div>
 
+      {/* Small 32px circle next button */}
       <button
         onClick={goToNextMonth}
-        className="p-2 rounded-full border border-[#0D0D0C]/[0.08] bg-[#FFFDFA] hover:bg-[#FFFDFA]/80 text-[#0D0D0C]/56 hover:text-[#0D0D0C] transition-colors active:scale-95 shadow-sm"
+        className="w-8 h-8 rounded-full border border-[#0D0D0C]/[0.08] bg-[#FFFDFA] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] flex items-center justify-center transition-all active:scale-95 shadow-sm text-[#0D0D0C]/70 shrink-0"
         title="Next Month"
         aria-label="Next Month"
       >
-        <ChevronRight className="w-3.5 h-3.5 stroke-[1.8]" />
+        <ChevronRight className="w-3.5 h-3.5 stroke-[2]" />
       </button>
     </div>
   );

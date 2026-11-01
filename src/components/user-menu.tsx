@@ -3,13 +3,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import {
-  User as UserIcon,
   LogOut,
   UserPlus,
-  Users,
   Check,
   ChevronDown,
-  Sparkles,
   Settings,
   Trash2,
 } from "lucide-react";
@@ -41,22 +38,15 @@ export function UserMenu() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // ONE auth button when logged out: Sign In only (Register link is inside Sign In modal/page)
   if (!isAuthenticated || !currentUser) {
     return (
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => setAuthModalOpen(true, "login")}
-          className="h-10 px-4 rounded-full border border-[#0D0D0C]/[0.12] text-xs font-medium text-[#0D0D0C] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] transition-all"
-        >
-          Sign In
-        </button>
-        <button
-          onClick={() => setAuthModalOpen(true, "register")}
-          className="h-10 px-4 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-xs font-medium hover:opacity-90 transition-all shadow-sm hidden sm:inline-flex items-center"
-        >
-          Register
-        </button>
-      </div>
+      <button
+        onClick={() => setAuthModalOpen(true, "login")}
+        className="h-9 px-3.5 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FFFDFA] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] text-xs font-medium text-[#0D0D0C] transition-all shadow-sm shrink-0 active:scale-95"
+      >
+        Sign In
+      </button>
     );
   }
 
@@ -89,11 +79,11 @@ export function UserMenu() {
   };
 
   return (
-    <div className="relative" ref={menuRef}>
-      {/* Profile Pill Trigger */}
+    <div className="relative shrink-0" ref={menuRef}>
+      {/* Profile Pill Trigger (Avatar) */}
       <button
         onClick={() => setMenuOpen(!menuOpen)}
-        className="flex items-center gap-2 p-1.5 pr-3 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FFFDFA] hover:bg-[#FBF6EF] text-[#0D0D0C] transition-all shadow-sm active:scale-95"
+        className="flex items-center gap-2 p-1 pr-2.5 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FFFDFA] hover:bg-[#FBF6EF] text-[#0D0D0C] transition-all shadow-sm active:scale-95 shrink-0"
         aria-expanded={menuOpen}
         aria-label="User profile menu"
       >
@@ -103,10 +93,10 @@ export function UserMenu() {
         >
           {initials}
         </div>
-        <span className="text-xs font-medium text-[#0D0D0C] hidden sm:inline max-w-[110px] truncate">
+        <span className="text-xs font-medium text-[#0D0D0C] hidden sm:inline max-w-[90px] truncate">
           {firstName}
         </span>
-        <ChevronDown className="w-3.5 h-3.5 text-[#0D0D0C]/50 stroke-[1.5]" />
+        <ChevronDown className="w-3 h-3 text-[#0D0D0C]/50 stroke-[1.5]" />
       </button>
 
       {/* Dropdown Menu */}
@@ -116,16 +106,16 @@ export function UserMenu() {
           <div className="p-3 rounded-[16px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] mb-2">
             <div className="flex items-center gap-2.5">
               <div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold text-[#FFFDFA] shrink-0 shadow-sm"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-[#FFFDFA] shrink-0 shadow-sm"
                 style={{ backgroundColor: currentUser.avatarColor || "#0D0D0C" }}
               >
                 {initials}
               </div>
               <div className="truncate">
-                <span className="text-sm font-medium text-[#0D0D0C] block truncate">
+                <span className="text-xs font-medium text-[#0D0D0C] block truncate">
                   {currentUser.name}
                 </span>
-                <span className="text-[11px] text-[#0D0D0C]/50 block truncate">
+                <span className="text-[10px] text-[#0D0D0C]/50 block truncate">
                   {currentUser.email}
                 </span>
               </div>
@@ -184,6 +174,7 @@ export function UserMenu() {
           )}
 
           <div className="border-t border-[#0D0D0C]/[0.06] pt-1 space-y-0.5">
+            {/* Settings & Privacy link in User Menu */}
             <Link
               href="/settings"
               onClick={() => setMenuOpen(false)}
@@ -231,4 +222,3 @@ export function UserMenu() {
     </div>
   );
 }
-

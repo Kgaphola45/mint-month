@@ -8,17 +8,14 @@ import {
   Receipt,
   PiggyBank,
   ArrowLeftRight,
-  Settings,
   Plus,
   Sparkles,
-  BookOpen,
   Search,
   Command,
 } from "lucide-react";
 import { MonthPicker } from "./month-picker";
 import { UserMenu } from "./user-menu";
 import { useExpenseStore } from "@/store/useExpenseStore";
-import { CURRENCIES } from "@/lib/currencies";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -27,13 +24,11 @@ export function Navbar() {
     setSimulatorModalOpen,
     setStoryModalOpen,
     setCommandPaletteOpen,
-    currency,
   } = useExpenseStore();
-  const currentCurrency = CURRENCIES[currency] || CURRENCIES.ZAR;
 
   // Global keyboard shortcuts:
   // - Cmd/Ctrl + K: Linear Command Palette
-  // - 'n': Quick Add
+  // - 'n': Quick Add Expense
   // - 'a': Purchase Simulator
   // - 'w': Editorial Story (Monthly Wrapped)
   useEffect(() => {
@@ -69,110 +64,91 @@ export function Navbar() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [setQuickAddOpen, setSimulatorModalOpen, setStoryModalOpen, setCommandPaletteOpen]);
 
+  // Center pill navigation with ONLY 4 items (Settings moved to User Menu)
   const navLinks = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/transactions", label: "Transactions", icon: Receipt },
     { href: "/budgets", label: "Budgets", icon: PiggyBank },
     { href: "/compare", label: "Analytics", icon: ArrowLeftRight },
-    { href: "/settings", label: "Settings", icon: Settings },
   ];
 
   return (
     <>
-      {/* 80px tall Header with Hairline Border */}
-      <header className="sticky top-0 z-30 w-full h-20 border-b border-[#0D0D0C]/[0.08] bg-[#FBF6EF]/85 backdrop-blur-md transition-colors flex items-center">
-        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 flex items-center justify-between gap-4">
-          {/* Brand: 13px black dot + "mint month" Inter Tight 600 */}
-          <div className="flex items-center gap-6">
+      {/* 80px tall Header with Hairline Border, Vela style */}
+      <header className="sticky top-0 z-30 w-full h-20 border-b border-[#0D0D0C]/[0.08] bg-[#FBF6EF]/90 backdrop-blur-md flex items-center overflow-hidden">
+        <div className="w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 max-w-full overflow-hidden">
+          {/* ZONE 1 (Left): dot + "mint month" in one line, 20px, 600 weight */}
+          <div className="flex items-center shrink-0">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <span className="w-[13px] h-[13px] rounded-full bg-[#0D0D0C] shrink-0 group-hover:scale-110 transition-transform" />
-              <span className="font-semibold text-xl sm:text-[22px] tracking-[-0.02em] text-[#0D0D0C]">
+              <span className="w-3 h-3 rounded-full bg-[#0D0D0C] shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="font-semibold text-[20px] tracking-[-0.02em] text-[#0D0D0C] whitespace-nowrap">
                 mint month
               </span>
             </Link>
-
-            {/* Desktop Pill Navigation (rounded full, not boxy) */}
-            <nav className="hidden lg:flex items-center gap-1 bg-[#FFFDFA] p-1.5 rounded-full border border-[#0D0D0C]/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-              {navLinks.map((link) => {
-                const isActive = pathname === link.href;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`px-4 py-2 rounded-full text-xs font-medium transition-all ${
-                      isActive
-                        ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-sm"
-                        : "text-[#0D0D0C]/56 hover:text-[#0D0D0C] hover:bg-[#0D0D0C]/[0.04]"
-                    }`}
-                  >
-                    <span>{link.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
           </div>
 
-          {/* Central Month Switcher (pill style) */}
-          <div className="flex items-center justify-center">
+          {/* ZONE 2 (Center): pill with only 4 items - hidden on mobile, lg:flex */}
+          <nav className="hidden lg:flex items-center gap-1 bg-[#FFFDFA] p-1 rounded-full border border-[#0D0D0C]/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.02)] shrink-0">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    isActive
+                      ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-sm"
+                      : "text-[#0D0D0C]/60 hover:text-[#0D0D0C] hover:bg-[#0D0D0C]/[0.04]"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* ZONE 3 (Right): 
+              1. Compact month switcher (‹ Nov 2026 › with 32px circle buttons)
+              2. Commands as ⌘K pill
+              3. Can I Afford It as 36px icon-only button with A tooltip
+              4. ONE auth button (Sign In only if logged out, avatar if logged in)
+              5. Black primary Add Expense pill */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            {/* 1. Compact Month Switcher */}
             <MonthPicker />
-          </div>
 
-          {/* Right Action Items */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
-            {/* Linear Command Palette Trigger Button */}
+            {/* 2. Commands as ⌘K pill */}
             <button
               onClick={() => setCommandPaletteOpen(true)}
-              className="flex items-center gap-2 h-10 px-3.5 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FFFDFA] hover:bg-[#FBF6EF] text-xs text-[#0D0D0C]/60 hover:text-[#0D0D0C] transition-all shadow-sm"
-              title="Open Command Palette (⌘K / Ctrl+K)"
+              className="h-9 px-2.5 sm:px-3 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FFFDFA] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] text-xs font-medium inline-flex items-center gap-1.5 transition-all text-[#0D0D0C] shadow-sm shrink-0"
+              title="Commands (⌘K / Ctrl+K)"
+              aria-label="Commands"
             >
-              <Search className="w-3.5 h-3.5 text-[#0D0D0C]/40" />
-              <span className="hidden xl:inline text-[11px] font-normal text-[#0D0D0C]/70">Commands</span>
-              <kbd className="text-[10px] font-mono bg-[#0D0D0C]/[0.06] text-[#0D0D0C]/60 px-1.5 py-0.5 rounded">
-                ⌘K
-              </kbd>
+              <Command className="w-3.5 h-3.5 stroke-[1.8]" />
+              <span className="font-mono text-[11px] font-normal">⌘K</span>
             </button>
 
-            {/* Outlined Currency Pill */}
-            <Link
-              href="/settings"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[#FFFDFA] hover:bg-[#FFFDFA]/80 text-[#0D0D0C] border border-[#0D0D0C]/[0.12] transition-colors shadow-sm"
-              title="Change Currency in Settings"
-            >
-              <span className="font-medium text-[#0D0D0C]">{currentCurrency.symbol}</span>
-              <span className="text-[11px] text-[#0D0D0C]/56">{currentCurrency.code}</span>
-            </Link>
-
-            {/* Monthly Editorial Story / Wrapped Pill */}
-            <button
-              onClick={() => setStoryModalOpen(true)}
-              className="hidden 2xl:flex items-center gap-1.5 h-10 px-3.5 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FFFDFA] hover:bg-[#FBF6EF] text-xs font-medium text-[#0D0D0C] shadow-sm transition-all"
-              title="Monthly Editorial Story Review (Hotkey: W)"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-[#0D0D0C]/70" />
-              <span>Editorial Story</span>
-              <kbd className="ml-0.5 text-[10px] font-mono bg-[#0D0D0C]/[0.06] px-1.5 py-0.5 rounded text-[#0D0D0C]/60">W</kbd>
-            </button>
-
-            {/* "Can I Afford It?" Purchase Simulator Pill */}
+            {/* 3. Can I Afford It as 36px icon-only button with A hotkey tooltip */}
             <button
               onClick={() => setSimulatorModalOpen(true)}
-              className="hidden md:flex items-center gap-1.5 h-10 px-3.5 rounded-full border border-[#0D0D0C]/[0.12] bg-[#FFFDFA] hover:bg-[#FBF6EF] text-xs font-medium text-[#0D0D0C] shadow-sm transition-all"
-              title="Purchase Decision Simulator (Hotkey: A)"
+              className="w-9 h-9 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FFFDFA] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] flex items-center justify-center transition-all text-[#0D0D0C] shadow-sm shrink-0"
+              title="Can I Afford It? (Press A)"
+              aria-label="Can I Afford It?"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#0D0D0C]/70" />
-              <span>Can I Afford It?</span>
-              <kbd className="ml-0.5 text-[10px] font-mono bg-[#0D0D0C]/[0.06] px-1.5 py-0.5 rounded text-[#0D0D0C]/60">A</kbd>
+              <Sparkles className="w-4 h-4 stroke-[1.5]" />
             </button>
 
-            {/* User Profile / Account Switcher Menu */}
+            {/* 4. ONE auth button: Sign In only if logged out, avatar if logged in */}
             <UserMenu />
 
-            {/* Add Expense Button: 48px tall, 999px radius, black ink #0D0D0C, white text */}
+            {/* 5. Black primary Add Expense pill */}
             <button
               onClick={() => setQuickAddOpen(true)}
-              className="h-10 px-4 sm:px-5 rounded-full bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 active:scale-95 text-[#FFFDFA] font-medium text-xs sm:text-sm shadow-sm transition-all flex items-center gap-1.5"
+              className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-full bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 active:scale-95 text-[#FFFDFA] font-medium text-xs sm:text-sm shadow-sm transition-all flex items-center gap-1.5 shrink-0"
+              title="Add Expense (Press N)"
+              aria-label="Add Expense"
             >
-              <Plus className="w-4 h-4 stroke-[2]" />
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span className="hidden sm:inline">Add Expense</span>
               <span className="sm:hidden">Add</span>
             </button>
