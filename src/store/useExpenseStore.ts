@@ -43,6 +43,7 @@ interface ExpenseStore {
   budgetModalOpen: boolean;
   debtModalOpen: boolean;
   paydayModalOpen: boolean;
+  simulatorModalOpen: boolean;
   editingExpense: Expense | null;
   editingDebt: DebtInstalment | null;
 
@@ -56,6 +57,7 @@ interface ExpenseStore {
   setBudgetModalOpen: (open: boolean) => void;
   setDebtModalOpen: (open: boolean) => void;
   setPaydayModalOpen: (open: boolean) => void;
+  setSimulatorModalOpen: (open: boolean) => void;
   setAuthModalOpen: (open: boolean, mode?: "login" | "register") => void;
   login: (input: LoginInput) => { success: boolean; error?: string };
   register: (input: RegisterInput) => { success: boolean; error?: string };
@@ -160,6 +162,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   budgetModalOpen: false,
   debtModalOpen: false,
   paydayModalOpen: false,
+  simulatorModalOpen: false,
   editingExpense: null,
   editingDebt: null,
 
@@ -255,6 +258,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   setBudgetModalOpen: (open: boolean) => set({ budgetModalOpen: open }),
   setDebtModalOpen: (open: boolean) => set({ debtModalOpen: open }),
   setPaydayModalOpen: (open: boolean) => set({ paydayModalOpen: open }),
+  setSimulatorModalOpen: (open: boolean) => set({ simulatorModalOpen: open }),
   setAuthModalOpen: (open: boolean, mode: "login" | "register" = "login") =>
     set({ authModalOpen: open, authModalMode: mode }),
 
