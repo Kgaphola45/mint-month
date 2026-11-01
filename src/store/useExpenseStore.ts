@@ -47,6 +47,8 @@ interface ExpenseStore {
   simulatorModalOpen: boolean;
   storyModalOpen: boolean;
   storyMonth: string;
+  commandPaletteOpen: boolean;
+  digestModalOpen: boolean;
   editingExpense: Expense | null;
   editingDebt: DebtInstalment | null;
 
@@ -63,6 +65,8 @@ interface ExpenseStore {
   setSimulatorModalOpen: (open: boolean) => void;
   setStoryModalOpen: (open: boolean) => void;
   setStoryMonth: (month: string) => void;
+  setCommandPaletteOpen: (open: boolean) => void;
+  setDigestModalOpen: (open: boolean) => void;
   setAuthModalOpen: (open: boolean, mode?: "login" | "register") => void;
   login: (input: LoginInput) => { success: boolean; error?: string };
   register: (input: RegisterInput) => { success: boolean; error?: string };
@@ -171,6 +175,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   simulatorModalOpen: false,
   storyModalOpen: false,
   storyMonth: format(subMonths(new Date(), 1), "yyyy-MM"),
+  commandPaletteOpen: false,
+  digestModalOpen: false,
   editingExpense: null,
   editingDebt: null,
 
@@ -269,6 +275,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   setSimulatorModalOpen: (open: boolean) => set({ simulatorModalOpen: open }),
   setStoryModalOpen: (open: boolean) => set({ storyModalOpen: open }),
   setStoryMonth: (month: string) => set({ storyMonth: month }),
+  setCommandPaletteOpen: (open: boolean) => set({ commandPaletteOpen: open }),
+  setDigestModalOpen: (open: boolean) => set({ digestModalOpen: open }),
   setAuthModalOpen: (open: boolean, mode: "login" | "register" = "login") =>
     set({ authModalOpen: open, authModalMode: mode }),
 
