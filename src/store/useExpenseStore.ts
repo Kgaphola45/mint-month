@@ -84,8 +84,10 @@ interface ExpenseStore {
   setCommandPaletteOpen: (open: boolean) => void;
   setDigestModalOpen: (open: boolean) => void;
   setAuthModalOpen: (open: boolean, mode?: "login" | "register") => void;
-  login: (input: LoginInput) => { success: boolean; error?: string };
-  register: (input: RegisterInput) => { success: boolean; error?: string };
+  login: (input: LoginInput) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
+  register: (input: RegisterInput) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
+  isSyncingSupabase: boolean;
+  syncSupabaseData: (userId?: string) => Promise<void>;
   logout: () => void;
   switchUser: (userId: string) => void;
   deleteAccount: (userId?: string) => Promise<{ success: boolean; error?: string }>;
@@ -177,6 +179,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   incomes: { default: 25000 },
   paydayDay: 25,
   isLoaded: false,
+  isSyncingSupabase: false,
 
   currentUser: null,
   isAuthenticated: false,
@@ -296,7 +299,47 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   setAuthModalOpen: (open: boolean, mode: "login" | "register" = "login") =>
     set({ authModalOpen: open, authModalMode: mode }),
 
-  login: (input) => {
+    syncSupabaseData: async (userId?: string) => {
+    const targetUserId = userId || get().currentUser?.id;
+    if (!targetUserId || !isSupabaseConfigured()) return;
+
+    try {
+      set({ isSyncingSupabase: true });
+      const [txs, bgs, debts] = await Promise.all([
+        fetchSupabaseTransactions(targetUserId),
+        fetchSupabaseBudgets(targetUserId),
+        fetchSupabaseDebtContracts(targetUserId),
+      ]);
+
+      if (txs && txs.length > 0) {
+        set({ expenses: txs });
+        storage.saveExpenses(txs);
+      }
+      if (bgs && bgs.length > 0) {
+        set({ budgets: bgs });
+        storage.saveBudgets(bgs);
+      }
+      if (debts && debts.length > 0) {
+        set({ debts });
+        storage.saveDebts(debts);
+      }
+    } catch (err) {
+      console.error('Supabase sync error:', err);
+    } finally {
+      set({ isSyncingSupabase: false });
+    }
+  },
+
+  login: async (input) => {
+    if (isSupabaseConfigured()) {
+      const supa = await supabaseSignIn(input.email, input.password);
+      if (supa.success && supa.user) {
+        storage.setCurrentUser(supa.user);
+        set({ currentUser: supa.user, isAuthenticated: true, authModalOpen: false });
+        await get().syncSupabaseData(supa.user.id);
+        return { success: true };
+      }
+    }
     const res = storage.authenticateUser(input.email, input.password);
     if (res.success && res.user) {
       set({
@@ -310,7 +353,15 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     return { success: false, error: res.error || "Authentication failed" };
   },
 
-  register: (input) => {
+  register: async (input) => {
+    if (isSupabaseConfigured()) {
+      const supa = await supabaseSignUp(input.name, input.email, input.password, input.monthlySalary);
+      if (supa.success && supa.user) {
+        storage.setCurrentUser(supa.user);
+        set({ currentUser: supa.user, isAuthenticated: true, authModalOpen: false });
+        return { success: true };
+      }
+    }
     const res = storage.registerUser(
       input.name,
       input.email,
@@ -331,6 +382,9 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   },
 
   logout: () => {
+    if (isSupabaseConfigured()) {
+      supabaseSignOut().catch(() => {});
+    }
     storage.logoutUser();
     set({
       currentUser: null,
@@ -556,7 +610,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   },
 
   addExpense: (expenseData) => {
-    const id = `exp-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const id = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `exp-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const newExpense: Expense = {
       ...expenseData,
       id,

@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       transactions: {
@@ -43,6 +43,7 @@ export interface Database {
           is_recurring?: boolean;
           created_at?: string;
         };
+        Relationships: [];
       };
       budgets: {
         Row: {
@@ -69,6 +70,7 @@ export interface Database {
           categories?: Json | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       debit_orders: {
         Row: {
@@ -98,6 +100,7 @@ export interface Database {
           is_cleared?: boolean;
           month?: string;
         };
+        Relationships: [];
       };
       debt_contracts: {
         Row: {
@@ -127,6 +130,7 @@ export interface Database {
           remaining_balance?: number | null;
           months_left?: number | null;
         };
+        Relationships: [];
       };
       password_resets: {
         Row: {
@@ -150,7 +154,20 @@ export interface Database {
           expires_at?: string;
           used?: boolean;
         };
+        Relationships: [];
       };
     };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
-}
+};

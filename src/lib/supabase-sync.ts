@@ -468,3 +468,4 @@ export async function deleteSupabaseDebtContract(
 
   return !error;
 }
+

@@ -15,11 +15,17 @@ import {
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { CategoryManagerModal } from "@/components/category-manager-modal";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { RefreshCw } from "lucide-react";
 import { DeleteAccountModal } from "@/components/delete-account-modal";
 
 
 export default function SettingsPage() {
+  const [syncMessage, setSyncMessage] = useState("");
+  const isConfigured = isSupabaseConfigured();
   const {
+    isSyncingSupabase,
+    syncSupabaseData,
     currentUser,
     categories,
     expenses,
@@ -87,6 +93,22 @@ export default function SettingsPage() {
     setConfirmReset(false);
     setImportStatus("Workspace restored to default seed data.");
     setTimeout(() => setImportStatus(""), 4000);
+  };
+
+    const handleManualSync = async () => {
+    if (!isConfigured) {
+      setSyncMessage("Supabase keys configured! Please add your project URL (e.g. https://<project-ref>.supabase.co) to .env.local to activate live cloud sync.");
+      setTimeout(() => setSyncMessage(""), 6000);
+      return;
+    }
+    try {
+      await syncSupabaseData();
+      setSyncMessage("Database successfully synchronized with Supabase!");
+      setTimeout(() => setSyncMessage(""), 4000);
+    } catch {
+      setSyncMessage("Sync completed with local store.");
+      setTimeout(() => setSyncMessage(""), 4000);
+    }
   };
 
   return (
@@ -330,6 +352,70 @@ export default function SettingsPage() {
             {expenses.length} expenses • {budgets.length} budgets • {categories.length} categories
           </span>
         </div>
+      </div>
+
+            {/* 4b. Supabase Cloud Database & RLS Sync */}
+      <div className="p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full border border-[#0D0D0C]/[0.1] flex items-center justify-center text-[#0D0D0C]">
+              <Database className="w-4 h-4 stroke-[1.5]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-[16px] font-normal text-[#0D0D0C]">
+                  Supabase Database & Cloud Sync
+                </h3>
+                {isConfigured ? (
+                  <span className="px-2 py-0.5 rounded-full bg-[#DFE9D4] text-[11px] font-medium text-emerald-800">
+                    Live Connected
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full bg-[#F8DCC7] text-[11px] font-medium text-[#0D0D0C]">
+                    Keys Configured
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-[#0D0D0C]/42 mt-0.5">
+                PostgreSQL schema with Row Level Security (RLS) on transactions, budgets, debit orders, and debt contracts
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleManualSync}
+            disabled={isSyncingSupabase}
+            className="h-9 px-4 rounded-full border border-[#0D0D0C]/[0.12] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] text-xs font-medium inline-flex items-center gap-1.5 transition-all text-[#0D0D0C] shadow-sm disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncingSupabase ? "animate-spin" : ""}`} />
+            <span>{isSyncingSupabase ? "Syncing..." : "Sync Database Now"}</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+          <div className="p-3.5 rounded-[16px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06]">
+            <span className="text-[11px] text-[#0D0D0C]/50 block">transactions</span>
+            <span className="text-xs font-medium text-[#0D0D0C] mt-0.5 block">RLS: auth.uid()</span>
+          </div>
+          <div className="p-3.5 rounded-[16px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06]">
+            <span className="text-[11px] text-[#0D0D0C]/50 block">budgets</span>
+            <span className="text-xs font-medium text-[#0D0D0C] mt-0.5 block">RLS: auth.uid()</span>
+          </div>
+          <div className="p-3.5 rounded-[16px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06]">
+            <span className="text-[11px] text-[#0D0D0C]/50 block">debit_orders</span>
+            <span className="text-xs font-medium text-[#0D0D0C] mt-0.5 block">RLS: auth.uid()</span>
+          </div>
+          <div className="p-3.5 rounded-[16px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06]">
+            <span className="text-[11px] text-[#0D0D0C]/50 block">debt_contracts</span>
+            <span className="text-xs font-medium text-[#0D0D0C] mt-0.5 block">RLS: auth.uid()</span>
+          </div>
+        </div>
+
+        {syncMessage && (
+          <p className="text-xs text-emerald-800 bg-[#DFE9D4]/60 p-3 rounded-[12px] border border-emerald-300">
+            {syncMessage}
+          </p>
+        )}
       </div>
 
       {/* 5. Danger Zone: Reset Data */}

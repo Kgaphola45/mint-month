@@ -37,13 +37,13 @@ export function AuthModal() {
     setError(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     if (mode === "login") {
-      const res = login({ email, password });
+      const res = await login({ email, password });
       setLoading(false);
       if (res.success) {
         handleClose();
@@ -63,7 +63,7 @@ export function AuthModal() {
       }
 
       const parsedSalary = parseFloat(monthlySalary) || 25000;
-      const res = register({
+      const res = await register({
         name: name.trim(),
         email,
         password,

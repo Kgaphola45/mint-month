@@ -17,7 +17,7 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -32,7 +32,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     const parsedSalary = parseFloat(salary) || 25000;
-    const res = register({
+    const res = await register({
       name: name.trim(),
       email,
       password,

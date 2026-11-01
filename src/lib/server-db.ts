@@ -113,7 +113,7 @@ export const serverDb = {
     // Async sync to Supabase password_resets table
     const supabase = getSupabaseAdminClient();
     if (supabase) {
-      supabase
+      (supabase as any)
         .from("password_resets")
         .insert({
           email: record.email,
@@ -122,7 +122,7 @@ export const serverDb = {
           used: false,
         })
         .then(() => {})
-        .catch((err) => {
+        .catch((err: any) => {
           console.error("Supabase password_resets error:", err);
         });
     }
@@ -159,7 +159,7 @@ export const serverDb = {
 
       const supabase = getSupabaseAdminClient();
       if (supabase) {
-        supabase
+        (supabase as any)
           .from("password_resets")
           .update({ used: true })
           .eq("otp_hash", record.otpHash)

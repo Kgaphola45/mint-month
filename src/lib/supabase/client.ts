@@ -44,3 +44,4 @@ export const getSupabaseAdminClient = (): SupabaseClient<Database> | null => {
     },
   });
 };
+
