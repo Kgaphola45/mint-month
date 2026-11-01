@@ -34,6 +34,7 @@ export interface StorageAdapter {
   getCurrency(): string;
   saveCurrency(currency: string): void;
   initializeUserWorkspace(user: User): void;
+  updateUserPassword(email: string, newPassword: string): boolean;
   resetAll(): void;
 }
 
@@ -209,6 +210,28 @@ export class LocalStorageAdapter implements StorageAdapter {
 
     this.setCurrentUser(user);
     return { success: true, user };
+  }
+
+  updateUserPassword(email: string, newPassword: string): boolean {
+    if (!this.isClient()) return false;
+    const normalized = email.trim().toLowerCase();
+    const users = this.getUsers();
+    let updated = false;
+    const newUsers = users.map((u) => {
+      if (u.email.toLowerCase() === normalized) {
+        updated = true;
+        return { ...u, passwordHash: newPassword };
+      }
+      return u;
+    });
+    if (updated) {
+      this.saveUsers(newUsers);
+      const current = this.getCurrentUser();
+      if (current && current.email.toLowerCase() === normalized) {
+        this.setCurrentUser({ ...current, passwordHash: newPassword });
+      }
+    }
+    return updated;
   }
 
   logoutUser(): void {
