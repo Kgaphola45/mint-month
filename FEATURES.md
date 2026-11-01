@@ -80,8 +80,8 @@ On the 1st of every month (or on-demand via header button and hotkey), Mint Mont
 
 ---
 
-### 4. Guilt-Free Safe-to-Spend Daily Meter
-Guarantees zero end-of-month surprises by quarantining contract commitments upfront.
+### 4. Guilt-Free Safe-to-Spend Daily Meter & Payday What-If Widget
+Guarantees zero end-of-month surprises by quarantining contract commitments upfront and projecting live daily runway on the home screen.
 
 - **Contract Ring-Fencing:**
   Fixed obligations (rent, car finance, medical aid, WiFi, loan repayments) are quarantined on day 1:
@@ -93,6 +93,14 @@ Guarantees zero end-of-month surprises by quarantining contract commitments upfr
   - Slate Gray: Ring-fenced debit orders & fixed contracts.
   - Warm Peach / Rose: Discretionary spend consumed.
   - Soft Sage: Remaining guilt-free buffer for the month.
+- **Payday Countdown & What-If Runway (Home Screen):**
+  A live simulator prominently featured directly on the dashboard (not hidden inside a modal):
+  - **Live Dynamic Headline:** *"14 days to payday. If you don't spend tomorrow, daily goes R185 → R199 (+R14/day boost for remaining 13 days)."*
+  - **The Compound No-Spend Bonus Formula:**
+    $$\text{Daily Allowance}_{\text{after R0 tomorrow}} = \frac{\text{Safe Buffer}}{\text{Days Remaining} - 1}$$
+  - **Interactive What-If Outlay Slider:** Drag a slider from R0 to R1,000+ to instantly test tomorrow's spending impact before swiping your card.
+  - **Multi-Day No-Spend Streak Simulator:** Test banking 1, 2, 3, or 5 no-spend days to see your daily allowance jump dramatically.
+  - **"Commit to R0 Tomorrow":** One-click goal commitment button with celebratory micro-confetti.
 
 ---
 

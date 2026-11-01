@@ -46,9 +46,9 @@ export default function DashboardPage() {
                 <h4 className="text-sm font-medium text-[#0D0D0C]">
                   {summary.remaining < 0
                     ? `Monthly limit exceeded by ${formatCurrency(
-                        Math.abs(summary.remaining),
-                        currency
-                      )}`
+                      Math.abs(summary.remaining),
+                      currency
+                    )}`
                     : `Budget alert: ${budgetStatus.percentage}% of your monthly cap used`}
                 </h4>
                 <p className="text-xs text-[#0D0D0C]/56 mt-0.5">

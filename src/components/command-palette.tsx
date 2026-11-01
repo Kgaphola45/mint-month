@@ -23,6 +23,7 @@ import {
   Command,
   Check,
   FileSpreadsheet,
+  Zap,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, formatMonthYear, getTodayDateStr } from "@/lib/utils";
@@ -313,6 +314,21 @@ export function CommandPalette() {
         },
       },
       {
+        id: "act-what-if-runway",
+        section: "Quick Actions",
+        title: "Payday What-If Runway (Home Screen)",
+        subtitle: "See how R0 tomorrow shifts daily allowance until payday",
+        icon: Zap,
+        action: () => {
+          setCommandPaletteOpen(false);
+          router.push("/#what-if-widget");
+          setTimeout(() => {
+            const el = document.getElementById("what-if-widget");
+            el?.scrollIntoView({ behavior: "smooth" });
+          }, 100);
+        },
+      },
+      {
         id: "act-editorial-story",
         section: "Quick Actions",
         title: "Read Monthly Editorial Story (Wrapped)",
@@ -404,6 +420,8 @@ export function CommandPalette() {
         (lowerQuery.includes("csv") && item.id === "act-export-csv") ||
         (lowerQuery.includes("digest") && item.id === "act-payday-digest") ||
         (lowerQuery.includes("afford") && item.id === "act-can-i-afford") ||
+        (lowerQuery.includes("what if") && item.id === "act-what-if-runway") ||
+        (lowerQuery.includes("payday") && (item.id === "act-what-if-runway" || item.id === "act-payday-digest")) ||
         (lowerQuery.includes("story") && item.id === "act-editorial-story") ||
         (lowerQuery.includes("wrapped") && item.id === "act-editorial-story")
       ) {

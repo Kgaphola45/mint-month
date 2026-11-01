@@ -145,7 +145,10 @@ export function PaydayWhatIfWidget() {
   ];
 
   return (
-    <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-6">
+    <div
+      id="what-if-widget"
+      className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-6 scroll-mt-8"
+    >
       {/* 1. Header & Payday Context */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#0D0D0C]/[0.06]">
         <div>

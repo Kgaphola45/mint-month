@@ -165,6 +165,34 @@ export function SafeToSpendMeter() {
               <>Month completed. Total safe discretionary surplus preserved.</>
             )}
           </p>
+
+          {safe.daysRemaining > 1 && safe.safeToSpendRemaining > 0 && (
+            <div className="pt-1">
+              <a
+                href="#what-if-widget"
+                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#0D0D0C] bg-[#DFE9D4] hover:bg-[#d0dec2] px-2.5 py-1 rounded-full transition-colors border border-emerald-300/60 shadow-sm"
+              >
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-800 stroke-[2.5]" />
+                <span>
+                  What-if: If you don&apos;t spend tomorrow, daily jumps from{" "}
+                  <strong>{formatCurrency(Math.max(0, safe.dailyAllowance), currency)}</strong> →{" "}
+                  <strong>
+                    {formatCurrency(
+                      Math.round(
+                        (Math.max(0, safe.safeToSpendRemaining) /
+                          (safe.daysRemaining - 1)) *
+                          100
+                      ) / 100,
+                      currency
+                    )}
+                  </strong>
+                </span>
+                <span className="text-[10px] text-emerald-900 font-semibold underline underline-offset-2 ml-1">
+                  Simulate on home screen ↓
+                </span>
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Total Safe Discretionary Pool Pill */}

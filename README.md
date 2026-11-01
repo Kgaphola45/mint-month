@@ -36,6 +36,7 @@
 - **"Can I Afford It?" Simulator** — Press <kbd>A</kbd> to test impulse purchases against your real daily runway before you swipe your card.
 - **Month-End "Monthly Wrapped"** — Press <kbd>W</kbd> on the 1st of any month for a publication-grade 3-slide editorial magazine story with retina PNG and PDF export.
 - **Guilt-Free Safe-to-Spend Meter** — Quarantines fixed debit orders and contracts upfront so you always know your exact daily discretionary cushion.
+- **Payday Countdown & What-If Runway** — Live home-screen widget showing: *"14 days to payday. If you don't spend tomorrow, daily goes R185 → R199"* with interactive outlay sliders and no-spend streak simulators.
 - **Payday & Debit Order Email Digest** — Receive your ring-fenced monthly briefing directly in your inbox via free Gmail SMTP.
 - **100% Local-First & Private** — All financial records live in your browser's persistent storage. Zero bank logins required, zero tracking cookies.
 
