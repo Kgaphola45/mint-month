@@ -155,7 +155,7 @@ export default function SettingsPage() {
       )}
 
       {/* Account Overview Card */}
-      {currentUser && (
+      {currentUser ? (
         <div className="p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-5">
           <div className="flex items-center gap-4">
             <div
@@ -193,6 +193,26 @@ export default function SettingsPage() {
           >
             <Trash2 className="w-3.5 h-3.5" />
             <span>Delete Account</span>
+          </button>
+        </div>
+      ) : (
+        <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-full bg-[#0D0D0C]/5 flex items-center justify-center text-[#0D0D0C]/40 shrink-0">
+              <UserIcon className="w-5 h-5 stroke-[1.5]" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-[#0D0D0C]">Guest / Local Vault</p>
+              <p className="text-xs text-[#0D0D0C]/50 mt-0.5">
+                Sign in to sync your expenses with Supabase cloud and back up your vault
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => useExpenseStore.getState().setAuthModalOpen(true, "login")}
+            className="btn-vela-primary px-4 py-2 text-xs font-medium self-start sm:self-auto shrink-0"
+          >
+            Sign In / Register →
           </button>
         </div>
       )}
