@@ -546,3 +546,4 @@ export function SortedBoard({ onOpenSetLimits }: SortedBoardProps) {
     </div>
   );
 }
+
