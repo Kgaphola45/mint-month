@@ -190,7 +190,7 @@ export default function BudgetsPage() {
                     {sortedCount} of {budgetedCategories.length} Budgets Sorted
                   </span>
                   <span className="text-[11px] text-[#0D0D0C]/42">
-                    Click Tick on any card below when reconciled
+                    Drag items to the right column below when paid off
                   </span>
                 </div>
               </div>
