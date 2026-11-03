@@ -177,11 +177,10 @@ export default function BudgetsPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center ${
-                    allSorted
-                      ? "bg-[#0D0D0C] text-[#FFFDFA]"
-                      : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/60"
-                  }`}
+                  className={`w-7 h-7 rounded-full flex items-center justify-center ${allSorted
+                    ? "bg-[#0D0D0C] text-[#FFFDFA]"
+                    : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/60"
+                    }`}
                 >
                   <Check className="w-3.5 h-3.5 stroke-[2]" />
                 </div>
@@ -207,11 +206,10 @@ export default function BudgetsPage() {
               <div
                 className="h-full bg-[#0D0D0C] rounded-full transition-all duration-500"
                 style={{
-                  width: `${
-                    budgetedCategories.length > 0
-                      ? (sortedCount / budgetedCategories.length) * 100
-                      : 0
-                  }%`,
+                  width: `${budgetedCategories.length > 0
+                    ? (sortedCount / budgetedCategories.length) * 100
+                    : 0
+                    }%`,
                 }}
               />
             </div>
@@ -261,11 +259,10 @@ export default function BudgetsPage() {
             <button
               type="button"
               onClick={() => setViewMode("board")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
-                viewMode === "board"
-                  ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-xs"
-                  : "text-[#0D0D0C]/60 hover:text-[#0D0D0C]"
-              }`}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${viewMode === "board"
+                ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-xs"
+                : "text-[#0D0D0C]/60 hover:text-[#0D0D0C]"
+                }`}
             >
               <Columns3 className="w-3.5 h-3.5" />
               <span>Two-Column Board</span>
@@ -274,11 +271,10 @@ export default function BudgetsPage() {
             <button
               type="button"
               onClick={() => setViewMode("grid")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
-                viewMode === "grid"
-                  ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-xs"
-                  : "text-[#0D0D0C]/60 hover:text-[#0D0D0C]"
-              }`}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${viewMode === "grid"
+                ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-xs"
+                : "text-[#0D0D0C]/60 hover:text-[#0D0D0C]"
+                }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
               <span>Category Grid</span>
@@ -300,15 +296,14 @@ export default function BudgetsPage() {
               return (
                 <div
                   key={item.category.id}
-                  className={`p-6 rounded-[24px] bg-[#FFFDFA] border transition-all duration-200 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between ${
-                    isSorted
-                      ? "border-[#0D0D0C] bg-[#FFFDFA]"
-                      : isRecurring
+                  className={`p-6 rounded-[24px] bg-[#FFFDFA] border transition-all duration-200 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between ${isSorted
+                    ? "border-[#0D0D0C] bg-[#FFFDFA]"
+                    : isRecurring
                       ? "border-[#0D0D0C]/30"
                       : status.isOver
-                      ? "border-rose-300"
-                      : "border-[#0D0D0C]/[0.08] hover:border-[#0D0D0C]/20"
-                  }`}
+                        ? "border-rose-300"
+                        : "border-[#0D0D0C]/[0.08] hover:border-[#0D0D0C]/20"
+                    }`}
                 >
                   <div>
                     <div className="flex items-center justify-between gap-3 mb-4">
@@ -322,9 +317,8 @@ export default function BudgetsPage() {
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <h4
-                              className={`text-sm font-medium truncate ${
-                                isSorted ? "text-[#0D0D0C] line-through opacity-60" : "text-[#0D0D0C]"
-                              }`}
+                              className={`text-sm font-medium truncate ${isSorted ? "text-[#0D0D0C] line-through opacity-60" : "text-[#0D0D0C]"
+                                }`}
                             >
                               {item.category.name}
                             </h4>
@@ -350,11 +344,10 @@ export default function BudgetsPage() {
                         <button
                           type="button"
                           onClick={() => handleToggleRecurring(item.category.id, item.budget)}
-                          className={`p-2 rounded-full text-xs transition-all ${
-                            isRecurring
-                              ? "bg-[#0D0D0C] text-[#FFFDFA]"
-                              : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/60 hover:text-[#0D0D0C] hover:bg-[#FBF6EF]"
-                          }`}
+                          className={`p-2 rounded-full text-xs transition-all ${isRecurring
+                            ? "bg-[#0D0D0C] text-[#FFFDFA]"
+                            : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/60 hover:text-[#0D0D0C] hover:bg-[#FBF6EF]"
+                            }`}
                           title={
                             isRecurring
                               ? "Appears in every month's budget (Click to make one-off)"
@@ -368,11 +361,10 @@ export default function BudgetsPage() {
                         <button
                           type="button"
                           onClick={() => handleToggleSorted(item.category.id, isSorted)}
-                          className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95 ${
-                            isSorted
-                              ? "bg-[#0D0D0C] text-[#FFFDFA]"
-                              : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/70 hover:border-[#0D0D0C] hover:text-[#0D0D0C]"
-                          }`}
+                          className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95 ${isSorted
+                            ? "bg-[#0D0D0C] text-[#FFFDFA]"
+                            : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/70 hover:border-[#0D0D0C] hover:text-[#0D0D0C]"
+                            }`}
                           title={isSorted ? "Mark as unsorted" : "Mark as sorted / paid"}
                         >
                           <Check className="w-3.5 h-3.5 stroke-[2]" />
@@ -417,10 +409,10 @@ export default function BudgetsPage() {
                           {isSorted
                             ? "Sorted & Settled"
                             : status.isOver
-                            ? "Over Budget"
-                            : status.status === "warning"
-                            ? "Approaching Limit"
-                            : "Within Budget"}
+                              ? "Over Budget"
+                              : status.status === "warning"
+                                ? "Approaching Limit"
+                                : "Within Budget"}
                         </span>
                         <span className="text-[#0D0D0C]/56">
                           {remaining >= 0
