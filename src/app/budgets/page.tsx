@@ -241,174 +241,207 @@ export default function BudgetsPage() {
         )}
       </div>
 
-      {/* Category Wise Budget Breakdown Grid */}
-      <div>
-        <div className="flex items-center justify-between mb-5">
+      {/* Category Wise Budget Breakdown & Sorted Board */}
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 className="text-[16px] font-normal text-[#0D0D0C]/56">
-              Category Budgets & Every-Month Controls
+            <h3 className="text-[20px] font-medium tracking-tight text-[#0D0D0C]">
+              {viewMode === "board"
+                ? "Monthly Settlement & Sorted Board"
+                : "Category Budgets & Every-Month Controls"}
             </h3>
-            <p className="text-xs text-[#0D0D0C]/42 mt-0.5">
-              Tick when paid / sorted • Toggle 🔁 to repeat in every month
+            <p className="text-xs text-[#0D0D0C]/56 mt-0.5">
+              {viewMode === "board"
+                ? "Drag items to the right as you pay them off to track settled bills"
+                : "Tick when paid / sorted • Toggle 🔁 to repeat in every month"}
             </p>
           </div>
-          <span className="text-xs text-[#0D0D0C]/56 hidden sm:inline">
-            {summary.recurringCount} repeat monthly
-          </span>
+
+          <div className="flex items-center gap-1.5 p-1 rounded-full bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] shadow-xs self-start sm:self-auto shrink-0">
+            <button
+              type="button"
+              onClick={() => setViewMode("board")}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                viewMode === "board"
+                  ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-xs"
+                  : "text-[#0D0D0C]/60 hover:text-[#0D0D0C]"
+              }`}
+            >
+              <Columns3 className="w-3.5 h-3.5" />
+              <span>Two-Column Board</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setViewMode("grid")}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                viewMode === "grid"
+                  ? "bg-[#0D0D0C] text-[#FFFDFA] shadow-xs"
+                  : "text-[#0D0D0C]/60 hover:text-[#0D0D0C]"
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>Category Grid</span>
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {categoryStats.map((item) => {
-            const hasBudget = item.budget > 0;
-            const status = getBudgetStatus(item.spent, item.budget);
-            const remaining = item.budget - item.spent;
-            const isSorted = item.isSorted;
-            const isRecurring = item.isRecurring;
+        {viewMode === "board" ? (
+          <SortedBoard onOpenSetLimits={() => setBudgetModalOpen(true)} />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {categoryStats.map((item) => {
+              const hasBudget = item.budget > 0;
+              const status = getBudgetStatus(item.spent, item.budget);
+              const remaining = item.budget - item.spent;
+              const isSorted = item.isSorted;
+              const isRecurring = item.isRecurring;
 
-            return (
-              <div
-                key={item.category.id}
-                className={`p-6 rounded-[24px] bg-[#FFFDFA] border transition-all duration-200 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between ${
-                  isSorted
-                    ? "border-[#0D0D0C] bg-[#FFFDFA]"
-                    : isRecurring
-                    ? "border-[#0D0D0C]/30"
-                    : status.isOver
-                    ? "border-rose-300"
-                    : "border-[#0D0D0C]/[0.08] hover:border-[#0D0D0C]/20"
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-3 mb-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div
-                        className="w-10 h-10 rounded-full border border-[#0D0D0C]/[0.08] flex items-center justify-center shrink-0 bg-[#FFFDFA]"
-                        style={{ color: item.category.color || "#0D0D0C" }}
-                      >
-                        <CategoryIcon iconName={item.category.icon} className="w-4 h-4 stroke-[1.5]" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <h4
-                            className={`text-sm font-medium truncate ${
-                              isSorted ? "text-[#0D0D0C] line-through opacity-60" : "text-[#0D0D0C]"
-                            }`}
-                          >
-                            {item.category.name}
-                          </h4>
-                          {isRecurring && (
-                            <span
-                              className="px-2 py-0.5 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FBF6EF] text-[#0D0D0C] text-[10px] font-normal flex items-center gap-0.5"
-                              title="Appears in every month's budget"
-                            >
-                              <Repeat className="w-2.5 h-2.5" />
-                              Monthly
-                            </span>
-                          )}
+              return (
+                <div
+                  key={item.category.id}
+                  className={`p-6 rounded-[24px] bg-[#FFFDFA] border transition-all duration-200 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between ${
+                    isSorted
+                      ? "border-[#0D0D0C] bg-[#FFFDFA]"
+                      : isRecurring
+                      ? "border-[#0D0D0C]/30"
+                      : status.isOver
+                      ? "border-rose-300"
+                      : "border-[#0D0D0C]/[0.08] hover:border-[#0D0D0C]/20"
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className="w-10 h-10 rounded-full border border-[#0D0D0C]/[0.08] flex items-center justify-center shrink-0 bg-[#FFFDFA]"
+                          style={{ color: item.category.color || "#0D0D0C" }}
+                        >
+                          <CategoryIcon iconName={item.category.icon} className="w-4 h-4 stroke-[1.5]" />
                         </div>
-                        <span className="text-[11px] text-[#0D0D0C]/42">
-                          {item.transactionCount} expense{item.transactionCount === 1 ? "" : "s"}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <h4
+                              className={`text-sm font-medium truncate ${
+                                isSorted ? "text-[#0D0D0C] line-through opacity-60" : "text-[#0D0D0C]"
+                              }`}
+                            >
+                              {item.category.name}
+                            </h4>
+                            {isRecurring && (
+                              <span
+                                className="px-2 py-0.5 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FBF6EF] text-[#0D0D0C] text-[10px] font-normal flex items-center gap-0.5"
+                                title="Appears in every month's budget"
+                              >
+                                <Repeat className="w-2.5 h-2.5" />
+                                Monthly
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] text-[#0D0D0C]/42">
+                            {item.transactionCount} expense{item.transactionCount === 1 ? "" : "s"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons: Tick Sorted + Toggle Every Month */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Repeat / Every Month Toggle Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleRecurring(item.category.id, item.budget)}
+                          className={`p-2 rounded-full text-xs transition-all ${
+                            isRecurring
+                              ? "bg-[#0D0D0C] text-[#FFFDFA]"
+                              : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/60 hover:text-[#0D0D0C] hover:bg-[#FBF6EF]"
+                          }`}
+                          title={
+                            isRecurring
+                              ? "Appears in every month's budget (Click to make one-off)"
+                              : "Make this appear in every month's budget"
+                          }
+                        >
+                          <Repeat className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* Tick / Mark Sorted Action Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSorted(item.category.id, isSorted)}
+                          className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95 ${
+                            isSorted
+                              ? "bg-[#0D0D0C] text-[#FFFDFA]"
+                              : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/70 hover:border-[#0D0D0C] hover:text-[#0D0D0C]"
+                          }`}
+                          title={isSorted ? "Mark as unsorted" : "Mark as sorted / paid"}
+                        >
+                          <Check className="w-3.5 h-3.5 stroke-[2]" />
+                          <span>{isSorted ? "Sorted" : "Tick"}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Amounts */}
+                    <div className="flex items-baseline justify-between mb-2">
+                      <div>
+                        <span className="text-[11px] text-[#0D0D0C]/42 block">
+                          Spent
+                        </span>
+                        <span className="text-2xl font-medium tracking-tight text-[#0D0D0C]">
+                          {formatCurrency(item.spent, currency)}
+                        </span>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="text-[11px] text-[#0D0D0C]/42 block">
+                          Target Limit
+                        </span>
+                        <span className="text-sm font-normal text-[#0D0D0C]/56">
+                          {hasBudget ? formatCurrency(item.budget, currency) : "No limit"}
                         </span>
                       </div>
                     </div>
-
-                    {/* Action Buttons: Tick Sorted + Toggle Every Month */}
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {/* Repeat / Every Month Toggle Button */}
-                      <button
-                        type="button"
-                        onClick={() => handleToggleRecurring(item.category.id, item.budget)}
-                        className={`p-2 rounded-full text-xs transition-all ${
-                          isRecurring
-                            ? "bg-[#0D0D0C] text-[#FFFDFA]"
-                            : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/60 hover:text-[#0D0D0C] hover:bg-[#FBF6EF]"
-                        }`}
-                        title={
-                          isRecurring
-                            ? "Appears in every month's budget (Click to make one-off)"
-                            : "Make this appear in every month's budget"
-                        }
-                      >
-                        <Repeat className="w-3.5 h-3.5" />
-                      </button>
-
-                      {/* Tick / Mark Sorted Action Button */}
-                      <button
-                        type="button"
-                        onClick={() => handleToggleSorted(item.category.id, isSorted)}
-                        className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95 ${
-                          isSorted
-                            ? "bg-[#0D0D0C] text-[#FFFDFA]"
-                            : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/70 hover:border-[#0D0D0C] hover:text-[#0D0D0C]"
-                        }`}
-                        title={isSorted ? "Mark as unsorted" : "Mark as sorted / paid"}
-                      >
-                        <Check className="w-3.5 h-3.5 stroke-[2]" />
-                        <span>{isSorted ? "Sorted" : "Tick"}</span>
-                      </button>
-                    </div>
                   </div>
 
-                  {/* Amounts */}
-                  <div className="flex items-baseline justify-between mb-2">
-                    <div>
-                      <span className="text-[11px] text-[#0D0D0C]/42 block">
-                        Spent
-                      </span>
-                      <span className="text-2xl font-medium tracking-tight text-[#0D0D0C]">
-                        {formatCurrency(item.spent, currency)}
-                      </span>
+                  {/* Progress bar */}
+                  {hasBudget ? (
+                    <div className="mt-3 pt-3 border-t border-[#0D0D0C]/[0.06] space-y-1.5">
+                      <div className="w-full h-1.5 bg-[#0D0D0C]/[0.06] rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-300 bg-[#0D0D0C]"
+                          style={{ width: `${Math.min(status.percentage, 100)}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-normal text-[#0D0D0C]/70">
+                          {isSorted
+                            ? "Sorted & Settled"
+                            : status.isOver
+                            ? "Over Budget"
+                            : status.status === "warning"
+                            ? "Approaching Limit"
+                            : "Within Budget"}
+                        </span>
+                        <span className="text-[#0D0D0C]/56">
+                          {remaining >= 0
+                            ? `${formatCurrency(remaining, currency)} left`
+                            : `${formatCurrency(Math.abs(remaining), currency)} over`}
+                        </span>
+                      </div>
                     </div>
-
-                    <div className="text-right">
-                      <span className="text-[11px] text-[#0D0D0C]/42 block">
-                        Target Limit
-                      </span>
-                      <span className="text-sm font-normal text-[#0D0D0C]/56">
-                        {hasBudget ? formatCurrency(item.budget, currency) : "No limit"}
-                      </span>
-                    </div>
-                  </div>
+                  ) : (
+                    <button
+                      onClick={() => setBudgetModalOpen(true)}
+                      className="mt-3 pt-3 border-t border-[#0D0D0C]/[0.06] text-xs text-[#0D0D0C] font-medium hover:underline text-left"
+                    >
+                      + Set limit for {item.category.name}
+                    </button>
+                  )}
                 </div>
-
-                {/* Progress bar */}
-                {hasBudget ? (
-                  <div className="mt-3 pt-3 border-t border-[#0D0D0C]/[0.06] space-y-1.5">
-                    <div className="w-full h-1.5 bg-[#0D0D0C]/[0.06] rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-300 bg-[#0D0D0C]"
-                        style={{ width: `${Math.min(status.percentage, 100)}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-normal text-[#0D0D0C]/70">
-                        {isSorted
-                          ? "Sorted & Settled"
-                          : status.isOver
-                          ? "Over Budget"
-                          : status.status === "warning"
-                          ? "Approaching Limit"
-                          : "Within Budget"}
-                      </span>
-                      <span className="text-[#0D0D0C]/56">
-                        {remaining >= 0
-                          ? `${formatCurrency(remaining, currency)} left`
-                          : `${formatCurrency(Math.abs(remaining), currency)} over`}
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setBudgetModalOpen(true)}
-                    className="mt-3 pt-3 border-t border-[#0D0D0C]/[0.06] text-xs text-[#0D0D0C] font-medium hover:underline text-left"
-                  >
-                    + Set limit for {item.category.name}
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Debt & Instalment Paydown Tracker */}
