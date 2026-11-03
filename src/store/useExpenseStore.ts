@@ -449,6 +449,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   },
 
   login: async (input) => {
+    let supaError: string | undefined;
     if (isSupabaseConfigured()) {
       const supa = await supabaseSignIn(input.email, input.password);
       if (supa.success && supa.user) {
@@ -467,6 +468,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         await get().syncSupabaseData(supa.user.id);
         return { success: true };
       }
+      supaError = supa.error;
     }
     const res = storage.authenticateUser(input.email, input.password);
     if (res.success && res.user) {
@@ -482,7 +484,11 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       get().initStore();
       return { success: true };
     }
-    return { success: false, error: res.error || "Authentication failed" };
+    const finalError =
+      supaError === "Invalid login credentials"
+        ? "Invalid email or password. If you haven't registered this account yet, please sign up."
+        : supaError || res.error || "Authentication failed. Please check your credentials.";
+    return { success: false, error: finalError };
   },
 
   register: async (input) => {

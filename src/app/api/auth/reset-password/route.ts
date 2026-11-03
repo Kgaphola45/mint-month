@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { serverDb } from "@/lib/server-db";
+import { getSupabaseAdminClient } from "@/lib/supabase/client";
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,11 +34,29 @@ export async function POST(req: NextRequest) {
     // Hash password with bcryptjs (10 salt rounds)
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update user password in DB
+    // Update user password in local server DB
     serverDb.updateUserPassword(record.email, hashedPassword);
 
     // Invalidate reset token
     serverDb.markResetTokenUsed(record.token);
+
+    // Update user password in Supabase Auth if configured
+    const supabase = getSupabaseAdminClient();
+    if (supabase) {
+      const { data: usersData } = await supabase.auth.admin.listUsers();
+      const supaUser = usersData?.users?.find(
+        (u) => u.email?.toLowerCase() === record.email.toLowerCase()
+      );
+      if (supaUser) {
+        const { error: updateErr } = await supabase.auth.admin.updateUserById(
+          supaUser.id,
+          { password: newPassword }
+        );
+        if (updateErr) {
+          console.error("Supabase password update error:", updateErr);
+        }
+      }
+    }
 
     return NextResponse.json({
       ok: true,
