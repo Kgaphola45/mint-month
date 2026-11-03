@@ -8,11 +8,14 @@ import {
   Sparkles,
   Repeat,
   Edit3,
+  Columns3,
+  LayoutGrid,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, formatMonthYear, getBudgetStatus } from "@/lib/utils";
 import { CategoryIcon } from "@/components/category-icon";
 import { DebtTracker } from "@/components/debt-tracker";
+import { SortedBoard } from "@/components/sorted-board";
 
 export default function BudgetsPage() {
   const {
@@ -27,6 +30,7 @@ export default function BudgetsPage() {
   } = useExpenseStore();
 
   const [appliedNotice, setAppliedNotice] = useState(false);
+  const [viewMode, setViewMode] = useState<"board" | "grid">("board");
 
   const summary = getMonthSummary(selectedMonth);
   const categoryStats = getCategorySpending(selectedMonth);
