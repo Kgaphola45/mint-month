@@ -1,15 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Inter_Tight } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppShell } from "@/components/app-shell";
-
-const interTight = Inter_Tight({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  display: "swap",
-  variable: "--font-inter-tight",
-});
 
 export const metadata: Metadata = {
   title: "Mint Month — In Your Terms",
@@ -44,8 +36,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`bg-[#FBF6EF] ${interTight.variable}`} suppressHydrationWarning>
-      <body className={`${interTight.className} font-sans bg-[#FBF6EF] text-[#0D0D0C] antialiased selection:bg-[#0D0D0C]/10 selection:text-[#0D0D0C]`}>
+    <html lang="en" className="bg-[#FBF6EF]" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="font-sans bg-[#FBF6EF] text-[#0D0D0C] antialiased selection:bg-[#0D0D0C]/10 selection:text-[#0D0D0C]">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
