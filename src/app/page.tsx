@@ -35,13 +35,7 @@ const EditorialStoryBanner = dynamic(
     loading: () => <div className="h-[120px] animate-pulse bg-black/5 rounded-2xl" />,
   }
 );
-const LandingPage = dynamic(
-  () => import("@/components/LandingPage").then((m) => m.LandingPage),
-  {
-    ssr: false,
-    loading: () => <div className="min-h-screen animate-pulse bg-black/5" />,
-  }
-);
+import { LandingPage } from "@/components/LandingPage";
 
 export default function DashboardPage() {
   const {
@@ -111,19 +105,7 @@ export default function DashboardPage() {
 
   const isLoggedIn = Boolean(hasSupabaseUser || currentUser || isAuthenticated);
 
-  // If store is still initializing or checking initial Supabase session
-  if (
-    !isLoaded ||
-    (isSupabaseConfigured() && !supabaseChecked && !currentUser && !isAuthenticated)
-  ) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 rounded-full border-2 border-[#0D0D0C] border-t-transparent animate-spin" />
-      </div>
-    );
-  }
-
-  // If user is not logged in, render the Vela-editorial Landing Page
+  // If user is not logged in, render the Vela-editorial Landing Page immediately
   if (!isLoggedIn) {
     return <LandingPage />;
   }

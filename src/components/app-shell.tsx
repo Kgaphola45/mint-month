@@ -129,13 +129,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {!isLanding && <Navbar />}
 
       <main className={`flex-1 w-full ${isLanding ? "" : "pb-24 lg:pb-16"}`}>
-        {isLoaded ? (
-          children
-        ) : (
-          <div className="flex items-center justify-center min-h-[50vh]">
-            <div className="w-8 h-8 rounded-full border-2 border-[#0D0D0C] border-t-transparent animate-spin" />
-          </div>
-        )}
+        {children}
       </main>
 
       {/* Global Modals & Command Overlays (Loaded on demand) */}
