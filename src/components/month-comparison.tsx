@@ -179,13 +179,12 @@ export function MonthComparison() {
           </div>
 
           <div
-            className={`px-3.5 py-1.5 rounded-full text-xs font-medium border flex items-center gap-1.5 ${
-              isSpendingLess
-                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                : diffAmount > 0
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium border flex items-center gap-1.5 ${isSpendingLess
+              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+              : diffAmount > 0
                 ? "bg-rose-50 text-rose-800 border-rose-200"
                 : "bg-[#FBF6EF] text-[#0D0D0C] border-[#0D0D0C]/[0.08]"
-            }`}
+              }`}
           >
             {isSpendingLess ? (
               <>
@@ -814,13 +813,12 @@ export function MonthComparison() {
 
                 <div className="text-right shrink-0">
                   <div
-                    className={`text-sm font-medium flex items-center justify-end gap-1 ${
-                      isDown
-                        ? "text-emerald-700"
-                        : item.delta > 0
+                    className={`text-sm font-medium flex items-center justify-end gap-1 ${isDown
+                      ? "text-emerald-700"
+                      : item.delta > 0
                         ? "text-rose-700"
                         : "text-[#0D0D0C]/56"
-                    }`}
+                      }`}
                   >
                     {isDown ? (
                       <ArrowDownRight className="w-3.5 h-3.5" />

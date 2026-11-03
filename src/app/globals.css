@@ -6,6 +6,7 @@
 
 @layer base {
   :root {
+    --font-inter-tight: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --cream: #FBF6EF;
     --cream-card: #FFFDFA;
     --ink: #0D0D0C;
@@ -47,6 +48,7 @@
 
   /* Override dark mode completely to enforce cream & ink editorial theme */
   .dark {
+    --font-inter-tight: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --cream: #FBF6EF;
     --cream-card: #FFFDFA;
     --ink: #0D0D0C;
