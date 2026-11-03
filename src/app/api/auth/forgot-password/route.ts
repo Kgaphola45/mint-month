@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { transporter } from "@/lib/nodemailer";
 import { serverDb } from "@/lib/server-db";
+import { getSupabaseAdminClient } from "@/lib/supabase/client";
 
 // In-memory rate limiter: Map<email, { count: number, resetTime: number }>
 interface RateLimitEntry {
@@ -62,7 +63,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Generate 6-digit OTP
+    // 2. Check if user actually exists before generating & sending code
+    const supabase = getSupabaseAdminClient();
+    if (supabase) {
+      const { data: usersData, error: listErr } = await supabase.auth.admin.listUsers();
+      if (!listErr && usersData?.users) {
+        const userExists = usersData.users.some(
+          (u) => u.email?.toLowerCase() === normalizedEmail
+        );
+        if (!userExists) {
+          return NextResponse.json(
+            {
+              ok: false,
+              error: "No account found with this email address. Please register an account first.",
+            },
+            { status: 404 }
+          );
+        }
+      }
+    }
+
+    // 3. Generate 6-digit OTP
     const rawOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
     // 3. Hash OTP with SHA-256 before saving to DB
