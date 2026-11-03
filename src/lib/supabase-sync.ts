@@ -246,11 +246,24 @@ export async function fetchSupabaseBudgets(userId: string): Promise<Budget[]> {
     return [];
   }
 
-  return data.map((row) => ({
-    month: row.month,
-    total: Number(row.total) || 0,
-    categories: (row.categories as Record<string, number>) || {},
-  }));
+  return data.map((row) => {
+    const rawCats = (row.categories as Record<string, any>) || {};
+    const meta = rawCats._meta || {};
+    const cleanCats: Record<string, number> = {};
+    for (const [k, v] of Object.entries(rawCats)) {
+      if (k !== "_meta" && typeof v === "number") {
+        cleanCats[k] = v;
+      }
+    }
+    return {
+      month: row.month,
+      total: Number(row.total) || 0,
+      categories: cleanCats,
+      sortedCategories: Array.isArray(meta.sortedCategories) ? meta.sortedCategories : [],
+      recurringCategories: Array.isArray(meta.recurringCategories) ? meta.recurringCategories : [],
+      isTotalSorted: Boolean(meta.isTotalSorted),
+    };
+  });
 }
 
 export async function upsertSupabaseBudget(
@@ -260,20 +273,29 @@ export async function upsertSupabaseBudget(
   const supabase = getSupabaseClient();
   if (!supabase) return false;
 
-  // Check if budget exists for month
+  const categoriesWithMeta = {
+    ...budget.categories,
+    _meta: {
+      sortedCategories: budget.sortedCategories || [],
+      recurringCategories: budget.recurringCategories || [],
+      isTotalSorted: Boolean(budget.isTotalSorted),
+    },
+  };
+
+  // Check if budget exists for month using maybeSingle to avoid 406 on no rows
   const { data: existing } = await supabase
     .from("budgets")
     .select("id")
     .eq("user_id", userId)
     .eq("month", budget.month)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     const { error } = await supabase
       .from("budgets")
       .update({
         total: budget.total,
-        categories: budget.categories as any,
+        categories: categoriesWithMeta,
       })
       .eq("id", existing.id);
     return !error;
@@ -282,7 +304,7 @@ export async function upsertSupabaseBudget(
       user_id: userId,
       month: budget.month,
       total: budget.total,
-      categories: budget.categories as any,
+      categories: categoriesWithMeta,
     });
     return !error;
   }
@@ -510,7 +532,14 @@ export async function pushLocalDataToSupabase(
         user_id: userId,
         month: b.month,
         total: b.total,
-        categories: b.categories as any,
+        categories: {
+          ...b.categories,
+          _meta: {
+            sortedCategories: b.sortedCategories || [],
+            recurringCategories: b.recurringCategories || [],
+            isTotalSorted: Boolean(b.isTotalSorted),
+          },
+        } as any,
       }));
       const { error: bgErr } = await supabase.from("budgets").upsert(budgetRows as any);
       if (!bgErr) count += budgetRows.length;

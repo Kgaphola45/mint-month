@@ -42,6 +42,17 @@ import {
 } from "@/lib/supabase-sync";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 
+function safeUUID(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 interface ExpenseStore {
   selectedMonth: string; // 'YYYY-MM'
   currency: string;
@@ -212,12 +223,16 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const currentUser = storage.getCurrentUser();
     const users = storage.getUsers();
     const expenses = storage.getExpenses();
-    // Read IndexedDB cache first (<5ms)
+    // Non-destructive reconciliation with IndexedDB cache
     getCachedTransactions().then((cached) => {
-      if (cached && cached.length > 0) {
+      const current = get().expenses;
+      if (cached && cached.length > current.length) {
         set({ expenses: cached });
+        storage.saveExpenses(cached);
+      } else if (current.length > 0) {
+        saveCachedTransactions(current).catch(() => {});
       }
-    });
+    }).catch(console.error);
     const categories = storage.getCategories();
     const budgets = storage.getBudgets();
     const recurringBudgets = storage.getRecurringBudgets();
@@ -317,38 +332,107 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   setAuthModalOpen: (open: boolean, mode: "login" | "register" = "login") =>
     set({ authModalOpen: open, authModalMode: mode }),
 
-    syncSupabaseData: async (userId?: string) => {
+  syncSupabaseData: async (userId?: string) => {
     const targetUserId = userId || get().currentUser?.id;
     if (!targetUserId || !isSupabaseConfigured()) return;
 
     try {
       set({ isSyncingSupabase: true });
-      const [txs, bgs, debts] = await Promise.all([
+      const [remoteTxs, remoteBgs, remoteDebts] = await Promise.all([
         fetchSupabaseTransactions(targetUserId),
         fetchSupabaseBudgets(targetUserId),
         fetchSupabaseDebtContracts(targetUserId),
       ]);
 
-      const validTxs = txs || [];
-      const validBgs = bgs || [];
-      const validDebts = debts || [];
+      const cur = get();
+      const localExpenses = cur.expenses.length > 0 ? cur.expenses : storage.getExpenses();
+      const localBudgets = cur.budgets.length > 0 ? cur.budgets : storage.getBudgets();
+      const localDebts = cur.debts.length > 0 ? cur.debts : storage.getDebts();
 
+      // 1. NON-DESTRUCTIVE TRANSACTIONS MERGE
+      const txMap = new Map<string, Expense>();
+      for (const e of localExpenses) {
+        txMap.set(e.id, e);
+      }
+      for (const r of (remoteTxs || [])) {
+        txMap.set(r.id, r);
+      }
+      const mergedExpenses = Array.from(txMap.values()).sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+
+      // Auto-upload any local expenses that don't yet exist in Supabase
+      const remoteTxIds = new Set((remoteTxs || []).map((r) => r.id));
+      const localOnlyTxs = localExpenses.filter((e) => !remoteTxIds.has(e.id));
+      if (localOnlyTxs.length > 0) {
+        Promise.all(localOnlyTxs.map((e) => insertSupabaseTransaction(e, targetUserId))).catch(console.error);
+      }
+
+      // 2. NON-DESTRUCTIVE BUDGETS MERGE
+      const bgMap = new Map<string, Budget>();
+      for (const b of localBudgets) {
+        bgMap.set(b.month, b);
+      }
+      for (const r of (remoteBgs || [])) {
+        const local = bgMap.get(r.month);
+        if (local) {
+          bgMap.set(r.month, {
+            month: r.month,
+            total: r.total > 0 ? r.total : local.total,
+            categories: { ...local.categories, ...r.categories },
+            sortedCategories: Array.from(
+              new Set([...(local.sortedCategories || []), ...(r.sortedCategories || [])])
+            ),
+            recurringCategories: Array.from(
+              new Set([...(local.recurringCategories || []), ...(r.recurringCategories || [])])
+            ),
+            isTotalSorted: r.isTotalSorted !== undefined ? r.isTotalSorted : local.isTotalSorted,
+          });
+        } else {
+          bgMap.set(r.month, r);
+        }
+      }
+      const mergedBudgets = Array.from(bgMap.values());
+
+      const remoteBgMonths = new Set((remoteBgs || []).map((r) => r.month));
+      const localOnlyBgs = localBudgets.filter((b) => !remoteBgMonths.has(b.month));
+      if (localOnlyBgs.length > 0) {
+        Promise.all(localOnlyBgs.map((b) => upsertSupabaseBudget(b, targetUserId))).catch(console.error);
+      }
+
+      // 3. NON-DESTRUCTIVE DEBTS MERGE
+      const debtMap = new Map<string, DebtInstalment>();
+      for (const d of localDebts) {
+        debtMap.set(d.id, d);
+      }
+      for (const r of (remoteDebts || [])) {
+        debtMap.set(r.id, r);
+      }
+      const mergedDebts = Array.from(debtMap.values());
+
+      const remoteDebtIds = new Set((remoteDebts || []).map((r) => r.id));
+      const localOnlyDebts = localDebts.filter((d) => !remoteDebtIds.has(d.id));
+      if (localOnlyDebts.length > 0) {
+        Promise.all(localOnlyDebts.map((d) => upsertSupabaseDebtContract(d, targetUserId))).catch(console.error);
+      }
+
+      // Commit merged data everywhere
       set({
-        expenses: validTxs,
-        budgets: validBgs,
-        debts: validDebts,
+        expenses: mergedExpenses,
+        budgets: mergedBudgets,
+        debts: mergedDebts,
       });
-      storage.saveExpenses(validTxs);
-      storage.saveBudgets(validBgs);
-      storage.saveDebts(validDebts);
+      storage.saveExpenses(mergedExpenses);
+      storage.saveBudgets(mergedBudgets);
+      storage.saveDebts(mergedDebts);
+      saveCachedTransactions(mergedExpenses).catch(() => {});
     } catch (err) {
-      console.error('Supabase sync error:', err);
+      console.error("Supabase sync error:", err);
     } finally {
       set({ isSyncingSupabase: false });
     }
   },
 
-  
   pushAllToSupabase: async () => {
     const currentUser = get().currentUser;
     if (!currentUser?.id || !isSupabaseConfigured()) {
@@ -369,16 +453,30 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       const supa = await supabaseSignIn(input.email, input.password);
       if (supa.success && supa.user) {
         storage.setCurrentUser(supa.user);
-        set({ currentUser: supa.user, isAuthenticated: true, authModalOpen: false });
+        const userExpenses = storage.getExpenses();
+        const userBudgets = storage.getBudgets();
+        const userDebts = storage.getDebts();
+        set({
+          currentUser: supa.user,
+          isAuthenticated: true,
+          expenses: userExpenses,
+          budgets: userBudgets,
+          debts: userDebts,
+          authModalOpen: false,
+        });
         await get().syncSupabaseData(supa.user.id);
         return { success: true };
       }
     }
     const res = storage.authenticateUser(input.email, input.password);
     if (res.success && res.user) {
+      storage.setCurrentUser(res.user);
       set({
         currentUser: res.user,
         isAuthenticated: true,
+        expenses: storage.getExpenses(),
+        budgets: storage.getBudgets(),
+        debts: storage.getDebts(),
         authModalOpen: false,
       });
       get().initStore();
@@ -391,18 +489,33 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     if (isSupabaseConfigured()) {
       const supa = await supabaseSignUp(input.name, input.email, input.password, input.monthlySalary);
       if (supa.success && supa.user) {
-        storage.initializeUserWorkspace(supa.user);
+        const cur = get();
+        const existingExpenses = cur.expenses.length > 0 ? cur.expenses : storage.getExpenses();
+        const existingBudgets = cur.budgets.length > 0 ? cur.budgets : storage.getBudgets();
+        const existingDebts = cur.debts.length > 0 ? cur.debts : storage.getDebts();
+
+        storage.setCurrentUser(supa.user);
+        storage.saveExpenses(existingExpenses);
+        storage.saveBudgets(existingBudgets);
+        storage.saveDebts(existingDebts);
+
         set({
           currentUser: supa.user,
           isAuthenticated: true,
-          expenses: [],
-          budgets: [],
-          debts: [],
-          recurringBudgets: {},
-          clearedRecurring: {},
+          expenses: existingExpenses,
+          budgets: existingBudgets,
+          debts: existingDebts,
+          recurringBudgets: storage.getRecurringBudgets(),
+          clearedRecurring: storage.getClearedRecurring(),
           incomes: { default: input.monthlySalary || 25000 },
           authModalOpen: false,
         });
+
+        pushLocalDataToSupabase(
+          { expenses: existingExpenses, budgets: existingBudgets, debts: existingDebts },
+          supa.user.id
+        ).catch(console.error);
+
         await get().syncSupabaseData(supa.user.id);
         return { success: true };
       }
@@ -414,15 +527,24 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       input.monthlySalary
     );
     if (res.success && res.user) {
-      storage.initializeUserWorkspace(res.user);
+      const cur = get();
+      const existingExpenses = cur.expenses.length > 0 ? cur.expenses : storage.getExpenses();
+      const existingBudgets = cur.budgets.length > 0 ? cur.budgets : storage.getBudgets();
+      const existingDebts = cur.debts.length > 0 ? cur.debts : storage.getDebts();
+
+      storage.setCurrentUser(res.user);
+      storage.saveExpenses(existingExpenses);
+      storage.saveBudgets(existingBudgets);
+      storage.saveDebts(existingDebts);
+
       set({
         currentUser: res.user,
         isAuthenticated: true,
-        expenses: [],
-        budgets: [],
-        debts: [],
-        recurringBudgets: {},
-        clearedRecurring: {},
+        expenses: existingExpenses,
+        budgets: existingBudgets,
+        debts: existingDebts,
+        recurringBudgets: storage.getRecurringBudgets(),
+        clearedRecurring: storage.getClearedRecurring(),
         incomes: { default: input.monthlySalary || 25000 },
         users: storage.getUsers(),
         authModalOpen: false,
@@ -537,7 +659,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   },
 
   addDebt: (debtData) => {
-    const id = `debt-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const id = safeUUID();
     const totalAmount =
       debtData.totalAmount || debtData.totalInstalments * debtData.monthlyAmount;
     const isPaidOff = debtData.paidInstalments >= debtData.totalInstalments;
@@ -552,9 +674,15 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const updated = [...get().debts, newDebt];
     storage.saveDebts(updated);
     set({ debts: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseDebtContract(newDebt, currentUser.id).catch(console.error);
+    }
   },
 
   updateDebt: (id, updates) => {
+    let targetDebt: DebtInstalment | undefined;
     const updated = get().debts.map((d) => {
       if (d.id !== id) return d;
       const merged = { ...d, ...updates };
@@ -566,44 +694,69 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       ) {
         merged.isPaidOff = false;
       }
+      targetDebt = merged;
       return merged;
     });
     storage.saveDebts(updated);
     set({ debts: updated });
+
+    const currentUser = get().currentUser;
+    if (targetDebt && currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseDebtContract(targetDebt, currentUser.id).catch(console.error);
+    }
   },
 
   deleteDebt: (id) => {
     const updated = get().debts.filter((d) => d.id !== id);
     storage.saveDebts(updated);
     set({ debts: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      deleteSupabaseDebtContract(id, currentUser.id).catch(console.error);
+    }
   },
 
   incrementDebtInstalment: (id) => {
+    let targetDebt: DebtInstalment | undefined;
     const updated = get().debts.map((d) => {
       if (d.id !== id) return d;
       const paid = Math.min(d.totalInstalments, (d.paidInstalments || 0) + 1);
-      return {
+      targetDebt = {
         ...d,
         paidInstalments: paid,
         isPaidOff: paid >= d.totalInstalments,
       };
+      return targetDebt;
     });
     storage.saveDebts(updated);
     set({ debts: updated });
+
+    const currentUser = get().currentUser;
+    if (targetDebt && currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseDebtContract(targetDebt, currentUser.id).catch(console.error);
+    }
   },
 
   decrementDebtInstalment: (id) => {
+    let targetDebt: DebtInstalment | undefined;
     const updated = get().debts.map((d) => {
       if (d.id !== id) return d;
       const paid = Math.max(0, (d.paidInstalments || 0) - 1);
-      return {
+      targetDebt = {
         ...d,
         paidInstalments: paid,
         isPaidOff: paid >= d.totalInstalments,
       };
+      return targetDebt;
     });
     storage.saveDebts(updated);
     set({ debts: updated });
+
+    const currentUser = get().currentUser;
+    if (targetDebt && currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseDebtContract(targetDebt, currentUser.id).catch(console.error);
+    }
   },
 
   getDebtSummary: () => {
@@ -666,7 +819,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   },
 
   addExpense: (expenseData) => {
-    const id = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `exp-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const id = safeUUID();
     const newExpense: Expense = {
       ...expenseData,
       id,
@@ -675,21 +828,54 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
 
     const updated = [newExpense, ...get().expenses];
     storage.saveExpenses(updated);
+    putCachedTransaction(newExpense).catch(console.error);
     set({ expenses: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      insertSupabaseTransaction(newExpense, currentUser.id).then((saved) => {
+        if (saved && saved.id !== newExpense.id) {
+          const remapped = get().expenses.map((e) => (e.id === newExpense.id ? saved : e));
+          storage.saveExpenses(remapped);
+          putCachedTransaction(saved).catch(console.error);
+          set({ expenses: remapped });
+        }
+      }).catch(console.error);
+    }
   },
 
   updateExpense: (id: string, updates: Partial<Expense>) => {
-    const updated = get().expenses.map((exp) =>
-      exp.id === id ? { ...exp, ...updates } : exp
-    );
+    let targetItem: Expense | undefined;
+    const updated = get().expenses.map((exp) => {
+      if (exp.id === id) {
+        targetItem = { ...exp, ...updates };
+        return targetItem;
+      }
+      return exp;
+    });
+
     storage.saveExpenses(updated);
+    if (targetItem) {
+      putCachedTransaction(targetItem).catch(console.error);
+    }
     set({ expenses: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      updateSupabaseTransaction(id, updates, currentUser.id).catch(console.error);
+    }
   },
 
   deleteExpense: (id: string) => {
     const updated = get().expenses.filter((exp) => exp.id !== id);
     storage.saveExpenses(updated);
+    deleteCachedTransaction(id).catch(console.error);
     set({ expenses: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      deleteSupabaseTransaction(id, currentUser.id).catch(console.error);
+    }
   },
 
   addCategory: (categoryData) => {
@@ -733,53 +919,67 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     storage.saveRecurringBudgets(recurring);
     storage.saveBudgets(updated);
     set({ budgets: updated, recurringBudgets: recurring });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseBudget(budget, currentUser.id).catch(console.error);
+    }
   },
 
   updateTotalBudget: (month: string, total: number) => {
     const currentBudgets = get().budgets;
     const existing = currentBudgets.find((b) => b.month === month);
+    let targetBudget: Budget;
     let updated: Budget[];
 
     if (existing) {
+      targetBudget = { ...existing, total };
       updated = currentBudgets.map((b) =>
-        b.month === month ? { ...b, total } : b
+        b.month === month ? targetBudget : b
       );
     } else {
-      updated = [...currentBudgets, { month, total, categories: {}, sortedCategories: [], recurringCategories: [] }];
+      targetBudget = { month, total, categories: {}, sortedCategories: [], recurringCategories: [] };
+      updated = [...currentBudgets, targetBudget];
     }
 
     storage.saveBudgets(updated);
     set({ budgets: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseBudget(targetBudget, currentUser.id).catch(console.error);
+    }
   },
 
   updateCategoryBudget: (month: string, categoryId: string, amount: number) => {
     const currentBudgets = get().budgets;
     const existing = currentBudgets.find((b) => b.month === month);
+    let targetBudget: Budget;
     let updated: Budget[];
 
     if (existing) {
+      const newCats = { ...existing.categories };
+      if (amount <= 0) {
+        delete newCats[categoryId];
+      } else {
+        newCats[categoryId] = amount;
+      }
+      targetBudget = { ...existing, categories: newCats };
       updated = currentBudgets.map((b) => {
-        if (b.month === month) {
-          const newCats = { ...b.categories };
-          if (amount <= 0) {
-            delete newCats[categoryId];
-          } else {
-            newCats[categoryId] = amount;
-          }
-          return { ...b, categories: newCats };
-        }
+        if (b.month === month) return targetBudget;
         return b;
       });
     } else {
+      targetBudget = {
+        month,
+        total: amount,
+        categories: { [categoryId]: amount },
+        sortedCategories: [],
+        recurringCategories: [],
+      };
       updated = [
         ...currentBudgets,
-        {
-          month,
-          total: amount,
-          categories: { [categoryId]: amount },
-          sortedCategories: [],
-          recurringCategories: [],
-        },
+        targetBudget,
       ];
     }
 
@@ -797,11 +997,17 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
 
     storage.saveBudgets(updated);
     set({ budgets: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseBudget(targetBudget, currentUser.id).catch(console.error);
+    }
   },
 
   toggleCategorySorted: (month: string, categoryId: string) => {
     const currentBudgets = get().budgets;
     const existing = currentBudgets.find((b) => b.month === month);
+    let targetBudget: Budget;
     let updated: Budget[];
 
     if (existing) {
@@ -811,51 +1017,66 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         ? currentSorted.filter((id) => id !== categoryId)
         : [...currentSorted, categoryId];
 
+      targetBudget = { ...existing, sortedCategories: newSorted };
       updated = currentBudgets.map((b) =>
-        b.month === month ? { ...b, sortedCategories: newSorted } : b
+        b.month === month ? targetBudget : b
       );
     } else {
+      targetBudget = {
+        month,
+        total: 0,
+        categories: {},
+        sortedCategories: [categoryId],
+        recurringCategories: [],
+      };
       updated = [
         ...currentBudgets,
-        {
-          month,
-          total: 0,
-          categories: {},
-          sortedCategories: [categoryId],
-          recurringCategories: [],
-        },
+        targetBudget,
       ];
     }
 
     storage.saveBudgets(updated);
     set({ budgets: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseBudget(targetBudget, currentUser.id).catch(console.error);
+    }
   },
 
   toggleTotalSorted: (month: string) => {
     const currentBudgets = get().budgets;
     const existing = currentBudgets.find((b) => b.month === month);
+    let targetBudget: Budget;
     let updated: Budget[];
 
     if (existing) {
+      targetBudget = { ...existing, isTotalSorted: !existing.isTotalSorted };
       updated = currentBudgets.map((b) =>
-        b.month === month ? { ...b, isTotalSorted: !b.isTotalSorted } : b
+        b.month === month ? targetBudget : b
       );
     } else {
+      targetBudget = {
+        month,
+        total: 0,
+        categories: {},
+        sortedCategories: [],
+        recurringCategories: [],
+        isTotalSorted: true,
+      };
       updated = [
         ...currentBudgets,
-        {
-          month,
-          total: 0,
-          categories: {},
-          sortedCategories: [],
-          recurringCategories: [],
-          isTotalSorted: true,
-        },
+        targetBudget,
       ];
     }
 
     storage.saveBudgets(updated);
     set({ budgets: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseBudget(targetBudget, currentUser.id).catch(console.error);
+    }
   },
 
   isCategorySorted: (month: string, categoryId: string) => {

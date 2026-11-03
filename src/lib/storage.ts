@@ -279,8 +279,22 @@ export class LocalStorageAdapter implements StorageAdapter {
   getExpenses(): Expense[] {
     if (!this.isClient()) return [];
     try {
-      const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.EXPENSES));
-      return raw ? JSON.parse(raw) : [];
+      const userKey = this.getKey(STORAGE_KEYS.EXPENSES);
+      const raw = localStorage.getItem(userKey);
+      if (raw) return JSON.parse(raw);
+
+      // If user-specific key has no data, check for guest data and migrate it
+      if (userKey !== STORAGE_KEYS.EXPENSES) {
+        const guestRaw = localStorage.getItem(STORAGE_KEYS.EXPENSES);
+        if (guestRaw) {
+          const parsed = JSON.parse(guestRaw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            localStorage.setItem(userKey, guestRaw);
+            return parsed;
+          }
+        }
+      }
+      return [];
     } catch {
       return [];
     }
@@ -309,8 +323,22 @@ export class LocalStorageAdapter implements StorageAdapter {
   getBudgets(): Budget[] {
     if (!this.isClient()) return [];
     try {
-      const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.BUDGETS));
-      return raw ? JSON.parse(raw) : [];
+      const userKey = this.getKey(STORAGE_KEYS.BUDGETS);
+      const raw = localStorage.getItem(userKey);
+      if (raw) return JSON.parse(raw);
+
+      // If user-specific key has no data, check for guest budgets and migrate
+      if (userKey !== STORAGE_KEYS.BUDGETS) {
+        const guestRaw = localStorage.getItem(STORAGE_KEYS.BUDGETS);
+        if (guestRaw) {
+          const parsed = JSON.parse(guestRaw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            localStorage.setItem(userKey, guestRaw);
+            return parsed;
+          }
+        }
+      }
+      return [];
     } catch {
       return [];
     }

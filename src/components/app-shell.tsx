@@ -79,8 +79,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             useExpenseStore.setState({
               currentUser: supaUser,
               isAuthenticated: true,
+              expenses: storage.getExpenses(),
+              budgets: storage.getBudgets(),
+              debts: storage.getDebts(),
             });
-            state.syncSupabaseData(supaUser.id);
+            useExpenseStore.getState().syncSupabaseData(supaUser.id);
           }
         }
       }
@@ -98,8 +101,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               useExpenseStore.setState({
                 currentUser: supaUser,
                 isAuthenticated: true,
+                expenses: storage.getExpenses(),
+                budgets: storage.getBudgets(),
+                debts: storage.getDebts(),
               });
-              state.syncSupabaseData(supaUser.id);
+              useExpenseStore.getState().syncSupabaseData(supaUser.id);
             }
           }
         } else if (event === "SIGNED_OUT") {
