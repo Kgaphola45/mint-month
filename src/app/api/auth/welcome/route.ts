@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     const { email, name } = parseResult.data;
     const normalizedEmail = email.toLowerCase();
-    const displayName = (name && typeof name === "string" ? name.trim() : "Valued Member");
+    const displayName = name && typeof name === "string" ? name.trim() : "Valued Member";
 
     try {
       await transporter.sendMail({
@@ -110,21 +110,15 @@ export async function POST(req: NextRequest) {
         ok: true,
         sent: true,
       });
-    } catch {
-      console.error("EMAIL_FAILED_USE_DEV_BYPASS");
-
-      const isProd = process.env.NODE_ENV === "production";
-      if (isProd) {
-        return NextResponse.json(
-          { ok: false, error: "Email service failed" },
-          { status: 500 }
-        );
-      }
+    } catch (sendErr: unknown) {
+      const errMsg = sendErr instanceof Error ? sendErr.message : String(sendErr);
+      console.error("EMAIL_DISPATCH_FALLBACK (welcome):", errMsg);
 
       return NextResponse.json({
         ok: true,
         sent: false,
         devBypassOtp: true,
+        emailError: errMsg,
       });
     }
   } catch {

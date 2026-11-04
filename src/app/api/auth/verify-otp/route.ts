@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { z } from "zod";
-import { serverDb } from "@/lib/server-db";
+import { serverDb, OTP_COOKIE_NAME } from "@/lib/server-db";
 
 const verifyOtpSchema = z.object({
   email: z.string().trim().email("Please provide a valid email address"),
@@ -10,6 +9,7 @@ const verifyOtpSchema = z.object({
     .trim()
     .length(6, "Verification code must be exactly 6 digits")
     .regex(/^\d{6}$/, "Verification code must contain only numbers"),
+  otpSessionToken: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -24,14 +24,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, otp } = parseResult.data;
+    const { email, otp, otpSessionToken } = parseResult.data;
     const normalizedEmail = email.toLowerCase();
 
     // Hash incoming OTP with SHA-256
     const otpHash = serverDb.hashOtp(otp);
 
-    // Look up latest record where used=false and expiresAt > now
-    const record = serverDb.findValidOtp(normalizedEmail, otpHash);
+    // 1. Look up latest record in serverDb / Supabase password_resets
+    let record = await serverDb.findValidOtp(normalizedEmail, otpHash);
+
+    // 2. Fallback to stateless HMAC-signed session token for Vercel serverless cold-start resilience
+    if (!record) {
+      const cookieToken = req.cookies.get(OTP_COOKIE_NAME)?.value;
+      record = serverDb.verifyStatelessOtpSession(
+        otpSessionToken || cookieToken,
+        normalizedEmail,
+        otpHash
+      );
+    }
 
     if (!record) {
       return NextResponse.json(
@@ -41,22 +51,25 @@ export async function POST(req: NextRequest) {
     }
 
     // Mark OTP as used (one-time use guarantee)
-    serverDb.markOtpUsed(record.id);
+    await serverDb.markOtpUsed(record.id, otpHash);
 
-    // Generate secure 32-byte reset token
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    const tokenExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    // Generate self-verifying stateless HMAC reset token (10 minutes expiry)
+    const tokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    const resetToken = serverDb.generateStatelessResetToken(normalizedEmail, tokenExpiry);
 
     serverDb.createResetToken(normalizedEmail, resetToken, tokenExpiry);
 
-    return NextResponse.json({
-      ok: true,
-      resetToken,
-    });
-  } catch {
-    return NextResponse.json(
-      { ok: false, error: "Internal server error" },
-      { status: 500 }
-    );
+      const response = NextResponse.json({
+        ok: true,
+        resetToken,
+      });
+
+      response.cookies.delete(OTP_COOKIE_NAME);
+      return response;
+    } catch {
+      return NextResponse.json(
+        { ok: false, error: "Internal server error" },
+        { status: 500 }
+      );
+    }
   }
-}

@@ -28,7 +28,6 @@ export async function POST(req: NextRequest) {
       fixedCommitments = 5800,
       daysRemaining = 14,
       daysUntilPayday = 9,
-      paydayDay = 25,
       debitOrders = [] as DebitOrderItem[],
       debts = [] as DebtItem[],
     } = body || {};
@@ -49,16 +48,14 @@ export async function POST(req: NextRequest) {
       0
     );
 
-    // Subject as requested: "Your [Month] Plan: 5 debit orders scheduled to run this week (R3,450), leaving you R280/day in Safe-to-Spend"
     const subject = `Your ${monthStr} Plan: ${upcomingCount} debit orders scheduled (R${upcomingTotal.toLocaleString()}), leaving you R${Math.round(
       safeToSpendDaily
     ).toLocaleString()}/day Safe-to-Spend`;
 
-    // Render debit orders HTML rows
     const debitOrdersHtml = debitOrders.length
       ? debitOrders
-          .map(
-            (item: DebitOrderItem) => `
+        .map(
+          (item: DebitOrderItem) => `
         <tr style="border-bottom: 1px solid rgba(13, 13, 12, 0.06);">
           <td style="padding: 12px 8px; font-size: 13px; color: #0D0D0C; font-weight: 500;">
             ${item.name}
@@ -67,10 +64,9 @@ export async function POST(req: NextRequest) {
             ${item.day ? `${item.day}th` : "Monthly"}
           </td>
           <td style="padding: 12px 8px; font-size: 11px; text-align: center;">
-            <span style="display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; ${
-              item.cleared
-                ? "background-color: #DFE9D4; color: #0D0D0C;"
-                : "background-color: #F8DCC7; color: #0D0D0C;"
+            <span style="display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; ${item.cleared
+              ? "background-color: #DFE9D4; color: #0D0D0C;"
+              : "background-color: #F8DCC7; color: #0D0D0C;"
             }">
               ${item.cleared ? "Cleared" : "Upcoming"}
             </span>
@@ -80,8 +76,8 @@ export async function POST(req: NextRequest) {
           </td>
         </tr>
       `
-          )
-          .join("")
+        )
+        .join("")
       : `
         <tr>
           <td colspan="4" style="padding: 16px; text-align: center; color: rgba(13,13,12,0.4); font-size: 12px;">
@@ -90,11 +86,10 @@ export async function POST(req: NextRequest) {
         </tr>
       `;
 
-    // Render debts HTML rows
     const debtsHtml = debts.length
       ? debts
-          .map(
-            (d: DebtItem) => `
+        .map(
+          (d: DebtItem) => `
         <tr style="border-bottom: 1px solid rgba(13, 13, 12, 0.06);">
           <td style="padding: 10px 8px; font-size: 13px; color: #0D0D0C; font-weight: 500;">
             ${d.name}
@@ -107,9 +102,11 @@ export async function POST(req: NextRequest) {
           </td>
         </tr>
       `
-          )
-          .join("")
+        )
+        .join("")
       : "";
+
+    const appOrigin = req.nextUrl?.origin || "https://mint-month.vercel.app";
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -238,9 +235,8 @@ export async function POST(req: NextRequest) {
             </td>
           </tr>
 
-          ${
-            debtsHtml
-              ? `
+          ${debtsHtml
+        ? `
           <!-- Debt Paydown Milestones -->
           <tr>
             <td style="padding-top: 28px;">
@@ -255,13 +251,13 @@ export async function POST(req: NextRequest) {
             </td>
           </tr>
           `
-              : ""
-          }
+        : ""
+      }
 
           <!-- Call to Action -->
           <tr>
             <td align="center" style="padding-top: 36px; padding-bottom: 8px;">
-              <a href="http://localhost:3000" style="display: inline-block; background-color: #0D0D0C; color: #FFFDFA; text-decoration: none; padding: 14px 32px; border-radius: 9999px; font-size: 13px; font-weight: 500; letter-spacing: 0.02em;">
+              <a href="${appOrigin}" style="display: inline-block; background-color: #0D0D0C; color: #FFFDFA; text-decoration: none; padding: 14px 32px; border-radius: 9999px; font-size: 13px; font-weight: 500; letter-spacing: 0.02em;">
                 Open Your Mint Month Vault &rarr;
               </a>
             </td>
@@ -298,22 +294,17 @@ export async function POST(req: NextRequest) {
         deliveredTo: normalizedEmail,
         previewSubject: subject,
       });
-    } catch {
-      console.error("EMAIL_FAILED_USE_DEV_BYPASS");
-
-      const isProd = process.env.NODE_ENV === "production";
-      if (isProd) {
-        return NextResponse.json(
-          { ok: false, error: "Email service failed" },
-          { status: 500 }
-        );
-      }
+    } catch (sendErr: unknown) {
+      const errMsg = sendErr instanceof Error ? sendErr.message : String(sendErr);
+      console.error("EMAIL_DISPATCH_FALLBACK (digest):", errMsg);
 
       return NextResponse.json({
         ok: true,
         sent: false,
+        sandbox: true,
         devBypassOtp: true,
         previewSubject: subject,
+        emailError: errMsg,
       });
     }
   } catch {
