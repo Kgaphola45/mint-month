@@ -150,25 +150,6 @@ export function QuickAddModal() {
     }
   };
 
-  const handleSampleSlipScan = (sample: {
-    merchant: string;
-    amount: number;
-    catKeyword: string;
-    catFallback: string;
-  }) => {
-    const matchedCat =
-      categories.find(
-        (c) => c.id === sample.catFallback || c.name.toLowerCase().includes(sample.catKeyword)
-      )?.id ||
-      categories[0]?.id ||
-      "";
-    setAmount(sample.amount.toString());
-    setCategoryId(matchedCat);
-    setNote(sample.merchant);
-    setDate(getDefaultDate());
-    setReceiptFeedback(`Auto-filled from ${sample.merchant} (R${sample.amount})`);
-  };
-
   const getDefaultDate = () => {
     const today = getTodayDateStr();
     if (today.startsWith(selectedMonth)) {
@@ -349,53 +330,6 @@ export function QuickAddModal() {
                   onChange={handleReceiptFileChange}
                   className="hidden"
                 />
-              </div>
-
-              {/* Quick 1-Tap SA Till Slip OCR Presets */}
-              <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-[#0D0D0C]/[0.06]">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-[#0D0D0C]/45 flex items-center gap-1">
-                  <Sparkles className="w-2.5 h-2.5" />
-                  <span>Quick SA Slip:</span>
-                </span>
-                {[
-                  {
-                    label: "Woolworths R485",
-                    merchant: "Woolworths Food Till Slip",
-                    amount: 485,
-                    catKeyword: "grocer",
-                    catFallback: "cat-groceries",
-                  },
-                  {
-                    label: "Checkers R620",
-                    merchant: "Checkers Sixty60 Till Slip",
-                    amount: 620,
-                    catKeyword: "grocer",
-                    catFallback: "cat-groceries",
-                  },
-                  {
-                    label: "Engen Fuel R950",
-                    merchant: "Engen Forecourt Fuel Slip",
-                    amount: 950,
-                    catKeyword: "transport",
-                    catFallback: "cat-transport",
-                  },
-                  {
-                    label: "Dis-Chem R310",
-                    merchant: "Dis-Chem Pharmacy Slip",
-                    amount: 310,
-                    catKeyword: "personal",
-                    catFallback: "cat-personal-care",
-                  },
-                ].map((s) => (
-                  <button
-                    key={s.label}
-                    type="button"
-                    onClick={() => handleSampleSlipScan(s)}
-                    className="px-2 py-0.5 rounded-full bg-[#FFFDFA] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] border border-[#0D0D0C]/[0.1] text-[10px] font-medium text-[#0D0D0C] transition-colors"
-                  >
-                    {s.label}
-                  </button>
-                ))}
               </div>
             </div>
           )}

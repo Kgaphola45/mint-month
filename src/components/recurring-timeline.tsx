@@ -369,7 +369,8 @@ export function RecurringTimeline() {
                     </span>
                   ) : bill.status === "today" ? (
                     <span className="px-2.5 py-1 rounded-full text-xs font-medium border border-amber-300 bg-amber-50 text-amber-800 flex items-center gap-1">
-                      <span>⚡ Runs Today</span>
+                      <Zap className="w-3 h-3 text-amber-700" />
+                      <span>Runs Today</span>
                     </span>
                   ) : (
                     <span className="px-2.5 py-1 rounded-full text-xs font-normal border border-[#0D0D0C]/[0.1] bg-[#FFFDFA] text-[#0D0D0C]/60">

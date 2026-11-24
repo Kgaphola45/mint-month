@@ -221,7 +221,7 @@ export function SavingsVaultTracker() {
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[15px] font-normal text-[#0D0D0C]/56">
-              🇿🇦 Pay-Yourself-First & Ring-Fenced Reserves
+              Pay-Yourself-First & Ring-Fenced Reserves
             </span>
             <span className="px-2.5 py-0.5 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FBF6EF] text-[11px] text-[#0D0D0C] font-normal">
               {summary.activeCount} Active · {summary.completedCount} Funded

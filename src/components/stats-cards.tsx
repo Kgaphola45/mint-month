@@ -43,7 +43,7 @@ export function StatsCards() {
           : "Not Set",
       subtitle:
         summary.totalBudget > 0
-          ? `${summary.sortedCount}/${summary.totalCategoriesWithBudget} sorted ✓ • ${budgetStatus.percentage}% used`
+          ? `${summary.sortedCount}/${summary.totalCategoriesWithBudget} sorted • ${budgetStatus.percentage}% used`
           : "Click to set monthly budget",
       icon: BarChart3,
       onClick: () => setBudgetModalOpen(true),

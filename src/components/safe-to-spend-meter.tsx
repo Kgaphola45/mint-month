@@ -76,7 +76,7 @@ export function SafeToSpendMeter() {
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[14px] sm:text-[15px] font-normal text-[#0D0D0C]/56">
-              🇿🇦 Payday Planner & Cashflow Reserve
+              Payday Planner & Cashflow Reserve
             </span>
             <span className="px-2.5 py-0.5 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FBF6EF] text-[11px] text-[#0D0D0C] font-normal">
               {formatMonthYear(selectedMonth)}

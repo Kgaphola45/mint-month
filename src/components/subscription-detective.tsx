@@ -335,25 +335,29 @@ export function SubscriptionDetective() {
   });
 
   return (
-    <div className="w-full bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] rounded-[28px] p-6 sm:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)] space-y-7">
-      {/* 1. Header with Sherlock / Detective Badge */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#0D0D0C]/[0.06]">
+    <div className="p-6 sm:p-8 rounded-[24px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-6">
+      {/* 1. Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#0D0D0C]/[0.06]">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F6DE68]/30 border border-[#F6DE68]/70 text-[#0D0D0C] text-[11px] font-semibold tracking-wide uppercase mb-2">
-            <Search className="w-3.5 h-3.5 stroke-[2.2] text-[#8B6D1B]" />
-            <span>Subscription Detective</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[14px] sm:text-[15px] font-normal text-[#0D0D0C]/56">
+              Recurring Audits & Leak Prevention
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FBF6EF] text-[11px] text-[#0D0D0C] font-normal">
+              {summary.activeCount} Active · {summary.forgottenCount} Flagged
+            </span>
           </div>
-          <h2 className="font-serif text-2xl sm:text-3xl font-medium tracking-tight text-[#0D0D0C]">
-            Recurring Subscriptions & Hidden Leaks
+          <h2 className="text-2xl sm:text-3xl font-medium tracking-tight text-[#0D0D0C] mt-1 font-serif">
+            Subscription Detective
           </h2>
-          <p className="text-xs sm:text-sm text-[#0D0D0C]/60 mt-1 max-w-xl">
-            Audit your true monthly and annual drain across streaming, gym, WiFi, and software. Flag forgotten services and track silent price increases.
+          <p className="text-sm text-[#0D0D0C]/56 mt-1">
+            Audit monthly and annual drain across streaming, gym, WiFi, and software. Flag forgotten services and track silent price increases.
           </p>
         </div>
 
         <button
           onClick={() => openAddModal()}
-          className="h-10 px-4 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-xs font-medium inline-flex items-center gap-2 hover:bg-[#0D0D0C]/90 transition-all shadow-sm shrink-0 self-start sm:self-center"
+          className="h-10 px-5 rounded-full bg-[#0D0D0C] hover:bg-[#0D0D0C]/90 text-[#FFFDFA] text-xs font-medium inline-flex items-center gap-2 transition-all shadow-sm shrink-0 self-start md:self-center"
         >
           <Plus className="w-4 h-4" />
           <span>Add Subscription</span>
@@ -363,47 +367,47 @@ export function SubscriptionDetective() {
       {/* 2. Key Metric Cards (Vela Editorial Grid) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1: Monthly Total */}
-        <div className="p-4 rounded-2xl bg-[#FBF6EF]/70 border border-[#0D0D0C]/[0.06]">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-[#0D0D0C]/50 block">
+        <div className="p-5 rounded-2xl bg-[#FBF6EF] border border-[#0D0D0C]/[0.06]">
+          <span className="text-[12px] font-normal text-[#0D0D0C]/56 block">
             Monthly Subscription Total
           </span>
-          <div className="text-xl sm:text-2xl font-serif font-semibold text-[#0D0D0C] mt-1">
+          <div className="text-2xl sm:text-3xl font-serif font-medium text-[#0D0D0C] mt-1">
             {formatCurrency(summary.totalMonthly, currency)}
             <span className="text-xs font-sans font-normal text-[#0D0D0C]/50 ml-1">/mo</span>
           </div>
-          <p className="text-[11px] text-[#0D0D0C]/60 mt-1">
+          <p className="text-[11px] text-[#0D0D0C]/50 mt-1">
             Across {summary.activeCount} active recurring services
           </p>
         </div>
 
-        {/* Metric 2: Annual Outflow (The big eye-opener) */}
-        <div className="p-4 rounded-2xl bg-[#0D0D0C] text-[#FFFDFA] shadow-sm">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-[#FFFDFA]/60 block flex items-center justify-between">
+        {/* Metric 2: Annual Cumulative Drain */}
+        <div className="p-5 rounded-2xl bg-[#0D0D0C] text-[#FFFDFA] shadow-sm">
+          <span className="text-[12px] font-normal text-[#FFFDFA]/60 block flex items-center justify-between">
             <span>Annual Cumulative Drain</span>
-            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <Flame className="w-4 h-4 text-amber-400" />
           </span>
-          <div className="text-xl sm:text-2xl font-serif font-semibold text-[#FFFDFA] mt-1">
+          <div className="text-2xl sm:text-3xl font-serif font-medium text-[#FFFDFA] mt-1">
             {formatCurrency(summary.totalAnnual, currency)}
             <span className="text-xs font-sans font-normal text-[#FFFDFA]/60 ml-1">/year</span>
           </div>
           <p className="text-[11px] text-[#FFFDFA]/70 mt-1">
-            What you actually pay per year on subscriptions
+            Total annual out-of-pocket subscription drain
           </p>
         </div>
 
         {/* Metric 3: Forgotten / Leak Alert */}
         <div
-          className={`p-4 rounded-2xl border transition-all ${
+          className={`p-5 rounded-2xl border transition-all ${
             summary.forgottenCount > 0
               ? "bg-rose-50/70 border-rose-200 text-rose-950"
-              : "bg-[#FBF6EF]/70 border-[#0D0D0C]/[0.06] text-[#0D0D0C]"
+              : "bg-[#FBF6EF] border-[#0D0D0C]/[0.06] text-[#0D0D0C]"
           }`}
         >
-          <span className="text-[11px] font-medium uppercase tracking-wider opacity-70 block flex items-center gap-1.5">
+          <span className="text-[12px] font-normal opacity-70 block flex items-center gap-1.5">
             <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
-            <span>Forgotten Service Leak</span>
+            <span>Forgotten Service Leaks</span>
           </span>
-          <div className="text-xl sm:text-2xl font-serif font-semibold mt-1">
+          <div className="text-2xl sm:text-3xl font-serif font-medium mt-1">
             {summary.forgottenCount > 0
               ? formatCurrency(summary.forgottenAnnualSavings, currency)
               : "R0.00"}
@@ -411,61 +415,40 @@ export function SubscriptionDetective() {
               {summary.forgottenCount > 0 ? "/yr leak" : "waste"}
             </span>
           </div>
-          <p className="text-[11px] opacity-80 mt-1">
+          <p className="text-[11px] opacity-70 mt-1">
             {summary.forgottenCount > 0
               ? `${summary.forgottenCount} service(s) flagged for cancellation`
-              : "No forgotten services flagged"}
+              : "Zero forgotten services flagged"}
           </p>
         </div>
 
         {/* Metric 4: Price Hike Alert */}
         <div
-          className={`p-4 rounded-2xl border transition-all ${
+          className={`p-5 rounded-2xl border transition-all ${
             summary.priceHikedCount > 0
               ? "bg-amber-50/70 border-amber-200 text-amber-950"
-              : "bg-[#FBF6EF]/70 border-[#0D0D0C]/[0.06] text-[#0D0D0C]"
+              : "bg-[#FBF6EF] border-[#0D0D0C]/[0.06] text-[#0D0D0C]"
           }`}
         >
-          <span className="text-[11px] font-medium uppercase tracking-wider opacity-70 block flex items-center gap-1.5">
+          <span className="text-[12px] font-normal opacity-70 block flex items-center gap-1.5">
             <TrendingUp className="w-3.5 h-3.5 text-amber-600" />
             <span>Price Increases Tracked</span>
           </span>
-          <div className="text-xl sm:text-2xl font-serif font-semibold mt-1">
+          <div className="text-2xl sm:text-3xl font-serif font-medium mt-1">
             {summary.priceHikedCount > 0
               ? `+${formatCurrency(summary.totalPriceHikeAnnualImpact, currency)}`
               : "R0.00"}
             <span className="text-xs font-sans font-normal opacity-70 ml-1">/yr impact</span>
           </div>
-          <p className="text-[11px] opacity-80 mt-1">
+          <p className="text-[11px] opacity-70 mt-1">
             {summary.priceHikedCount > 0
-              ? `${summary.priceHikedCount} subscription price hike(s) detected`
-              : "All subscriptions at baseline prices"}
+              ? `${summary.priceHikedCount} subscription price hike(s) logged`
+              : "All subscriptions at base price"}
           </p>
         </div>
       </div>
 
-      {/* 3. Popular Presets Ribbon (Fast 1-click addition) */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs text-[#0D0D0C]/60">
-          <span className="font-medium text-[#0D0D0C]">Quick Add Popular South African Services:</span>
-          <span className="text-[11px]">Click preset to pre-fill</span>
-        </div>
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {POPULAR_PRESETS.slice(0, 7).map((preset) => (
-            <button
-              key={preset.name}
-              onClick={() => openAddModal(preset)}
-              className="px-3 py-1.5 rounded-full bg-[#FBF6EF] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] border border-[#0D0D0C]/[0.08] text-xs font-medium text-[#0D0D0C] transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 shadow-xs"
-            >
-              <Plus className="w-3 h-3 opacity-60" />
-              <span>{preset.name}</span>
-              <span className="text-[10px] opacity-60">({formatCurrency(preset.monthlyAmount, currency)})</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 4. Filter Tabs & Category Filter */}
+      {/* 3. Filter Tabs & Category Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
         {/* Status Filter Tabs */}
         <div className="flex items-center gap-1.5 bg-[#FBF6EF] p-1 rounded-full border border-[#0D0D0C]/[0.08] shrink-0 overflow-x-auto">
@@ -487,7 +470,8 @@ export function SubscriptionDetective() {
                 : "text-[#0D0D0C]/70 hover:text-[#0D0D0C]"
             }`}
           >
-            <span>⚠️ Forgotten / Review</span>
+            <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+            <span>Forgotten / Review</span>
             {summary.forgottenCount > 0 && (
               <span className="w-4 h-4 rounded-full bg-rose-200 text-rose-900 text-[10px] font-bold flex items-center justify-center">
                 {summary.forgottenCount}
@@ -502,7 +486,8 @@ export function SubscriptionDetective() {
                 : "text-[#0D0D0C]/70 hover:text-[#0D0D0C]"
             }`}
           >
-            <span>📈 Price Increases</span>
+            <TrendingUp className="w-3.5 h-3.5 text-amber-500" />
+            <span>Price Increases</span>
             {summary.priceHikedCount > 0 && (
               <span className="w-4 h-4 rounded-full bg-amber-200 text-amber-900 text-[10px] font-bold flex items-center justify-center">
                 {summary.priceHikedCount}
@@ -529,25 +514,36 @@ export function SubscriptionDetective() {
         </div>
       </div>
 
-      {/* 5. Subscriptions Directory List */}
+      {/* 4. Subscriptions Directory List */}
       {filteredSubscriptions.length === 0 ? (
-        <div className="p-8 text-center rounded-2xl bg-[#FBF6EF]/50 border border-dashed border-[#0D0D0C]/[0.1] space-y-3">
-          <ShieldAlert className="w-8 h-8 text-[#0D0D0C]/40 mx-auto" />
-          <h3 className="font-serif text-lg font-medium text-[#0D0D0C]">No subscriptions found in this view</h3>
-          <p className="text-xs text-[#0D0D0C]/60 max-w-sm mx-auto">
+        <div className="p-10 text-center rounded-[20px] bg-[#FBF6EF]/50 border border-dashed border-[#0D0D0C]/[0.12] space-y-3">
+          <div className="w-12 h-12 rounded-full bg-[#FBF6EF] border border-[#0D0D0C]/[0.08] flex items-center justify-center mx-auto text-[#0D0D0C]/50">
+            <Search className="w-5 h-5 stroke-[1.8]" />
+          </div>
+          <h3 className="font-serif text-lg font-medium text-[#0D0D0C]">
             {activeFilter === "forgotten"
-              ? "Good job! You have zero forgotten or wasteful subscriptions flagged."
+              ? "No forgotten or wasteful subscriptions flagged"
               : activeFilter === "priceHikes"
-              ? "None of your tracked subscriptions have logged price hikes."
-              : "Add your recurring subscriptions above to begin tracking monthly and annual totals."}
+              ? "No subscription price increases logged"
+              : "No subscriptions tracked yet"}
+          </h3>
+          <p className="text-xs sm:text-sm text-[#0D0D0C]/60 max-w-sm mx-auto">
+            {activeFilter === "forgotten"
+              ? "Good job! You have zero forgotten or inactive subscriptions bleeding your account."
+              : activeFilter === "priceHikes"
+              ? "None of your tracked services have experienced a price increase."
+              : "Add your recurring subscriptions above to track monthly commitments and uncover annual cumulative drain."}
           </p>
-          <button
-            onClick={() => openAddModal()}
-            className="px-4 py-2 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-xs font-medium inline-flex items-center gap-2"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Subscription</span>
-          </button>
+          {activeFilter === "all" && (
+            <button
+              onClick={() => openAddModal()}
+              className="mt-1 h-9 px-4 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-xs font-medium inline-flex items-center gap-1.5 hover:bg-[#0D0D0C]/90 transition-all shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Your First Subscription</span>
+            </button>
+          )}
+        </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -728,11 +724,20 @@ export function SubscriptionDetective() {
       {/* 6. Native <dialog> Modal for Adding / Editing Subscriptions */}
       <dialog
         ref={formDialogRef}
+        {...({ closedby: "any" } as any)}
         aria-labelledby={formTitleId}
         onClick={(e) => {
-          // Light dismiss on backdrop click
+          // Light dismiss on backdrop click fallback for browsers without native closedby support
           if (e.target === formDialogRef.current) {
-            setIsModalOpen(false);
+            const rect = formDialogRef.current.getBoundingClientRect();
+            const isInDialog =
+              rect.top <= e.clientY &&
+              e.clientY <= rect.top + rect.height &&
+              rect.left <= e.clientX &&
+              e.clientX <= rect.left + rect.width;
+            if (!isInDialog) {
+              setIsModalOpen(false);
+            }
           }
         }}
         onCancel={() => setIsModalOpen(false)}
@@ -759,6 +764,38 @@ export function SubscriptionDetective() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Optional Template Helper inside Modal */}
+            {!editingSub && (
+              <div className="p-3 rounded-xl bg-[#FBF6EF] border border-[#0D0D0C]/[0.08] space-y-1.5">
+                <span className="text-[11px] font-normal text-[#0D0D0C]/55 block">
+                  Optional: Pre-fill from template
+                </span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {POPULAR_PRESETS.slice(0, 6).map((preset) => (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => {
+                        setFormData({
+                          name: preset.name,
+                          monthlyAmount: preset.monthlyAmount.toString(),
+                          category: preset.category,
+                          billingDay: preset.billingDay,
+                          previousAmount: preset.previousAmount ? preset.previousAmount.toString() : "",
+                          isForgotten: false,
+                          cancellationUrl: preset.cancellationUrl || "",
+                          cancellationNotes: preset.cancellationNotes || "",
+                        });
+                      }}
+                      className="px-2.5 py-1 rounded-full bg-[#FFFDFA] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] border border-[#0D0D0C]/[0.08] text-[11px] font-medium text-[#0D0D0C] transition-colors"
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Service Name */}
             <div>
               <label className="block text-xs font-medium text-[#0D0D0C]/80 mb-1">
@@ -915,10 +952,19 @@ export function SubscriptionDetective() {
       {/* 7. Native <dialog> Modal for Cancellation Terms & Assistant */}
       <dialog
         ref={cancelDialogRef}
+        {...({ closedby: "any" } as any)}
         aria-labelledby={cancelTitleId}
         onClick={(e) => {
           if (e.target === cancelDialogRef.current) {
-            setCancellingSub(null);
+            const rect = cancelDialogRef.current.getBoundingClientRect();
+            const isInDialog =
+              rect.top <= e.clientY &&
+              e.clientY <= rect.top + rect.height &&
+              rect.left <= e.clientX &&
+              e.clientX <= rect.left + rect.width;
+            if (!isInDialog) {
+              setCancellingSub(null);
+            }
           }
         }}
         onCancel={() => setCancellingSub(null)}
