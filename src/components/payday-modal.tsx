@@ -120,6 +120,37 @@ export function PaydayModal() {
             <p className="text-[11px] text-[#0D0D0C]/50 pl-2">
               The net amount deposited into your bank account on payday.
             </p>
+            {/* Quick Salary Preset & Increment Chips */}
+            <div className="flex items-center gap-1.5 flex-wrap pt-1">
+              {[15000, 25000, 35000, 50000].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setSalaryInput(preset.toString())}
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+                    parsedSalary === preset
+                      ? "bg-[#0D0D0C] text-[#FFFDFA] border-[#0D0D0C]"
+                      : "bg-[#FBF6EF] text-[#0D0D0C]/75 border-[#0D0D0C]/[0.1] hover:border-[#0D0D0C]/30"
+                  }`}
+                >
+                  R{preset.toLocaleString()}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setSalaryInput(Math.max(1000, parsedSalary + 1000).toString())}
+                className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#FBF6EF] text-[#0D0D0C]/75 border border-[#0D0D0C]/[0.1] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] transition-colors"
+              >
+                +R1,000
+              </button>
+              <button
+                type="button"
+                onClick={() => setSalaryInput(Math.max(1000, parsedSalary + 5000).toString())}
+                className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#FBF6EF] text-[#0D0D0C]/75 border border-[#0D0D0C]/[0.1] hover:bg-[#0D0D0C] hover:text-[#FFFDFA] transition-colors"
+              >
+                +R5,000
+              </button>
+            </div>
           </div>
 
           {/* Payday date selection */}

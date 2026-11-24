@@ -817,3 +817,36 @@ export async function deleteSupabaseUserRecord(
 
   return { success: true };
 }
+
+export async function updateSupabaseUserSalaryAndPayday(
+  userId: string,
+  updates: { monthlySalary?: number; paydayDay?: number }
+): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return false;
+
+  const effectiveUserId = await resolveAuthenticatedUserId(userId);
+  if (!effectiveUserId) return false;
+
+  const dbPayload: Record<string, number> = {};
+  const metaPayload: Record<string, number> = {};
+
+  if (typeof updates.monthlySalary === "number" && updates.monthlySalary > 0) {
+    dbPayload.monthly_salary = updates.monthlySalary;
+    metaPayload.monthlySalary = updates.monthlySalary;
+  }
+  if (typeof updates.paydayDay === "number" && updates.paydayDay >= 1 && updates.paydayDay <= 31) {
+    dbPayload.payday_day = updates.paydayDay;
+    metaPayload.paydayDay = updates.paydayDay;
+  }
+
+  if (Object.keys(dbPayload).length === 0) return false;
+
+  try {
+    await supabase.from("users").update(dbPayload).eq("id", effectiveUserId);
+    await supabase.auth.updateUser({ data: metaPayload });
+    return true;
+  } catch {
+    return false;
+  }
+}

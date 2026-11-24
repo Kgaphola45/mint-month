@@ -471,6 +471,19 @@ export class LocalStorageAdapter implements StorageAdapter {
   saveIncomes(incomes: Record<string, number>): void {
     if (!this.isClient()) return;
     localStorage.setItem(this.getKey(STORAGE_KEYS.INCOMES), JSON.stringify(incomes));
+    if (typeof incomes.default === "number" && incomes.default > 0) {
+      const current = this.getCurrentUser();
+      if (current) {
+        const updatedUser = { ...current, monthlySalary: incomes.default };
+        this.setCurrentUser(updatedUser);
+        const users = this.getUsers().map((u) =>
+          u.id === current.id || u.email.toLowerCase() === current.email.toLowerCase()
+            ? { ...u, monthlySalary: incomes.default }
+            : u
+        );
+        this.saveUsers(users);
+      }
+    }
   }
 
   getPaydayDay(): number {
@@ -489,6 +502,17 @@ export class LocalStorageAdapter implements StorageAdapter {
   savePaydayDay(day: number): void {
     if (!this.isClient()) return;
     localStorage.setItem(this.getKey(STORAGE_KEYS.PAYDAY), day.toString());
+    const current = this.getCurrentUser();
+    if (current) {
+      const updatedUser = { ...current, paydayDay: day };
+      this.setCurrentUser(updatedUser);
+      const users = this.getUsers().map((u) =>
+        u.id === current.id || u.email.toLowerCase() === current.email.toLowerCase()
+          ? { ...u, paydayDay: day }
+          : u
+      );
+      this.saveUsers(users);
+    }
   }
 
   getCurrency(): string {

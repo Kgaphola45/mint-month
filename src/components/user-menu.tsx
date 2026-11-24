@@ -11,6 +11,8 @@ import {
   Settings,
   Trash2,
   Shield,
+  Wallet,
+  Pencil,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { DeleteAccountModal } from "@/components/delete-account-modal";
@@ -22,7 +24,11 @@ export function UserMenu() {
     currentUser,
     isAuthenticated,
     users,
+    incomes,
+    selectedMonth,
+    paydayDay,
     setAuthModalOpen,
+    setPaydayModalOpen,
     switchUser,
     logout,
   } = useExpenseStore();
@@ -154,6 +160,29 @@ export function UserMenu() {
                 </span>
               </div>
             </div>
+
+            {/* Take-Home Salary Quick Summary & 1-Click Edit inside Profile Card */}
+            <div className="mt-2.5 pt-2.5 border-t border-[#0D0D0C]/[0.06] flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <span className="text-[10px] text-[#0D0D0C]/45 uppercase tracking-wider font-medium block">
+                  Take-Home Pay
+                </span>
+                <span className="text-xs font-semibold text-[#0D0D0C] block truncate">
+                  R{(incomes[selectedMonth] || incomes.default || currentUser.monthlySalary || 25000).toLocaleString()}/mo · {paydayDay || currentUser.paydayDay || 25}th
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setPaydayModalOpen(true);
+                }}
+                className="px-2.5 py-1 rounded-full bg-[#0D0D0C] text-[#FFFDFA] hover:opacity-90 text-[10px] font-medium inline-flex items-center gap-1 shrink-0 transition-all shadow-sm"
+              >
+                <Pencil className="w-2.5 h-2.5" />
+                <span>Edit</span>
+              </button>
+            </div>
           </div>
 
           {/* Switch Account Section (only if multiple accounts exist) */}
@@ -220,6 +249,23 @@ export function UserMenu() {
           )}
 
           <div className="border-t border-[#0D0D0C]/[0.06] pt-1 space-y-0.5">
+            {/* Edit Take-Home Salary available to EVERY user */}
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                setPaydayModalOpen(true);
+              }}
+              className="w-full p-2 rounded-[14px] text-xs text-[#0D0D0C]/80 hover:bg-[#FBF6EF] hover:text-[#0D0D0C] flex items-center justify-between transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Wallet className="w-3.5 h-3.5 stroke-[1.5]" />
+                <span>Edit Take-Home Salary</span>
+              </div>
+              <span className="text-[10px] font-semibold text-[#0D0D0C]/55">
+                R{(incomes[selectedMonth] || incomes.default || currentUser.monthlySalary || 25000).toLocaleString()}
+              </span>
+            </button>
+
             {/* Settings & Privacy link ONLY visible to Super User (RBAC) */}
             {isSuper && (
               <Link

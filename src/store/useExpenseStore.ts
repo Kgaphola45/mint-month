@@ -39,6 +39,7 @@ import {
   upsertSupabaseDebtContract,
   deleteSupabaseDebtContract,
   pushLocalDataToSupabase,
+  updateSupabaseUserSalaryAndPayday,
 } from "@/lib/supabase-sync";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 
@@ -649,19 +650,49 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   setMonthIncome: (month: string, amount: number) => {
     const updated = { ...get().incomes, [month]: amount };
     storage.saveIncomes(updated);
-    set({ incomes: updated });
+    const curUser = get().currentUser;
+    const updatedUser = curUser ? { ...curUser, monthlySalary: amount } : null;
+    set({
+      incomes: updated,
+      ...(updatedUser ? { currentUser: updatedUser, users: storage.getUsers() } : {}),
+    });
+    if (curUser?.id && isSupabaseConfigured()) {
+      updateSupabaseUserSalaryAndPayday(curUser.id, { monthlySalary: amount }).catch(
+        console.error
+      );
+    }
   },
 
   setDefaultIncome: (amount: number) => {
     const updated = { ...get().incomes, default: amount };
     storage.saveIncomes(updated);
-    set({ incomes: updated });
+    const curUser = get().currentUser;
+    const updatedUser = curUser ? { ...curUser, monthlySalary: amount } : null;
+    set({
+      incomes: updated,
+      ...(updatedUser ? { currentUser: updatedUser, users: storage.getUsers() } : {}),
+    });
+    if (curUser?.id && isSupabaseConfigured()) {
+      updateSupabaseUserSalaryAndPayday(curUser.id, { monthlySalary: amount }).catch(
+        console.error
+      );
+    }
   },
 
   setPaydayDay: (day: number) => {
     const clamped = Math.max(1, Math.min(31, day));
     storage.savePaydayDay(clamped);
-    set({ paydayDay: clamped });
+    const curUser = get().currentUser;
+    const updatedUser = curUser ? { ...curUser, paydayDay: clamped } : null;
+    set({
+      paydayDay: clamped,
+      ...(updatedUser ? { currentUser: updatedUser, users: storage.getUsers() } : {}),
+    });
+    if (curUser?.id && isSupabaseConfigured()) {
+      updateSupabaseUserSalaryAndPayday(curUser.id, { paydayDay: clamped }).catch(
+        console.error
+      );
+    }
   },
 
   addDebt: (debtData) => {

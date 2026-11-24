@@ -264,19 +264,26 @@ export function SafeToSpendMeter() {
 
       {/* 3 Metric Summary Tiles */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* 1. Monthly Take-Home */}
-        <div className="p-4 sm:p-5 rounded-[20px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06]">
+        {/* 1. Monthly Take-Home (Clickable for 1-tap salary editing) */}
+        <button
+          type="button"
+          onClick={() => setPaydayModalOpen(true)}
+          className="p-4 sm:p-5 rounded-[20px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] hover:border-[#0D0D0C]/25 transition-all text-left group"
+          title="Click to edit your Monthly Take-Home Salary"
+        >
           <div className="flex items-center justify-between text-xs text-[#0D0D0C]/56 mb-1">
             <span>Take-Home Salary</span>
-            <Wallet className="w-4 h-4 stroke-[1.5] text-[#0D0D0C]/40" />
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] text-[10px] font-medium text-[#0D0D0C] group-hover:bg-[#0D0D0C] group-hover:text-[#FFFDFA] transition-colors">
+              Edit Salary
+            </span>
           </div>
           <div className="text-xl sm:text-2xl font-medium tracking-tight text-[#0D0D0C]">
             {formatCurrency(safe.monthlyIncome, currency)}
           </div>
           <p className="text-xs text-[#0D0D0C]/50 mt-1">
-            Expected net deposit
+            Expected net deposit · Tap to update
           </p>
-        </div>
+        </button>
 
         {/* 2. Quarantined Debit Orders */}
         <div className="p-4 sm:p-5 rounded-[20px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06]">

@@ -27,10 +27,13 @@ export function Header() {
 
   const {
     currentUser,
+    incomes,
+    selectedMonth,
     setQuickAddOpen,
     setSimulatorModalOpen,
     setStoryModalOpen,
     setCommandPaletteOpen,
+    setPaydayModalOpen,
   } = useExpenseStore();
 
   // Close mobile drawer on route change
@@ -249,6 +252,28 @@ export function Header() {
               <div className="p-3 rounded-2xl bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] flex items-center justify-between">
                 <span className="text-xs text-[#0D0D0C]/60 font-medium">Cycle:</span>
                 <MonthPicker />
+              </div>
+
+              {/* Quick Edit Take-Home Salary in Drawer for Every User */}
+              <div className="p-3.5 rounded-2xl bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] flex items-center justify-between gap-2">
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-[#0D0D0C]/45 font-medium block">
+                    Take-Home Salary
+                  </span>
+                  <span className="text-xs font-semibold text-[#0D0D0C]">
+                    R{(incomes[selectedMonth] || incomes.default || currentUser?.monthlySalary || 25000).toLocaleString()}/mo
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setPaydayModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-[11px] font-medium hover:opacity-90 transition-all"
+                >
+                  Edit Salary
+                </button>
               </div>
 
               {/* Navigation Links */}
