@@ -13,6 +13,7 @@ import { RecurringTimeline } from "@/components/recurring-timeline";
 import { SavingsVaultTracker } from "@/components/savings-vault-tracker";
 import { DebtTracker } from "@/components/debt-tracker";
 import { SubscriptionDetective } from "@/components/subscription-detective";
+import { CashFlowCalendar } from "@/components/cash-flow-calendar";
 import { TransactionsList } from "@/components/transactions-list";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
@@ -191,6 +192,11 @@ export default function DashboardPage() {
         {/* 6d. Subscription Detective (Netflix, Spotify, Gym, WiFi, Leaks & Price Hikes) */}
         <section id="subscriptions">
           <SubscriptionDetective />
+        </section>
+
+        {/* 6e. Cash Flow Calendar (Daily Events, Tight Day Squeeze & Projected Balance) */}
+        <section id="cashflow-calendar">
+          <CashFlowCalendar />
         </section>
 
         {/* 7. Visual Charts Grid (Category Donut & Daily Bar Flow) */}

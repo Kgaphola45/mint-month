@@ -19,13 +19,14 @@ TABLE OF CONTENTS:
    6.6. Savings Vaults, Emergency Fund & Stokvel Goal Tracker
    6.7. Debt & Loan Snowball Paydown Tracker
    6.8. Subscription Detective (Recurring Drain, Leaks & Price Hikes)
-   6.9. Smart Budget Planner & Category Board
-   6.10. Transaction Ledger & Expense Tracking
-   6.11. Till Slip / Receipt OCR Quick-Scan
-   6.12. Monthly Editorial Financial Story ("Wrapped" Report)
-   6.13. Automated Email Dispatches (Payday & Debit Order Digest)
-   6.14. Super User Administrative Console (/settings)
-   6.15. User Profile & Preferences Self-Service Drawer
+   6.9. Cash Flow Calendar (Daily Events, Tight Day Squeeze & Projected Balance)
+   6.10. Smart Budget Planner & Category Board
+   6.11. Transaction Ledger & Expense Tracking
+   6.12. Till Slip / Receipt OCR Quick-Scan
+   6.13. Monthly Editorial Financial Story ("Wrapped" Report)
+   6.14. Automated Email Dispatches (Payday & Debit Order Digest)
+   6.15. Super User Administrative Console (/settings)
+   6.16. User Profile & Preferences Self-Service Drawer
 7. Design System, Aesthetic & UI Tokens
 8. Environment Variables Reference (.env.local)
 9. Deployment & Production Setup
@@ -341,7 +342,31 @@ CREATE POLICY "Users can only view and manage their own data"
   real local pricing, cancellation links, and notice terms pre-filled.
 
 --------------------------------------------------------------------------------
-6.9. SMART BUDGET PLANNER & CATEGORY BOARD
+6.9. CASH FLOW CALENDAR (DAILY FINANCIAL SQUEEZE DETECTOR)
+--------------------------------------------------------------------------------
+- Daily Financial Timeline & Squeeze Detection: A monthly calendar that maps
+  every incoming and outgoing financial event for each day of the month.
+- Events Tracked Daily:
+  * Salary incoming dates (celebrated in emerald on payday, e.g. 25th).
+  * Recurring debit orders (rent, medical aid, car, wifi, insurance).
+  * Active subscriptions (Netflix, Spotify, Showmax, gym).
+  * Debt & financing instalments (PayJustNow, phone, laptop contracts).
+  * Savings contributions (Emergency fund, Stokvel, sinking funds).
+  * Planned purchases and actual logged variable expenses.
+- Projected Bank Balance After Each Day/Event: Dynamically simulates your
+  projected bank balance for every day from Day 1 to Month-End.
+- Tight Day & Danger Zone Warning:
+  * Automatically flags days when your cash balance drops below safe reserves
+    (< R1,500) or when multiple heavy debit orders cluster together (> R3,000).
+  * Directly highlights the "Toughest Day of the Month" (lowest cash point).
+- Dual View Modes:
+  * Full 7-column calendar grid view with visual event chips and closing balances.
+  * Chronological Agenda view listing every active day with net day changes.
+- Interactive Day Inspector: Click any day to see an itemized breakdown of events,
+  net change, and 1-click simulation to plan an expense on that specific date.
+
+--------------------------------------------------------------------------------
+6.10. SMART BUDGET PLANNER & CATEGORY BOARD
 --------------------------------------------------------------------------------
 - Category Budget Caps: Set custom spending ceilings for Groceries, Fuel, Dining,
   Entertainment, Health, Shopping, Utilities, etc.
@@ -356,7 +381,7 @@ CREATE POLICY "Users can only view and manage their own data"
   "Padel Tennis", "Pet Care") with cloud synchronization.
 
 --------------------------------------------------------------------------------
-6.10. TRANSACTION LEDGER & EXPENSE TRACKING
+6.11. TRANSACTION LEDGER & EXPENSE TRACKING
 --------------------------------------------------------------------------------
 - Quick Add Modal: Rapid expense entry with automatic category prediction.
 - Detailed Ledger Table:
@@ -369,7 +394,7 @@ CREATE POLICY "Users can only view and manage their own data"
 - CSV & JSON Statement Export: Download your full transaction history anytime.
 
 --------------------------------------------------------------------------------
-6.11. TILL SLIP / RECEIPT OCR QUICK-SCAN
+6.12. TILL SLIP / RECEIPT OCR QUICK-SCAN
 --------------------------------------------------------------------------------
 - Mobile Camera Snap / File Upload: Integrated directly into the Quick Add modal.
 - Client-Side Receipt Parsing:
@@ -379,7 +404,7 @@ CREATE POLICY "Users can only view and manage their own data"
 - Image Preview & Verification: Users review scanned figures before saving.
 
 --------------------------------------------------------------------------------
-6.12. MONTHLY EDITORIAL FINANCIAL STORY ("WRAPPED" REPORT)
+6.13. MONTHLY EDITORIAL FINANCIAL STORY ("WRAPPED" REPORT)
 --------------------------------------------------------------------------------
 - 3-Slide Interactive Editorial Story:
   * Slide 1: The Macro Picture (Net Income, Total Outflow, Net Savings Rate).
@@ -392,7 +417,7 @@ CREATE POLICY "Users can only view and manage their own data"
 - Print & PDF Friendly: Formatted for clean printing or saving as a monthly PDF.
 
 --------------------------------------------------------------------------------
-6.13. AUTOMATED EMAIL DISPATCHES (PAYDAY & DEBIT ORDER DIGEST)
+6.14. AUTOMATED EMAIL DISPATCHES (PAYDAY & DEBIT ORDER DIGEST)
 --------------------------------------------------------------------------------
 - Payday Celebration Digest: Automated email arriving on cycle start detailing
   safe spend allowance and recommended allocations.
@@ -402,7 +427,7 @@ CREATE POLICY "Users can only view and manage their own data"
   handling and retry failovers.
 
 --------------------------------------------------------------------------------
-6.14. SUPER USER ADMINISTRATIVE CONSOLE (/settings)
+6.15. SUPER USER ADMINISTRATIVE CONSOLE (/settings)
 --------------------------------------------------------------------------------
 - Role-Gated Access: Strict server and client gating ensuring only superusers
   (Emmanuel Kgaphola) can view or execute actions.
@@ -417,7 +442,7 @@ CREATE POLICY "Users can only view and manage their own data"
   * Environment variable presence inspection.
 
 --------------------------------------------------------------------------------
-6.15. USER PROFILE & PREFERENCES SELF-SERVICE DRAWER
+6.16. USER PROFILE & PREFERENCES SELF-SERVICE DRAWER
 --------------------------------------------------------------------------------
 - Native Dialog Architecture: Modal with background lock and full keyboard
   accessibility (ESC key dismiss).

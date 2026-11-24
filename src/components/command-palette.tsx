@@ -424,6 +424,20 @@ export function CommandPalette() {
           if (el) el.scrollIntoView({ behavior: "smooth" });
         },
       },
+      {
+        id: "act-cashflow-calendar",
+        section: "Quick Actions",
+        title: "Cash Flow Calendar",
+        subtitle: "Forecast daily balances, salary incoming dates, debit orders & tight days",
+        icon: Calendar,
+        badge: "Forecast",
+        action: () => {
+          setCommandPaletteOpen(false);
+          router.push("/#cashflow-calendar");
+          const el = document.getElementById("cashflow-calendar");
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        },
+      },
     ];
 
     // Filter quick actions if query matches

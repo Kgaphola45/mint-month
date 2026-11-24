@@ -16,6 +16,7 @@ export interface Expense {
   date: string; // ISO date string YYYY-MM-DD
   paymentMethod: PaymentMethod;
   isRecurring?: boolean;
+  isPlanned?: boolean; // Planned future purchase for Cash Flow Calendar
   createdAt?: string;
 }
 
@@ -148,6 +149,7 @@ export interface DebtInstalment {
   totalAmount?: number; // total contract value
   startDate?: string; // 'YYYY-MM'
   targetPayoffDate?: string; // e.g. 'Nov 2026'
+  dueDay?: number; // 1 - 31, monthly payment due day
   categoryId?: string; // 'cat-debt' or 'cat-clothing'
   notes?: string;
   isPaidOff?: boolean;
@@ -225,4 +227,53 @@ export interface RegisterInput {
 export interface LoginInput {
   email: string;
   password: string;
+}
+
+export type CashFlowEventType =
+  | "salary"
+  | "debit_order"
+  | "subscription"
+  | "debt"
+  | "savings"
+  | "planned_purchase"
+  | "expense";
+
+export interface CashFlowEvent {
+  id: string;
+  type: CashFlowEventType;
+  title: string;
+  amount: number;
+  isIncome: boolean;
+  category?: string;
+  isCleared?: boolean;
+}
+
+export interface CashFlowDay {
+  dayNumber: number;
+  dateStr: string; // 'YYYY-MM-DD'
+  dayOfWeek: string; // 'Mon', 'Tue', etc.
+  isCurrentDay: boolean;
+  isPast: boolean;
+  isPayday: boolean;
+  events: CashFlowEvent[];
+  inflowTotal: number;
+  outflowTotal: number;
+  netChange: number;
+  projectedClosingBalance: number;
+  isTight: boolean;
+  tightReason?: string;
+}
+
+export interface CashFlowCalendarSummary {
+  month: string;
+  startingBalance: number;
+  projectedEndingBalance: number;
+  totalInflows: number;
+  totalOutflows: number;
+  lowestBalance: number;
+  lowestBalanceDate: string;
+  lowestBalanceDay: number;
+  tightDaysCount: number;
+  heavyOutflowDaysCount: number;
+  days: CashFlowDay[];
 }

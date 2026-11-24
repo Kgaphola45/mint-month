@@ -19,6 +19,9 @@ import {
   SavingsSummary,
   Subscription,
   SubscriptionSummary,
+  CashFlowCalendarSummary,
+  CashFlowDay,
+  CashFlowEvent,
   SafeToSpendSummary,
   User,
   RegisterInput,
@@ -216,6 +219,7 @@ interface ExpenseStore {
   }>;
   getCategoryById: (id: string) => Category;
   getSafeToSpend: (month?: string) => SafeToSpendSummary;
+  getCashFlowCalendar: (month?: string) => CashFlowCalendarSummary;
   getEditorialStory: (month?: string) => EditorialStoryData;
 }
 
@@ -2253,6 +2257,215 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       status,
       fixedCommitmentsCount,
       ringFencedSavings,
+    };
+  },
+
+  getCashFlowCalendar: (month?: string) => {
+    const targetMonth = month || get().selectedMonth;
+    const { daysInMonth } = getMonthStats(targetMonth);
+    const incomes = get().incomes;
+    const monthlyIncome = incomes[targetMonth] || incomes.default || 25000;
+    const paydayDay = get().paydayDay || 25;
+    const todayStr = getTodayDateStr();
+    const isCurrentMonth = targetMonth === todayStr.slice(0, 7);
+    const currentDayNum = isCurrentMonth ? parseInt(todayStr.slice(8, 10), 10) : -1;
+
+    // 1. Gather all financial commitments
+    const timeline = get().getRecurringTimeline(targetMonth);
+    const debitOrders = timeline.items;
+    const subscriptions = get().subscriptions.filter((s) => s.isActive);
+    const debts = get().debts.filter((d) => !d.isPaidOff);
+    const savings = get().savingsGoals.filter((g) => !g.isCompleted);
+    const monthExpenses = get().expenses.filter(
+      (e) => e.date.startsWith(targetMonth) && !e.isRecurring
+    );
+
+    // Initial buffer calculation (opening balance from previous cycle)
+    const startingBalance = Math.round(monthlyIncome * 0.18);
+    let runningBalance = startingBalance;
+
+    let lowestBalance = Infinity;
+    let lowestBalanceDate = `${targetMonth}-01`;
+    let lowestBalanceDay = 1;
+    let tightDaysCount = 0;
+    let heavyOutflowDaysCount = 0;
+    let totalInflows = 0;
+    let totalOutflows = 0;
+
+    const days: CashFlowDay[] = [];
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${targetMonth}-${String(day).padStart(2, "0")}`;
+      let dateObj: Date;
+      try {
+        dateObj = parse(dateStr, "yyyy-MM-dd", new Date());
+      } catch {
+        dateObj = new Date();
+      }
+      const dayOfWeek = format(dateObj, "EEE");
+      const isCurrentDay = isCurrentMonth && day === currentDayNum;
+      const isPast = isCurrentMonth ? day < currentDayNum : targetMonth < todayStr.slice(0, 7);
+      const isPayday = day === paydayDay;
+
+      const events: CashFlowEvent[] = [];
+
+      // A. Salary on Payday
+      if (isPayday) {
+        events.push({
+          id: `salary-${dateStr}`,
+          type: "salary",
+          title: "Take-Home Salary",
+          amount: monthlyIncome,
+          isIncome: true,
+          category: "Income",
+        });
+      }
+
+      // B. Debit Orders on this day
+      for (const bill of debitOrders) {
+        if (bill.day === day) {
+          events.push({
+            id: `debit-${bill.id}`,
+            type: "debit_order",
+            title: bill.note,
+            amount: bill.amount,
+            isIncome: false,
+            category: bill.category?.name || "Bills",
+            isCleared: bill.isCleared,
+          });
+        }
+      }
+
+      // C. Subscriptions on this day (avoid duplicate if note matches)
+      for (const sub of subscriptions) {
+        if (sub.billingDay === day) {
+          const alreadyInDebit = events.some(
+            (ev) => ev.title.toLowerCase().includes(sub.name.toLowerCase())
+          );
+          if (!alreadyInDebit) {
+            events.push({
+              id: `sub-${sub.id}-${day}`,
+              type: "subscription",
+              title: sub.name,
+              amount: sub.monthlyAmount,
+              isIncome: false,
+              category: sub.category,
+            });
+          }
+        }
+      }
+
+      // D. Debt Repayments on this day (defaults to 1st or custom dueDay)
+      for (const debt of debts) {
+        const debtDay = debt.dueDay || 1;
+        if (debtDay === day) {
+          events.push({
+            id: `debt-${debt.id}-${day}`,
+            type: "debt",
+            title: `${debt.name} Instalment`,
+            amount: debt.monthlyAmount,
+            isIncome: false,
+            category: "Debt Financing",
+          });
+        }
+      }
+
+      // E. Savings Goals / Stokvel on this day (defaults to paydayDay or 25th)
+      for (const goal of savings) {
+        const goalDay = goal.dueDay || paydayDay;
+        if (goalDay === day && goal.monthlyContribution > 0) {
+          events.push({
+            id: `savings-${goal.id}-${day}`,
+            type: "savings",
+            title: `${goal.name} Contribution`,
+            amount: goal.monthlyContribution,
+            isIncome: false,
+            category: "Savings Vault",
+          });
+        }
+      }
+
+      // F. Variable expenses or planned purchases on this date
+      for (const exp of monthExpenses) {
+        const expDay = parseInt(exp.date.slice(8, 10), 10);
+        if (expDay === day) {
+          events.push({
+            id: exp.id,
+            type: exp.isPlanned ? "planned_purchase" : "expense",
+            title: exp.note || "Expense",
+            amount: exp.amount,
+            isIncome: false,
+            category: exp.categoryId,
+          });
+        }
+      }
+
+      // Calculate totals for this day
+      let dayInflows = 0;
+      let dayOutflows = 0;
+      for (const ev of events) {
+        if (ev.isIncome) {
+          dayInflows += ev.amount;
+        } else {
+          dayOutflows += ev.amount;
+        }
+      }
+
+      totalInflows += dayInflows;
+      totalOutflows += dayOutflows;
+      const netChange = dayInflows - dayOutflows;
+      runningBalance += netChange;
+
+      // Track lowest balance and tight days
+      if (runningBalance < lowestBalance) {
+        lowestBalance = runningBalance;
+        lowestBalanceDate = dateStr;
+        lowestBalanceDay = day;
+      }
+
+      const isLowBuffer = runningBalance < Math.max(1500, Math.round(monthlyIncome * 0.08));
+      const isHeavyDrain = dayOutflows >= Math.max(3000, Math.round(monthlyIncome * 0.15));
+      const isTight = (isLowBuffer || isHeavyDrain) && !isPayday;
+
+      if (isTight) tightDaysCount++;
+      if (isHeavyDrain) heavyOutflowDaysCount++;
+
+      let tightReason: string | undefined;
+      if (isLowBuffer) {
+        tightReason = "Low cash buffer (< R1,500)";
+      } else if (isHeavyDrain) {
+        tightReason = `Heavy clustered outlays (-R${dayOutflows.toLocaleString()})`;
+      }
+
+      days.push({
+        dayNumber: day,
+        dateStr,
+        dayOfWeek,
+        isCurrentDay,
+        isPast,
+        isPayday,
+        events,
+        inflowTotal: dayInflows,
+        outflowTotal: dayOutflows,
+        netChange,
+        projectedClosingBalance: runningBalance,
+        isTight,
+        tightReason,
+      });
+    }
+
+    return {
+      month: targetMonth,
+      startingBalance,
+      projectedEndingBalance: runningBalance,
+      totalInflows,
+      totalOutflows,
+      lowestBalance: lowestBalance === Infinity ? startingBalance : lowestBalance,
+      lowestBalanceDate,
+      lowestBalanceDay,
+      tightDaysCount,
+      heavyOutflowDaysCount,
+      days,
     };
   },
 

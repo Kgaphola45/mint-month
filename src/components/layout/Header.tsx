@@ -15,6 +15,7 @@ import {
   X,
   Settings,
   ChevronRight,
+  Calendar,
 } from "lucide-react";
 import { MonthPicker } from "../month-picker";
 import { UserMenu } from "../user-menu";
@@ -318,20 +319,20 @@ export function Header() {
                 })}
 
                 <Link
-                  href="/#subscriptions"
+                  href="/#cashflow-calendar"
                   onClick={() => {
                     setMobileMenuOpen(false);
-                    const el = document.getElementById("subscriptions");
+                    const el = document.getElementById("cashflow-calendar");
                     if (el) el.scrollIntoView({ behavior: "smooth" });
                   }}
                   className="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium text-[#0D0D0C]/70 hover:bg-[#FBF6EF] hover:text-[#0D0D0C] transition-all"
                 >
                   <div className="flex items-center gap-3">
-                    <Sparkles className="w-4 h-4 stroke-[1.8] text-amber-600" />
-                    <span>Subscription Detective</span>
+                    <Calendar className="w-4 h-4 stroke-[1.8] text-emerald-700" />
+                    <span>Cash Flow Calendar</span>
                   </div>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                    Audit
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                    Forecast
                   </span>
                 </Link>
               </nav>
