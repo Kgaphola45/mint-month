@@ -292,6 +292,59 @@ export class LocalStorageAdapter implements StorageAdapter {
     return updated;
   }
 
+  updateUserProfile(
+    userIdOrEmail: string,
+    updates: { name?: string; avatarColor?: string; monthlySalary?: number; paydayDay?: number }
+  ): User | null {
+    if (!this.isClient()) return null;
+    const target = userIdOrEmail.trim().toLowerCase();
+    const users = this.getUsers();
+    let updatedUser: User | null = null;
+
+    const newUsers = users.map((u) => {
+      if (u.id === userIdOrEmail || u.email.toLowerCase() === target) {
+        const isOwner = u.email.toLowerCase() === SUPER_USER_EMAIL;
+        const merged: User = {
+          ...u,
+          ...(updates.name ? { name: isOwner ? "Emmanuel Kgaphola" : updates.name.trim() } : {}),
+          ...(updates.avatarColor ? { avatarColor: updates.avatarColor } : {}),
+          ...(typeof updates.monthlySalary === "number" && updates.monthlySalary > 0
+            ? { monthlySalary: updates.monthlySalary }
+            : {}),
+          ...(typeof updates.paydayDay === "number" && updates.paydayDay >= 1 && updates.paydayDay <= 31
+            ? { paydayDay: updates.paydayDay }
+            : {}),
+        };
+        updatedUser = merged;
+        return merged;
+      }
+      return u;
+    });
+
+    const current = this.getCurrentUser();
+    if (
+      current &&
+      (current.id === userIdOrEmail || current.email.toLowerCase() === target)
+    ) {
+      const isOwner = current.email.toLowerCase() === SUPER_USER_EMAIL;
+      updatedUser = {
+        ...current,
+        ...(updates.name ? { name: isOwner ? "Emmanuel Kgaphola" : updates.name.trim() } : {}),
+        ...(updates.avatarColor ? { avatarColor: updates.avatarColor } : {}),
+        ...(typeof updates.monthlySalary === "number" && updates.monthlySalary > 0
+          ? { monthlySalary: updates.monthlySalary }
+          : {}),
+        ...(typeof updates.paydayDay === "number" && updates.paydayDay >= 1 && updates.paydayDay <= 31
+          ? { paydayDay: updates.paydayDay }
+          : {}),
+      };
+      this.setCurrentUser(updatedUser);
+    }
+
+    this.saveUsers(newUsers);
+    return updatedUser;
+  }
+
   logoutUser(): void {
     this.setCurrentUser(null);
   }

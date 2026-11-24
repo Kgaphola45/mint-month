@@ -1024,3 +1024,60 @@ export async function updateSupabaseUserSalaryAndPayday(
 ): Promise<boolean> {
   return upsertSupabaseUserPreferences(userId, updates);
 }
+
+export async function updateSupabaseUserProfile(
+  userId: string,
+  updates: {
+    name?: string;
+    avatarColor?: string;
+    monthlySalary?: number;
+    paydayDay?: number;
+    incomes?: Record<string, number>;
+  }
+): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return false;
+
+  const effectiveUserId = await resolveAuthenticatedUserId(userId);
+  if (!effectiveUserId) return false;
+
+  try {
+    const dbPayload: Record<string, any> = {};
+    const metaPayload: Record<string, any> = {};
+
+    if (updates.name && updates.name.trim()) {
+      dbPayload.name = updates.name.trim();
+      metaPayload.name = updates.name.trim();
+    }
+    if (updates.avatarColor) {
+      dbPayload.avatar_color = updates.avatarColor;
+      metaPayload.avatarColor = updates.avatarColor;
+    }
+    if (typeof updates.monthlySalary === "number" && updates.monthlySalary > 0) {
+      dbPayload.monthly_salary = updates.monthlySalary;
+      metaPayload.monthlySalary = updates.monthlySalary;
+    }
+    if (typeof updates.paydayDay === "number" && updates.paydayDay >= 1 && updates.paydayDay <= 31) {
+      dbPayload.payday_day = updates.paydayDay;
+      metaPayload.paydayDay = updates.paydayDay;
+    }
+
+    if (Object.keys(metaPayload).length > 0) {
+      await supabase.auth.updateUser({ data: metaPayload });
+    }
+    if (Object.keys(dbPayload).length > 0) {
+      await supabase.from("users").update(dbPayload).eq("id", effectiveUserId);
+    }
+    if (updates.incomes || updates.monthlySalary || updates.paydayDay) {
+      await upsertSupabaseUserPreferences(effectiveUserId, {
+        incomes: updates.incomes,
+        monthlySalary: updates.monthlySalary,
+        paydayDay: updates.paydayDay,
+      });
+    }
+    return true;
+  } catch (err) {
+    console.error("Error updating user profile in Supabase:", err);
+    return false;
+  }
+}

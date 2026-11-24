@@ -42,6 +42,7 @@ import {
   deleteSupabaseDebtContract,
   pushLocalDataToSupabase,
   updateSupabaseUserSalaryAndPayday,
+  updateSupabaseUserProfile,
   fetchSupabaseUserPreferences,
   upsertSupabaseUserPreferences,
 } from "@/lib/supabase-sync";
@@ -89,6 +90,7 @@ interface ExpenseStore {
   storyMonth: string;
   commandPaletteOpen: boolean;
   digestModalOpen: boolean;
+  profileModalOpen: boolean;
   editingExpense: Expense | null;
   editingDebt: DebtInstalment | null;
 
@@ -107,6 +109,13 @@ interface ExpenseStore {
   setStoryMonth: (month: string) => void;
   setCommandPaletteOpen: (open: boolean) => void;
   setDigestModalOpen: (open: boolean) => void;
+  setProfileModalOpen: (open: boolean) => void;
+  updateUserProfile: (updates: {
+    name?: string;
+    avatarColor?: string;
+    monthlySalary?: number;
+    paydayDay?: number;
+  }) => Promise<{ success: boolean; error?: string }>;
   setAuthModalOpen: (open: boolean, mode?: "login" | "register") => void;
   login: (input: LoginInput) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
   register: (input: RegisterInput) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
@@ -230,6 +239,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   storyMonth: format(subMonths(new Date(), 1), "yyyy-MM"),
   commandPaletteOpen: false,
   digestModalOpen: false,
+  profileModalOpen: false,
   editingExpense: null,
   editingDebt: null,
 
@@ -346,8 +356,57 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   setStoryMonth: (month: string) => set({ storyMonth: month }),
   setCommandPaletteOpen: (open: boolean) => set({ commandPaletteOpen: open }),
   setDigestModalOpen: (open: boolean) => set({ digestModalOpen: open }),
+  setProfileModalOpen: (open: boolean) => set({ profileModalOpen: open }),
   setAuthModalOpen: (open: boolean, mode: "login" | "register" = "login") =>
     set({ authModalOpen: open, authModalMode: mode }),
+
+  updateUserProfile: async (updates) => {
+    const curUser = get().currentUser;
+    if (!curUser) {
+      return { success: false, error: "Please sign in to update your profile." };
+    }
+
+    const selectedMonth = get().selectedMonth;
+    const nextIncomes = { ...get().incomes };
+    if (typeof updates.monthlySalary === "number" && updates.monthlySalary > 0) {
+      nextIncomes.default = updates.monthlySalary;
+      nextIncomes[selectedMonth] = updates.monthlySalary;
+      storage.saveIncomes(nextIncomes);
+    }
+
+    let nextPayday = get().paydayDay;
+    if (typeof updates.paydayDay === "number" && updates.paydayDay >= 1 && updates.paydayDay <= 31) {
+      nextPayday = Math.max(1, Math.min(31, updates.paydayDay));
+      storage.savePaydayDay(nextPayday);
+    }
+
+    const updatedLocalUser =
+      storage.updateUserProfile(curUser.id, updates) ||
+      storage.updateUserProfile(curUser.email, updates) || {
+        ...curUser,
+        ...(updates.name ? { name: updates.name.trim() } : {}),
+        ...(updates.avatarColor ? { avatarColor: updates.avatarColor } : {}),
+        ...(typeof updates.monthlySalary === "number" ? { monthlySalary: updates.monthlySalary } : {}),
+        ...(typeof updates.paydayDay === "number" ? { paydayDay: nextPayday } : {}),
+      };
+
+    set({
+      currentUser: updatedLocalUser,
+      users: storage.getUsers(),
+      incomes: nextIncomes,
+      paydayDay: nextPayday,
+    });
+
+    if (isSupabaseConfigured()) {
+      await updateSupabaseUserProfile(curUser.id, {
+        ...updates,
+        paydayDay: nextPayday,
+        incomes: nextIncomes,
+      });
+    }
+
+    return { success: true };
+  },
 
   syncSupabaseData: async (userId?: string) => {
     const targetUserId = userId || get().currentUser?.id;
