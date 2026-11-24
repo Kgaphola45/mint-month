@@ -1066,7 +1066,7 @@ export async function updateSupabaseUserProfile(
       await supabase.auth.updateUser({ data: metaPayload });
     }
     if (Object.keys(dbPayload).length > 0) {
-      await supabase.from("users").update(dbPayload).eq("id", effectiveUserId);
+      await supabase.from("users").update(dbPayload as any).eq("id", effectiveUserId);
     }
     if (updates.incomes || updates.monthlySalary || updates.paydayDay) {
       await upsertSupabaseUserPreferences(effectiveUserId, {

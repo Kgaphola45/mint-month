@@ -18,13 +18,14 @@ TABLE OF CONTENTS:
    6.5. Recurring Bills & Debit Order Timeline (With Price-Hike Detection)
    6.6. Savings Vaults, Emergency Fund & Stokvel Goal Tracker
    6.7. Debt & Loan Snowball Paydown Tracker
-   6.8. Smart Budget Planner & Category Board
-   6.9. Transaction Ledger & Expense Tracking
-   6.10. Till Slip / Receipt OCR Quick-Scan
-   6.11. Monthly Editorial Financial Story ("Wrapped" Report)
-   6.12. Automated Email Dispatches (Payday & Debit Order Digest)
-   6.13. Super User Administrative Console (/settings)
-   6.14. User Profile & Preferences Self-Service Drawer
+   6.8. Subscription Detective (Recurring Drain, Leaks & Price Hikes)
+   6.9. Smart Budget Planner & Category Board
+   6.10. Transaction Ledger & Expense Tracking
+   6.11. Till Slip / Receipt OCR Quick-Scan
+   6.12. Monthly Editorial Financial Story ("Wrapped" Report)
+   6.13. Automated Email Dispatches (Payday & Debit Order Digest)
+   6.14. Super User Administrative Console (/settings)
+   6.15. User Profile & Preferences Self-Service Drawer
 7. Design System, Aesthetic & UI Tokens
 8. Environment Variables Reference (.env.local)
 9. Deployment & Production Setup

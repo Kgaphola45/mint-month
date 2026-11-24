@@ -922,10 +922,7 @@ export function SubscriptionDetective() {
           }
         }}
         onCancel={() => setCancellingSub(null)}
-        className="w-full max-w-md rounded-[28px] bg-[#FFFDFA] text-[#0D0D0C] p-0 shadow-[0_24px_48px_rgba(0,0,0,0.18)] border border-[#0D0D0C]/[0.1] backdrop:bg-[#0D0D0C]/40 backdrop:backdrop-blur-sm m-auto"
-        style={{
-          overscrollBehavior: "contain",
-        }}
+        className="vela-native-dialog max-w-md m-auto"
       >
         {cancellingSub && (
           <div className="p-6 sm:p-7 space-y-5">
