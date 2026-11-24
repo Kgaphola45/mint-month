@@ -12,6 +12,7 @@ import { PaydayWhatIfWidget } from "@/components/payday-what-if-widget";
 import { RecurringTimeline } from "@/components/recurring-timeline";
 import { SavingsVaultTracker } from "@/components/savings-vault-tracker";
 import { DebtTracker } from "@/components/debt-tracker";
+import { SubscriptionDetective } from "@/components/subscription-detective";
 import { TransactionsList } from "@/components/transactions-list";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
@@ -185,6 +186,11 @@ export default function DashboardPage() {
         {/* 6c. Debt & Instalment Paydown Tracker */}
         <section>
           <DebtTracker />
+        </section>
+
+        {/* 6d. Subscription Detective (Netflix, Spotify, Gym, WiFi, Leaks & Price Hikes) */}
+        <section id="subscriptions">
+          <SubscriptionDetective />
         </section>
 
         {/* 7. Visual Charts Grid (Category Donut & Daily Bar Flow) */}

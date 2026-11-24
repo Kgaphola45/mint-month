@@ -1174,6 +1174,99 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     };
   },
 
+  addSubscription: (subData) => {
+    const id = `sub-${Date.now()}`;
+    const newSub: Subscription = {
+      ...subData,
+      id,
+      isActive: subData.isActive ?? true,
+      createdAt: new Date().toISOString(),
+    };
+    const updated = [...get().subscriptions, newSub];
+    storage.saveSubscriptions(updated);
+    set({ subscriptions: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        subscriptions: updated,
+      }).catch(console.error);
+    }
+  },
+
+  updateSubscription: (id, updates) => {
+    const updated = get().subscriptions.map((s) => (s.id === id ? { ...s, ...updates } : s));
+    storage.saveSubscriptions(updated);
+    set({ subscriptions: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        subscriptions: updated,
+      }).catch(console.error);
+    }
+  },
+
+  deleteSubscription: (id) => {
+    const updated = get().subscriptions.filter((s) => s.id !== id);
+    storage.saveSubscriptions(updated);
+    set({ subscriptions: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        subscriptions: updated,
+      }).catch(console.error);
+    }
+  },
+
+  toggleSubscriptionForgotten: (id) => {
+    const updated = get().subscriptions.map((s) =>
+      s.id === id ? { ...s, isForgotten: !s.isForgotten } : s
+    );
+    storage.saveSubscriptions(updated);
+    set({ subscriptions: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        subscriptions: updated,
+      }).catch(console.error);
+    }
+  },
+
+  getSubscriptionSummary: () => {
+    const subs = get().subscriptions.filter((s) => s.isActive);
+    let totalMonthly = 0;
+    const activeCount = subs.length;
+    let forgottenCount = 0;
+    let forgottenAnnualSavings = 0;
+    let priceHikedCount = 0;
+    let totalPriceHikeAnnualImpact = 0;
+
+    for (const s of subs) {
+      totalMonthly += s.monthlyAmount || 0;
+      if (s.isForgotten) {
+        forgottenCount++;
+        forgottenAnnualSavings += (s.monthlyAmount || 0) * 12;
+      }
+      if (s.previousAmount && s.monthlyAmount > s.previousAmount) {
+        priceHikedCount++;
+        totalPriceHikeAnnualImpact += (s.monthlyAmount - s.previousAmount) * 12;
+      }
+    }
+
+    return {
+      totalMonthly,
+      totalAnnual: totalMonthly * 12,
+      activeCount,
+      forgottenCount,
+      forgottenAnnualSavings,
+      priceHikedCount,
+      totalPriceHikeAnnualImpact,
+    };
+  },
+
   updateRecurringBillAmount: (expenseId: string, newAmount: number) => {
     if (newAmount <= 0) return;
     const targetMonth = get().selectedMonth;
@@ -1676,6 +1769,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       budgets: get().budgets,
       recurringBudgets: get().recurringBudgets,
       debts: get().debts,
+      savingsGoals: get().savingsGoals,
+      subscriptions: get().subscriptions,
       incomes: get().incomes,
       paydayDay: get().paydayDay,
     };
@@ -1718,6 +1813,12 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       }
       if (Array.isArray(data.debts)) {
         storage.saveDebts(data.debts);
+      }
+      if (Array.isArray(data.savingsGoals)) {
+        storage.saveSavingsGoals(data.savingsGoals);
+      }
+      if (Array.isArray(data.subscriptions)) {
+        storage.saveSubscriptions(data.subscriptions);
       }
       if (data.incomes && typeof data.incomes === "object") {
         storage.saveIncomes(data.incomes);
@@ -2165,6 +2266,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       budgets: get().budgets,
       recurringBudgets: get().recurringBudgets,
       debts: get().debts,
+      savingsGoals: get().savingsGoals,
+      subscriptions: get().subscriptions,
       incomes: get().incomes,
       currency: get().currency,
     });

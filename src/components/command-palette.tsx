@@ -410,6 +410,20 @@ export function CommandPalette() {
           setDebtModalOpen(true);
         },
       },
+      {
+        id: "act-subscription-detective",
+        section: "Quick Actions",
+        title: "Subscription Detective",
+        subtitle: "Audit recurring subscriptions, hidden annual leaks, and price hikes",
+        icon: Sparkles,
+        badge: "Detective",
+        action: () => {
+          setCommandPaletteOpen(false);
+          router.push("/#subscriptions");
+          const el = document.getElementById("subscriptions");
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        },
+      },
     ];
 
     // Filter quick actions if query matches
