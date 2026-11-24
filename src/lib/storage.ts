@@ -264,6 +264,33 @@ export class LocalStorageAdapter implements StorageAdapter {
     return updated;
   }
 
+  updateUserRole(emailOrId: string, role: "superuser" | "standard"): boolean {
+    if (!this.isClient()) return false;
+    const target = emailOrId.trim().toLowerCase();
+    // Primary Super User cannot be demoted
+    if (target === SUPER_USER_EMAIL && role !== "superuser") return false;
+    const users = this.getUsers();
+    let updated = false;
+    const newUsers = users.map((u) => {
+      if (u.id === emailOrId || u.email.toLowerCase() === target) {
+        if (u.email.toLowerCase() === SUPER_USER_EMAIL && role !== "superuser") {
+          return u;
+        }
+        updated = true;
+        return { ...u, role };
+      }
+      return u;
+    });
+    if (updated) {
+      this.saveUsers(newUsers);
+      const current = this.getCurrentUser();
+      if (current && (current.id === emailOrId || current.email.toLowerCase() === target)) {
+        this.setCurrentUser({ ...current, role });
+      }
+    }
+    return updated;
+  }
+
   logoutUser(): void {
     this.setCurrentUser(null);
   }

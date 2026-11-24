@@ -713,3 +713,107 @@ export async function pushLocalDataToSupabase(
     return { success: false, pushedCount: 0, error: err?.message || "Failed to push" };
   }
 }
+
+// ==========================================
+// 7. RBAC SUPER USER DIRECTORY MANAGEMENT (public.users)
+// ==========================================
+
+export interface ManagedUserRecord extends User {
+  syncSource: "supabase" | "local" | "both";
+}
+
+export async function fetchAllSupabaseUsers(): Promise<User[]> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  await resolveAuthenticatedUserId();
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data.map((row) => {
+    const email = row.email || "";
+    const isOwnerSuper = email.trim().toLowerCase() === SUPER_USER_EMAIL;
+    const role = isOwnerSuper || row.role === "superuser" ? "superuser" : "standard";
+    return {
+      id: row.id,
+      email,
+      name: isOwnerSuper ? "Emmanuel Kgaphola" : row.name || email.split("@")[0] || "User",
+      role,
+      monthlySalary: Number(row.monthly_salary) || 25000,
+      paydayDay: Number(row.payday_day) || 25,
+      avatarColor: row.avatar_color || "#0D0D0C",
+      createdAt: row.created_at || new Date().toISOString(),
+    };
+  });
+}
+
+export async function updateSupabaseUserRole(
+  userId: string,
+  email: string,
+  newRole: "superuser" | "standard"
+): Promise<{ success: boolean; error?: string }> {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (normalizedEmail === SUPER_USER_EMAIL && newRole !== "superuser") {
+    return {
+      success: false,
+      error: "Primary Super User (Emmanuel Kgaphola) cannot be demoted.",
+    };
+  }
+
+  storage.updateUserRole(email, newRole);
+  storage.updateUserRole(userId, newRole);
+
+  const supabase = getSupabaseClient();
+  if (!supabase) return { success: true };
+
+  await resolveAuthenticatedUserId();
+
+  const query = isUUID(userId)
+    ? supabase.from("users").update({ role: newRole }).eq("id", userId)
+    : supabase.from("users").update({ role: newRole }).eq("email", normalizedEmail);
+
+  const { error } = await query;
+  if (error) {
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
+export async function deleteSupabaseUserRecord(
+  userId: string,
+  email: string
+): Promise<{ success: boolean; error?: string }> {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (normalizedEmail === SUPER_USER_EMAIL) {
+    return {
+      success: false,
+      error: "Primary Super User (Emmanuel Kgaphola) cannot be deleted.",
+    };
+  }
+
+  storage.deleteUserAccount(userId);
+
+  const supabase = getSupabaseClient();
+  if (!supabase) return { success: true };
+
+  await resolveAuthenticatedUserId();
+
+  if (isUUID(userId)) {
+    await supabase.from("transactions").delete().eq("user_id", userId);
+    await supabase.from("budgets").delete().eq("user_id", userId);
+    await supabase.from("debit_orders").delete().eq("user_id", userId);
+    await supabase.from("debt_contracts").delete().eq("user_id", userId);
+    await supabase.from("users").delete().eq("id", userId);
+  } else {
+    await supabase.from("users").delete().eq("email", normalizedEmail);
+  }
+
+  return { success: true };
+}
