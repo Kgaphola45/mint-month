@@ -16,6 +16,7 @@ import {
   Mail,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
+import { isSuperUser } from "@/types";
 import { CategoryManagerModal } from "@/components/category-manager-modal";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { RefreshCw } from "lucide-react";
@@ -45,6 +46,49 @@ export default function SettingsPage() {
 
   const [confirmReset, setConfirmReset] = useState(false);
   const [importStatus, setImportStatus] = useState<string>("");
+  const isSuper = isSuperUser(currentUser);
+
+  if (!isSuper) {
+    return (
+      <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 py-16">
+        <div className="p-8 sm:p-10 rounded-[28px] bg-[#FFFDFA] border border-[#0D0D0C]/[0.1] shadow-[0_24px_48px_rgba(0,0,0,0.06)] space-y-6 text-center">
+          <div className="w-14 h-14 rounded-full bg-[#0D0D0C] text-[#FFFDFA] flex items-center justify-center mx-auto shadow-sm">
+            <ShieldCheck className="w-7 h-7 stroke-[1.5]" />
+          </div>
+          <div className="space-y-2">
+            <span className="inline-block px-3 py-1 rounded-full bg-[#F8DCC7] text-[#0D0D0C] text-[11px] font-semibold uppercase tracking-wider">
+              RBAC Restricted · Standard Account
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-[#0D0D0C]">
+              Super User Access Required
+            </h1>
+            <p className="text-sm text-[#0D0D0C]/60 leading-relaxed max-w-md mx-auto">
+              Workspace Settings, Cloud Database Sync, and System Preferences are restricted exclusively to the Super User account (<strong>Emmanuel Kgaphola</strong>).
+            </p>
+          </div>
+          {currentUser && (
+            <div className="p-4 rounded-[18px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] text-xs text-[#0D0D0C]/70">
+              Signed in as <strong>{currentUser.name}</strong> ({currentUser.email}) · <span className="uppercase font-semibold">Standard Role</span>
+            </div>
+          )}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Link
+              href="/"
+              className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-xs font-medium hover:opacity-90 transition-all"
+            >
+              Return to Dashboard
+            </Link>
+            <button
+              onClick={() => useExpenseStore.getState().setAuthModalOpen(true, "login")}
+              className="w-full sm:w-auto px-6 py-3 rounded-full border border-[#0D0D0C]/[0.14] hover:bg-[#FBF6EF] text-[#0D0D0C] text-xs font-medium transition-all"
+            >
+              Sign In as Super User
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleDownloadCSV = () => {
     const csv = exportDataCSV();
@@ -177,8 +221,8 @@ export default function SettingsPage() {
                 <h2 className="text-base font-medium text-[#0D0D0C]">
                   {currentUser.name}
                 </h2>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#96CE96]/30 text-[10px] font-medium text-[#0D0D0C]">
-                  Signed In
+                <span className="px-2.5 py-0.5 rounded-full bg-[#0D0D0C] text-[10px] font-semibold uppercase tracking-wider text-[#FFFDFA]">
+                  Super User (Admin)
                 </span>
               </div>
               <p className="text-xs text-[#0D0D0C]/50 mt-0.5">

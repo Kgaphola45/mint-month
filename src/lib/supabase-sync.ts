@@ -1,5 +1,5 @@
 import { getSupabaseClient } from "./supabase/client";
-import { Expense, Budget, DebtInstalment, PaymentMethod, User } from "@/types";
+import { Expense, Budget, DebtInstalment, PaymentMethod, User, isSuperUser } from "@/types";
 
 // Helper to check if a string is a valid UUID
 export function isUUID(str: string): boolean {
@@ -61,10 +61,13 @@ export async function supabaseSignIn(email: string, password: string) {
   }
 
   const meta = data.user.user_metadata || {};
+  const userEmail = data.user.email || email;
+  const superUser = isSuperUser({ email: userEmail, role: meta.role });
   const user: User = {
     id: data.user.id,
-    name: meta.name || data.user.email?.split("@")[0] || "User",
-    email: data.user.email || email,
+    name: superUser ? "Emmanuel Kgaphola" : meta.name || userEmail.split("@")[0] || "User",
+    email: userEmail,
+    role: superUser ? "superuser" : "standard",
     avatarColor: meta.avatarColor || "#0D0D0C",
     monthlySalary: Number(meta.monthlySalary) || 25000,
     paydayDay: Number(meta.paydayDay) || 25,
@@ -115,10 +118,13 @@ export async function supabaseSignUp(
     }
   }
 
+  const userEmail = data.user.email || email;
+  const superUser = isSuperUser({ email: userEmail });
   const user: User = {
     id: data.user.id,
-    name: name.trim(),
-    email: data.user.email || email,
+    name: superUser ? "Emmanuel Kgaphola" : name.trim(),
+    email: userEmail,
+    role: superUser ? "superuser" : "standard",
     avatarColor,
     monthlySalary: monthlySalary && monthlySalary > 0 ? monthlySalary : 25000,
     paydayDay: 25,
@@ -144,10 +150,13 @@ export async function getSupabaseCurrentUser(): Promise<User | null> {
   if (!session?.user) return null;
 
   const meta = session.user.user_metadata || {};
+  const userEmail = session.user.email || "";
+  const superUser = isSuperUser({ email: userEmail, role: meta.role });
   return {
     id: session.user.id,
-    name: meta.name || session.user.email?.split("@")[0] || "User",
-    email: session.user.email || "",
+    name: superUser ? "Emmanuel Kgaphola" : meta.name || userEmail.split("@")[0] || "User",
+    email: userEmail,
+    role: superUser ? "superuser" : "standard",
     avatarColor: meta.avatarColor || "#0D0D0C",
     monthlySalary: Number(meta.monthlySalary) || 25000,
     paydayDay: Number(meta.paydayDay) || 25,

@@ -127,10 +127,21 @@ export interface PaydaySettings {
   incomesByMonth?: Record<string, number>;
 }
 
+export type UserRole = "superuser" | "standard";
+
+export const SUPER_USER_EMAIL = "proit45ma@gmail.com";
+
+export function isSuperUser(user?: { email?: string; role?: UserRole } | null): boolean {
+  if (!user) return false;
+  if (user.role === "superuser") return true;
+  return (user.email || "").trim().toLowerCase() === SUPER_USER_EMAIL;
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
+  role?: UserRole;
   passwordHash?: string;
   avatarColor?: string;
   monthlySalary?: number;

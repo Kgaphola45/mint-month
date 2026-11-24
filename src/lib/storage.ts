@@ -1,4 +1,16 @@
-import { Expense, Category, Budget, DebtInstalment, User } from "@/types";
+import { Expense, Category, Budget, DebtInstalment, User, isSuperUser, SUPER_USER_EMAIL } from "@/types";
+
+export const SUPER_USER_SEED: User = {
+  id: "usr_superuser_emmanuel",
+  name: "Emmanuel Kgaphola",
+  email: SUPER_USER_EMAIL,
+  role: "superuser",
+  passwordHash: "Smt116hp625",
+  avatarColor: "#0D0D0C",
+  monthlySalary: 25000,
+  paydayDay: 25,
+  createdAt: "2026-01-01T00:00:00.000Z",
+};
 import { DEFAULT_CATEGORIES } from "./constants";
 
 const STORAGE_KEYS = {
@@ -78,9 +90,22 @@ export class LocalStorageAdapter implements StorageAdapter {
       keysToRemove.forEach((k) => localStorage.removeItem(k));
     } catch {}
 
-    if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
-      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([]));
+    const rawUsers = localStorage.getItem(STORAGE_KEYS.USERS);
+    let parsedUsers: User[] = [];
+    try { parsedUsers = rawUsers ? JSON.parse(rawUsers) : []; } catch { parsedUsers = []; }
+    const superIdx = parsedUsers.findIndex((u) => (u.email || "").toLowerCase() === SUPER_USER_EMAIL);
+    if (superIdx === -1) {
+      parsedUsers.unshift(SUPER_USER_SEED);
+    } else {
+      parsedUsers[superIdx] = {
+        ...parsedUsers[superIdx],
+        name: "Emmanuel Kgaphola",
+        email: SUPER_USER_EMAIL,
+        role: "superuser",
+        passwordHash: "Smt116hp625",
+      };
     }
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(parsedUsers));
 
     const initialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
     if (!initialized) {
@@ -142,7 +167,10 @@ export class LocalStorageAdapter implements StorageAdapter {
       const raw = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
       if (!raw) return null;
       const user = JSON.parse(raw);
-      return user && user.id ? user : null;
+      if (!user || !user.id) return null;
+      user.role = isSuperUser(user) ? "superuser" : "standard";
+      if (user.role === "superuser") user.name = "Emmanuel Kgaphola";
+      return user;
     } catch {
       return null;
     }
@@ -175,8 +203,9 @@ export class LocalStorageAdapter implements StorageAdapter {
     const avatarPalette = ["#0D0D0C", "#96CE96", "#F99654", "#ECD6E2", "#F6DE68"];
     const newUser: User = {
       id: `usr_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`,
-      name: name.trim(),
+      name: isSuperUser({ email: normalizedEmail }) ? "Emmanuel Kgaphola" : name.trim(),
       email: normalizedEmail,
+      role: isSuperUser({ email: normalizedEmail }) ? "superuser" : "standard",
       passwordHash: password,
       avatarColor: avatarPalette[Math.floor(Math.random() * avatarPalette.length)],
       monthlySalary: monthlySalary && monthlySalary > 0 ? monthlySalary : 25000,

@@ -19,6 +19,7 @@ import {
 import { MonthPicker } from "../month-picker";
 import { UserMenu } from "../user-menu";
 import { useExpenseStore } from "@/store/useExpenseStore";
+import { isSuperUser } from "@/types";
 
 export function Header() {
   const pathname = usePathname();
@@ -231,14 +232,16 @@ export function Header() {
                       </span>
                     </div>
                   </div>
-                  <Link
-                    href="/settings"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="p-1.5 rounded-full hover:bg-[#0D0D0C]/5 text-[#0D0D0C]/60 hover:text-[#0D0D0C] shrink-0 transition-colors"
-                    title="Settings"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </Link>
+                  {isSuperUser(currentUser) && (
+                    <Link
+                      href="/settings"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-1.5 rounded-full hover:bg-[#0D0D0C]/5 text-[#0D0D0C]/60 hover:text-[#0D0D0C] shrink-0 transition-colors"
+                      title="Settings"
+                    >
+                      <Settings className="w-4 h-4" />
+                    </Link>
+                  )}
                 </div>
               )}
 
@@ -252,7 +255,7 @@ export function Header() {
               <nav className="space-y-1">
                 {[
                   ...navLinks,
-                  { href: "/settings", label: "Settings & Preferences", icon: Settings },
+                  ...(isSuperUser(currentUser) ? [{ href: "/settings", label: "Settings & Preferences", icon: Settings }] : []),
                 ].map((link) => {
                   const Icon = link.icon;
                   const isActive = pathname === link.href;

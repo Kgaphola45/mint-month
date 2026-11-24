@@ -26,6 +26,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
+import { isSuperUser } from "@/types";
 import { formatCurrency, formatMonthYear, getTodayDateStr } from "@/lib/utils";
 import { CURRENCIES } from "@/lib/currencies";
 
@@ -59,6 +60,7 @@ export function CommandPalette() {
     setPaydayModalOpen,
     setDigestModalOpen,
     getHistoricalTrends,
+    currentUser,
   } = useExpenseStore();
 
   const [query, setQuery] = useState("");
@@ -475,17 +477,21 @@ export function CommandPalette() {
           setCommandPaletteOpen(false);
         },
       },
-      {
-        id: "nav-settings",
-        section: "Navigation",
-        title: "Go to Settings",
-        subtitle: "Currency, accounts, data backup and restore",
-        icon: Settings,
-        action: () => {
-          router.push("/settings");
-          setCommandPaletteOpen(false);
-        },
-      },
+      ...(isSuperUser(currentUser)
+        ? [
+            {
+              id: "nav-settings",
+              section: "Navigation" as const,
+              title: "Go to Settings (Super User)",
+              subtitle: "Currency, accounts, data backup and restore",
+              icon: Settings,
+              action: () => {
+                router.push("/settings");
+                setCommandPaletteOpen(false);
+              },
+            },
+          ]
+        : []),
     ];
 
     navItems.forEach((item) => {
@@ -526,6 +532,7 @@ export function CommandPalette() {
     categories,
     selectedMonth,
     trends,
+    currentUser,
     addExpense,
     exportDataCSV,
     router,
