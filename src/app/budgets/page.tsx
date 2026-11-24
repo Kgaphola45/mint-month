@@ -229,12 +229,12 @@ export default function BudgetsPage() {
             <h3 className="text-[20px] font-medium tracking-tight text-[#0D0D0C]">
               {viewMode === "board"
                 ? "Monthly Settlement & Sorted Board"
-                : "Category Budgets & Every-Month Controls"}
+                : "Category Budget Limits & Every-Month Controls"}
             </h3>
             <p className="text-xs text-[#0D0D0C]/56 mt-0.5">
               {viewMode === "board"
-                ? "Drag items to the right as you pay them off to track settled bills"
-                : "Tick when paid or sorted • Toggle Repeat to carry over every month"}
+                ? "Move individual transactions between columns as you settle them"
+                : "Set category spending limits • Toggle Repeat to carry them over every month"}
             </p>
           </div>
 
@@ -273,15 +273,13 @@ export default function BudgetsPage() {
               const hasBudget = item.budget > 0;
               const status = getBudgetStatus(item.spent, item.budget);
               const remaining = item.budget - item.spent;
-              const isSorted = item.isSorted;
               const isRecurring = item.isRecurring;
 
               return (
                 <div
                   key={item.category.id}
-                  className={`p-6 rounded-[24px] bg-[#FFFDFA] border transition-all duration-200 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between ${isSorted
-                    ? "border-[#0D0D0C] bg-[#FFFDFA]"
-                    : isRecurring
+                  className={`p-6 rounded-[24px] bg-[#FFFDFA] border transition-all duration-200 shadow-[0_8px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between ${
+                    isRecurring
                       ? "border-[#0D0D0C]/30"
                       : status.isOver
                         ? "border-rose-300"
@@ -299,10 +297,7 @@ export default function BudgetsPage() {
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <h4
-                              className={`text-sm font-medium truncate ${isSorted ? "text-[#0D0D0C] line-through opacity-60" : "text-[#0D0D0C]"
-                                }`}
-                            >
+                            <h4 className="text-sm font-medium truncate text-[#0D0D0C]">
                               {item.category.name}
                             </h4>
                             {isRecurring && (
@@ -321,7 +316,7 @@ export default function BudgetsPage() {
                         </div>
                       </div>
 
-                      {/* Action Buttons: Tick Sorted + Toggle Every Month */}
+                      {/* Every-Month Toggle */}
                       <div className="flex items-center gap-1.5 shrink-0">
                         {/* Repeat / Every Month Toggle Button */}
                         <button
@@ -340,19 +335,6 @@ export default function BudgetsPage() {
                           <Repeat className="w-3.5 h-3.5" />
                         </button>
 
-                        {/* Tick / Mark Sorted Action Button */}
-                        <button
-                          type="button"
-                          onClick={() => handleToggleSorted(item.category.id, isSorted)}
-                          className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95 ${isSorted
-                            ? "bg-[#0D0D0C] text-[#FFFDFA]"
-                            : "border border-[#0D0D0C]/[0.15] text-[#0D0D0C]/70 hover:border-[#0D0D0C] hover:text-[#0D0D0C]"
-                            }`}
-                          title={isSorted ? "Mark as unsorted" : "Mark as sorted / paid"}
-                        >
-                          <Check className="w-3.5 h-3.5 stroke-[2]" />
-                          <span>{isSorted ? "Sorted" : "Tick"}</span>
-                        </button>
                       </div>
                     </div>
 
@@ -389,13 +371,11 @@ export default function BudgetsPage() {
                       </div>
                       <div className="flex items-center justify-between text-[11px]">
                         <span className="font-normal text-[#0D0D0C]/70">
-                          {isSorted
-                            ? "Sorted & Settled"
-                            : status.isOver
-                              ? "Over Budget"
-                              : status.status === "warning"
-                                ? "Approaching Limit"
-                                : "Within Budget"}
+                          {status.isOver
+                            ? "Over Budget"
+                            : status.status === "warning"
+                              ? "Approaching Limit"
+                              : "Within Budget"}
                         </span>
                         <span className="text-[#0D0D0C]/56">
                           {remaining >= 0
