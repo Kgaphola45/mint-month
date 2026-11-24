@@ -2042,6 +2042,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
 
     const sortedTransactions = new Set(budget?.sortedTransactions || []);
     const sortedCount = monthExpenses.filter((expense) => sortedTransactions.has(expense.id)).length;
+    const budgetCategoryKeys = Object.keys(catBudgets).filter((key) => catBudgets[key] > 0);
 
     const recurringCategories = budget?.recurringCategories || Object.keys(get().recurringBudgets || {});
     const recurringCount = budgetCategoryKeys.filter(
