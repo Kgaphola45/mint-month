@@ -7,9 +7,15 @@ import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, getBudgetStatus } from "@/lib/utils";
 import { HeroPanel } from "@/components/hero-panel";
 import { StatsCards } from "@/components/stats-cards";
+import { FinancialHealthScore } from "@/components/financial-health-score";
 import { SafeToSpendMeter } from "@/components/safe-to-spend-meter";
 import { PaydayWhatIfWidget } from "@/components/payday-what-if-widget";
 import { RecurringTimeline } from "@/components/recurring-timeline";
+import { SavingsVaultTracker } from "@/components/savings-vault-tracker";
+import { FinancialGoalRoadmap } from "@/components/financial-goal-roadmap";
+import { DebtTracker } from "@/components/debt-tracker";
+import { SubscriptionDetective } from "@/components/subscription-detective";
+import { CashFlowCalendar } from "@/components/cash-flow-calendar";
 import { TransactionsList } from "@/components/transactions-list";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
@@ -160,6 +166,11 @@ export default function DashboardPage() {
           <StatsCards />
         </section>
 
+        {/* 3b. Monthly Financial Health Score & Longevity Index */}
+        <section id="financial-health">
+          <FinancialHealthScore />
+        </section>
+
         {/* 4. Safe-to-Spend Daily Meter & Payday Planner */}
         <section>
           <SafeToSpendMeter />
@@ -173,6 +184,31 @@ export default function DashboardPage() {
         {/* 6. Upcoming Recurring Bills & Debit Orders Timeline */}
         <section>
           <RecurringTimeline />
+        </section>
+
+        {/* 6b. Emergency Fund, Savings Vaults & Stokvel Goal Tracker */}
+        <section id="savings-vaults">
+          <SavingsVaultTracker />
+        </section>
+
+        {/* 6c. Financial Goal Roadmap (Buy a Car, Apartment, House, Travel, Debt-Free) */}
+        <section id="goal-roadmap">
+          <FinancialGoalRoadmap />
+        </section>
+
+        {/* 6d. Debt & Instalment Paydown Tracker */}
+        <section id="debt-tracker">
+          <DebtTracker />
+        </section>
+
+        {/* 6d. Subscription Detective (Netflix, Spotify, Gym, WiFi, Leaks & Price Hikes) */}
+        <section id="subscriptions">
+          <SubscriptionDetective />
+        </section>
+
+        {/* 6e. Cash Flow Calendar (Daily Events, Tight Day Squeeze & Projected Balance) */}
+        <section id="cashflow-calendar">
+          <CashFlowCalendar />
         </section>
 
         {/* 7. Visual Charts Grid (Category Donut & Daily Bar Flow) */}

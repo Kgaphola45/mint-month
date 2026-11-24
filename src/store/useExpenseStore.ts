@@ -15,7 +15,17 @@ import {
   RecurringTimelineSummary,
   DebtInstalment,
   DebtSummary,
+  SavingsGoal,
+  SavingsSummary,
+  Subscription,
+  SubscriptionSummary,
+  CashFlowCalendarSummary,
+  CashFlowDay,
+  CashFlowEvent,
   SafeToSpendSummary,
+  FinancialHealthScoreSummary,
+  LifeGoal,
+  LifeGoalRoadmapSummary,
   User,
   RegisterInput,
   LoginInput,
@@ -24,6 +34,8 @@ import { storage } from "@/lib/storage";
 import { DEFAULT_CATEGORIES } from "@/lib/constants";
 import { getCurrentMonthStr, getMonthStats, getTodayDateStr } from "@/lib/utils";
 import { computeEditorialStory, EditorialStoryData } from "@/lib/editorial-story";
+import { computeFinancialHealthScore } from "@/lib/financial-health";
+import { computeGoalRoadmap } from "@/lib/goal-roadmap";
 import {
   supabaseSignIn,
   supabaseSignUp,
@@ -39,6 +51,10 @@ import {
   upsertSupabaseDebtContract,
   deleteSupabaseDebtContract,
   pushLocalDataToSupabase,
+  updateSupabaseUserSalaryAndPayday,
+  updateSupabaseUserProfile,
+  fetchSupabaseUserPreferences,
+  upsertSupabaseUserPreferences,
 } from "@/lib/supabase-sync";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 
@@ -62,6 +78,8 @@ interface ExpenseStore {
   recurringBudgets: Record<string, number>; // Category limits that automatically repeat every month
   clearedRecurring: Record<string, boolean>; // 'YYYY-MM:expenseId' -> boolean
   debts: DebtInstalment[]; // Debt & contract instalment plans
+  savingsGoals: SavingsGoal[]; // Emergency fund, Stokvel & sinking fund vaults
+  subscriptions: Subscription[]; // Subscription Detective: Netflix, Spotify, Showmax, Gym, etc.
   incomes: Record<string, number>; // Month -> Income (or 'default' -> default income)
   paydayDay: number; // 1-31, default 25
   isLoaded: boolean;
@@ -83,6 +101,8 @@ interface ExpenseStore {
   storyMonth: string;
   commandPaletteOpen: boolean;
   digestModalOpen: boolean;
+  profileModalOpen: boolean;
+  subscriptionModalOpen: boolean;
   editingExpense: Expense | null;
   editingDebt: DebtInstalment | null;
 
@@ -101,6 +121,14 @@ interface ExpenseStore {
   setStoryMonth: (month: string) => void;
   setCommandPaletteOpen: (open: boolean) => void;
   setDigestModalOpen: (open: boolean) => void;
+  setProfileModalOpen: (open: boolean) => void;
+  setSubscriptionModalOpen: (open: boolean) => void;
+  updateUserProfile: (updates: {
+    name?: string;
+    avatarColor?: string;
+    monthlySalary?: number;
+    paydayDay?: number;
+  }) => Promise<{ success: boolean; error?: string }>;
   setAuthModalOpen: (open: boolean, mode?: "login" | "register") => void;
   login: (input: LoginInput) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
   register: (input: RegisterInput) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
@@ -148,6 +176,19 @@ interface ExpenseStore {
   decrementDebtInstalment: (id: string) => void;
   getDebtSummary: () => DebtSummary;
 
+  // Savings vaults & Stokvel goal actions
+  addSavingsGoal: (goal: Omit<SavingsGoal, "id">) => void;
+  updateSavingsGoal: (id: string, updates: Partial<SavingsGoal>) => void;
+  deleteSavingsGoal: (id: string) => void;
+  contributeToSavingsGoal: (id: string, amount?: number) => void;
+  getSavingsSummary: () => SavingsSummary;
+  addSubscription: (sub: Omit<Subscription, "id">) => void;
+  updateSubscription: (id: string, updates: Partial<Subscription>) => void;
+  deleteSubscription: (id: string) => void;
+  toggleSubscriptionForgotten: (id: string) => void;
+  getSubscriptionSummary: () => SubscriptionSummary;
+  updateRecurringBillAmount: (expenseId: string, newAmount: number) => void;
+
   resetToDefaults: () => void;
   exportDataJSON: () => string;
   exportDataCSV: () => string;
@@ -183,7 +224,17 @@ interface ExpenseStore {
   }>;
   getCategoryById: (id: string) => Category;
   getSafeToSpend: (month?: string) => SafeToSpendSummary;
+  getCashFlowCalendar: (month?: string) => CashFlowCalendarSummary;
+  getFinancialHealthScore: (month?: string) => FinancialHealthScoreSummary;
+  getGoalRoadmapSummary: (simulatedExtraSavings?: number) => LifeGoalRoadmapSummary;
   getEditorialStory: (month?: string) => EditorialStoryData;
+
+  // Life Goal Roadmap actions
+  lifeGoals: LifeGoal[];
+  addLifeGoal: (goal: Omit<LifeGoal, "id" | "createdAt">) => void;
+  updateLifeGoal: (id: string, updates: Partial<LifeGoal>) => void;
+  deleteLifeGoal: (id: string) => void;
+  contributeToLifeGoal: (id: string, amount: number) => void;
 }
 
 export const useExpenseStore = create<ExpenseStore>((set, get) => ({
@@ -195,6 +246,9 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   recurringBudgets: {},
   clearedRecurring: {},
   debts: [],
+  savingsGoals: [],
+  subscriptions: [],
+  lifeGoals: [],
   incomes: { default: 25000 },
   paydayDay: 25,
   isLoaded: false,
@@ -215,6 +269,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   storyMonth: format(subMonths(new Date(), 1), "yyyy-MM"),
   commandPaletteOpen: false,
   digestModalOpen: false,
+  profileModalOpen: false,
+  subscriptionModalOpen: false,
   editingExpense: null,
   editingDebt: null,
 
@@ -238,6 +294,9 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const recurringBudgets = storage.getRecurringBudgets();
     const clearedRecurring = storage.getClearedRecurring();
     const debts = storage.getDebts();
+    const savingsGoals = storage.getSavingsGoals();
+    const subscriptions = storage.getSubscriptions();
+    const lifeGoals = storage.getLifeGoals();
     const incomes = storage.getIncomes();
     const paydayDay = storage.getPaydayDay();
     const currency = storage.getCurrency() || "ZAR";
@@ -288,6 +347,9 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       recurringBudgets,
       clearedRecurring,
       debts,
+      savingsGoals,
+      subscriptions,
+      lifeGoals,
       incomes,
       paydayDay,
       currency,
@@ -329,8 +391,58 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   setStoryMonth: (month: string) => set({ storyMonth: month }),
   setCommandPaletteOpen: (open: boolean) => set({ commandPaletteOpen: open }),
   setDigestModalOpen: (open: boolean) => set({ digestModalOpen: open }),
+  setProfileModalOpen: (open: boolean) => set({ profileModalOpen: open }),
+  setSubscriptionModalOpen: (open: boolean) => set({ subscriptionModalOpen: open }),
   setAuthModalOpen: (open: boolean, mode: "login" | "register" = "login") =>
     set({ authModalOpen: open, authModalMode: mode }),
+
+  updateUserProfile: async (updates) => {
+    const curUser = get().currentUser;
+    if (!curUser) {
+      return { success: false, error: "Please sign in to update your profile." };
+    }
+
+    const selectedMonth = get().selectedMonth;
+    const nextIncomes = { ...get().incomes };
+    if (typeof updates.monthlySalary === "number" && updates.monthlySalary > 0) {
+      nextIncomes.default = updates.monthlySalary;
+      nextIncomes[selectedMonth] = updates.monthlySalary;
+      storage.saveIncomes(nextIncomes);
+    }
+
+    let nextPayday = get().paydayDay;
+    if (typeof updates.paydayDay === "number" && updates.paydayDay >= 1 && updates.paydayDay <= 31) {
+      nextPayday = Math.max(1, Math.min(31, updates.paydayDay));
+      storage.savePaydayDay(nextPayday);
+    }
+
+    const updatedLocalUser =
+      storage.updateUserProfile(curUser.id, updates) ||
+      storage.updateUserProfile(curUser.email, updates) || {
+        ...curUser,
+        ...(updates.name ? { name: updates.name.trim() } : {}),
+        ...(updates.avatarColor ? { avatarColor: updates.avatarColor } : {}),
+        ...(typeof updates.monthlySalary === "number" ? { monthlySalary: updates.monthlySalary } : {}),
+        ...(typeof updates.paydayDay === "number" ? { paydayDay: nextPayday } : {}),
+      };
+
+    set({
+      currentUser: updatedLocalUser,
+      users: storage.getUsers(),
+      incomes: nextIncomes,
+      paydayDay: nextPayday,
+    });
+
+    if (isSupabaseConfigured()) {
+      await updateSupabaseUserProfile(curUser.id, {
+        ...updates,
+        paydayDay: nextPayday,
+        incomes: nextIncomes,
+      });
+    }
+
+    return { success: true };
+  },
 
   syncSupabaseData: async (userId?: string) => {
     const targetUserId = userId || get().currentUser?.id;
@@ -338,16 +450,29 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
 
     try {
       set({ isSyncingSupabase: true });
-      const [remoteTxs, remoteBgs, remoteDebts] = await Promise.all([
+      const [remoteTxs, remoteBgs, remoteDebts, remotePrefs] = await Promise.all([
         fetchSupabaseTransactions(targetUserId),
         fetchSupabaseBudgets(targetUserId),
         fetchSupabaseDebtContracts(targetUserId),
+        fetchSupabaseUserPreferences(targetUserId),
       ]);
 
       const cur = get();
       const localExpenses = cur.expenses.length > 0 ? cur.expenses : storage.getExpenses();
       const localBudgets = cur.budgets.length > 0 ? cur.budgets : storage.getBudgets();
       const localDebts = cur.debts.length > 0 ? cur.debts : storage.getDebts();
+      const localCategories =
+        cur.categories.length > 0 ? cur.categories : storage.getCategories();
+      const localIncomes = storage.getIncomes();
+      const localPayday = storage.getPaydayDay();
+      const localRecurringBudgets = storage.getRecurringBudgets();
+      const localClearedRecurring = storage.getClearedRecurring();
+      const localSavingsGoals =
+        cur.savingsGoals.length > 0 ? cur.savingsGoals : storage.getSavingsGoals();
+      const localSubscriptions =
+        cur.subscriptions.length > 0 ? cur.subscriptions : storage.getSubscriptions();
+      const localLifeGoals =
+        cur.lifeGoals.length > 0 ? cur.lifeGoals : storage.getLifeGoals();
 
       // 1. NON-DESTRUCTIVE TRANSACTIONS MERGE
       const txMap = new Map<string, Expense>();
@@ -416,16 +541,134 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         Promise.all(localOnlyDebts.map((d) => upsertSupabaseDebtContract(d, targetUserId))).catch(console.error);
       }
 
+      // 4. NON-DESTRUCTIVE CATEGORIES, INCOMES (SALARY), PAYDAY & PREFERENCES MERGE
+      const catMap = new Map<string, Category>();
+      for (const c of DEFAULT_CATEGORIES) {
+        catMap.set(c.id, c);
+      }
+      for (const c of localCategories) {
+        catMap.set(c.id, c);
+      }
+      if (remotePrefs?.categories && Array.isArray(remotePrefs.categories)) {
+        for (const rc of remotePrefs.categories) {
+          if (rc && rc.id) {
+            catMap.set(rc.id, rc);
+          }
+        }
+      }
+      const mergedCategories = Array.from(catMap.values());
+
+      const mergedIncomes: Record<string, number> = {
+        ...localIncomes,
+        ...(remotePrefs?.incomes || {}),
+      };
+      if (remotePrefs?.monthlySalary && remotePrefs.monthlySalary > 0) {
+        mergedIncomes.default = remotePrefs.monthlySalary;
+      }
+
+      const mergedPaydayDay =
+        remotePrefs?.paydayDay && remotePrefs.paydayDay >= 1 && remotePrefs.paydayDay <= 31
+          ? remotePrefs.paydayDay
+          : localPayday || 25;
+
+      const mergedRecurringBudgets: Record<string, number> = {
+        ...localRecurringBudgets,
+        ...(remotePrefs?.recurringBudgets || {}),
+      };
+
+      const mergedClearedRecurring: Record<string, boolean> = {
+        ...localClearedRecurring,
+        ...(remotePrefs?.clearedRecurring || {}),
+      };
+
+      const savingsMap = new Map<string, SavingsGoal>();
+      for (const g of localSavingsGoals) {
+        savingsMap.set(g.id, g);
+      }
+      if (remotePrefs?.savingsGoals && Array.isArray(remotePrefs.savingsGoals)) {
+        for (const rg of remotePrefs.savingsGoals) {
+          if (rg && rg.id) {
+            savingsMap.set(rg.id, rg);
+          }
+        }
+      }
+      const mergedSavingsGoals = Array.from(savingsMap.values());
+
+      const subsMap = new Map<string, Subscription>();
+      for (const s of localSubscriptions) {
+        subsMap.set(s.id, s);
+      }
+      if (remotePrefs?.subscriptions && Array.isArray(remotePrefs.subscriptions)) {
+        for (const rs of remotePrefs.subscriptions) {
+          if (rs && rs.id) {
+            subsMap.set(rs.id, rs);
+          }
+        }
+      }
+      const mergedSubscriptions = Array.from(subsMap.values());
+
+      const lifeGoalsMap = new Map<string, LifeGoal>();
+      for (const lg of localLifeGoals) {
+        lifeGoalsMap.set(lg.id, lg);
+      }
+      if (remotePrefs?.lifeGoals && Array.isArray(remotePrefs.lifeGoals)) {
+        for (const rlg of remotePrefs.lifeGoals) {
+          if (rlg && rlg.id) {
+            lifeGoalsMap.set(rlg.id, rlg);
+          }
+        }
+      }
+      const mergedLifeGoals = Array.from(lifeGoalsMap.values());
+
+      const activeUser = get().currentUser;
+      const updatedUser = activeUser
+        ? {
+            ...activeUser,
+            monthlySalary: mergedIncomes.default || activeUser.monthlySalary || 25000,
+            paydayDay: mergedPaydayDay,
+          }
+        : null;
+
       // Commit merged data everywhere
       set({
         expenses: mergedExpenses,
         budgets: mergedBudgets,
         debts: mergedDebts,
+        savingsGoals: mergedSavingsGoals,
+        subscriptions: mergedSubscriptions,
+        lifeGoals: mergedLifeGoals,
+        categories: mergedCategories,
+        incomes: mergedIncomes,
+        paydayDay: mergedPaydayDay,
+        recurringBudgets: mergedRecurringBudgets,
+        clearedRecurring: mergedClearedRecurring,
+        ...(updatedUser ? { currentUser: updatedUser } : {}),
       });
       storage.saveExpenses(mergedExpenses);
       storage.saveBudgets(mergedBudgets);
       storage.saveDebts(mergedDebts);
+      storage.saveSavingsGoals(mergedSavingsGoals);
+      storage.saveSubscriptions(mergedSubscriptions);
+      storage.saveLifeGoals(mergedLifeGoals);
+      storage.saveCategories(mergedCategories);
+      storage.saveIncomes(mergedIncomes);
+      storage.savePaydayDay(mergedPaydayDay);
+      storage.saveRecurringBudgets(mergedRecurringBudgets);
+      storage.saveClearedRecurring(mergedClearedRecurring);
       saveCachedTransactions(mergedExpenses).catch(() => {});
+
+      // Push merged preferences (custom categories, salary, payday, recurring budgets, savings goals, subscriptions, life goals) back to Supabase
+      upsertSupabaseUserPreferences(targetUserId, {
+        categories: mergedCategories,
+        incomes: mergedIncomes,
+        paydayDay: mergedPaydayDay,
+        monthlySalary: mergedIncomes.default || 25000,
+        recurringBudgets: mergedRecurringBudgets,
+        clearedRecurring: mergedClearedRecurring,
+        savingsGoals: mergedSavingsGoals,
+        subscriptions: mergedSubscriptions,
+        lifeGoals: mergedLifeGoals,
+      }).catch(console.error);
     } catch (err) {
       console.error("Supabase sync error:", err);
     } finally {
@@ -443,6 +686,11 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         expenses: get().expenses,
         budgets: get().budgets,
         debts: get().debts,
+        categories: get().categories,
+        incomes: get().incomes,
+        paydayDay: get().paydayDay,
+        recurringBudgets: get().recurringBudgets,
+        clearedRecurring: get().clearedRecurring,
       },
       currentUser.id
     );
@@ -649,19 +897,51 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   setMonthIncome: (month: string, amount: number) => {
     const updated = { ...get().incomes, [month]: amount };
     storage.saveIncomes(updated);
-    set({ incomes: updated });
+    const curUser = get().currentUser;
+    const updatedUser = curUser ? { ...curUser, monthlySalary: amount } : null;
+    set({
+      incomes: updated,
+      ...(updatedUser ? { currentUser: updatedUser, users: storage.getUsers() } : {}),
+    });
+    if (curUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(curUser.id, {
+        incomes: updated,
+        monthlySalary: updated.default || amount,
+      }).catch(console.error);
+    }
   },
 
   setDefaultIncome: (amount: number) => {
     const updated = { ...get().incomes, default: amount };
     storage.saveIncomes(updated);
-    set({ incomes: updated });
+    const curUser = get().currentUser;
+    const updatedUser = curUser ? { ...curUser, monthlySalary: amount } : null;
+    set({
+      incomes: updated,
+      ...(updatedUser ? { currentUser: updatedUser, users: storage.getUsers() } : {}),
+    });
+    if (curUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(curUser.id, {
+        incomes: updated,
+        monthlySalary: amount,
+      }).catch(console.error);
+    }
   },
 
   setPaydayDay: (day: number) => {
     const clamped = Math.max(1, Math.min(31, day));
     storage.savePaydayDay(clamped);
-    set({ paydayDay: clamped });
+    const curUser = get().currentUser;
+    const updatedUser = curUser ? { ...curUser, paydayDay: clamped } : null;
+    set({
+      paydayDay: clamped,
+      ...(updatedUser ? { currentUser: updatedUser, users: storage.getUsers() } : {}),
+    });
+    if (curUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(curUser.id, {
+        paydayDay: clamped,
+      }).catch(console.error);
+    }
   },
 
   addDebt: (debtData) => {
@@ -824,6 +1104,339 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     };
   },
 
+  addSavingsGoal: (goalData) => {
+    const id = safeUUID();
+    const isCompleted = (goalData.savedAmount || 0) >= goalData.targetAmount;
+    const newGoal: SavingsGoal = {
+      ...goalData,
+      id,
+      isCompleted,
+      createdAt: new Date().toISOString(),
+    };
+    const updated = [...get().savingsGoals, newGoal];
+    storage.saveSavingsGoals(updated);
+    set({ savingsGoals: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        savingsGoals: updated,
+      }).catch(console.error);
+    }
+  },
+
+  updateSavingsGoal: (id, updates) => {
+    const updated = get().savingsGoals.map((g) => {
+      if (g.id !== id) return g;
+      const merged = { ...g, ...updates };
+      merged.isCompleted = merged.savedAmount >= merged.targetAmount;
+      return merged;
+    });
+    storage.saveSavingsGoals(updated);
+    set({ savingsGoals: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        savingsGoals: updated,
+      }).catch(console.error);
+    }
+  },
+
+  deleteSavingsGoal: (id) => {
+    const updated = get().savingsGoals.filter((g) => g.id !== id);
+    storage.saveSavingsGoals(updated);
+    set({ savingsGoals: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        savingsGoals: updated,
+      }).catch(console.error);
+    }
+  },
+
+  contributeToSavingsGoal: (id, customAmount) => {
+    const updated = get().savingsGoals.map((g) => {
+      if (g.id !== id) return g;
+      const delta = customAmount !== undefined ? customAmount : g.monthlyContribution;
+      const nextSaved = Math.max(0, (g.savedAmount || 0) + delta);
+      return {
+        ...g,
+        savedAmount: nextSaved,
+        isCompleted: nextSaved >= g.targetAmount,
+      };
+    });
+    storage.saveSavingsGoals(updated);
+    set({ savingsGoals: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        savingsGoals: updated,
+      }).catch(console.error);
+    }
+  },
+
+  getSavingsSummary: () => {
+    const goals = get().savingsGoals;
+    let totalMonthlyRingFenced = 0;
+    let totalSaved = 0;
+    let totalTarget = 0;
+    let activeCount = 0;
+    let completedCount = 0;
+
+    for (const g of goals) {
+      const done = Boolean(g.isCompleted || g.savedAmount >= g.targetAmount);
+      totalSaved += g.savedAmount || 0;
+      totalTarget += g.targetAmount || 0;
+      if (done) {
+        completedCount++;
+      } else {
+        activeCount++;
+        if (g.ringFenceInSafeToSpend) {
+          totalMonthlyRingFenced += g.monthlyContribution || 0;
+        }
+      }
+    }
+
+    const overallProgress =
+      totalTarget > 0 ? Math.min(100, Math.round((totalSaved / totalTarget) * 100)) : 0;
+
+    return {
+      totalMonthlyRingFenced,
+      totalSaved,
+      totalTarget,
+      overallProgress,
+      activeCount,
+      completedCount,
+    };
+  },
+
+  addSubscription: (subData) => {
+    const id = `sub-${Date.now()}`;
+    const newSub: Subscription = {
+      ...subData,
+      id,
+      isActive: subData.isActive ?? true,
+      createdAt: new Date().toISOString(),
+    };
+    const updated = [...get().subscriptions, newSub];
+    storage.saveSubscriptions(updated);
+    set({ subscriptions: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        subscriptions: updated,
+      }).catch(console.error);
+    }
+  },
+
+  updateSubscription: (id, updates) => {
+    const updated = get().subscriptions.map((s) => (s.id === id ? { ...s, ...updates } : s));
+    storage.saveSubscriptions(updated);
+    set({ subscriptions: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        subscriptions: updated,
+      }).catch(console.error);
+    }
+  },
+
+  deleteSubscription: (id) => {
+    const updated = get().subscriptions.filter((s) => s.id !== id);
+    storage.saveSubscriptions(updated);
+    set({ subscriptions: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        subscriptions: updated,
+      }).catch(console.error);
+    }
+  },
+
+  toggleSubscriptionForgotten: (id) => {
+    const updated = get().subscriptions.map((s) =>
+      s.id === id ? { ...s, isForgotten: !s.isForgotten } : s
+    );
+    storage.saveSubscriptions(updated);
+    set({ subscriptions: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        subscriptions: updated,
+      }).catch(console.error);
+    }
+  },
+
+  getSubscriptionSummary: () => {
+    const subs = get().subscriptions.filter((s) => s.isActive);
+    let totalMonthly = 0;
+    const activeCount = subs.length;
+    let forgottenCount = 0;
+    let forgottenAnnualSavings = 0;
+    let priceHikedCount = 0;
+    let totalPriceHikeAnnualImpact = 0;
+
+    for (const s of subs) {
+      totalMonthly += s.monthlyAmount || 0;
+      if (s.isForgotten) {
+        forgottenCount++;
+        forgottenAnnualSavings += (s.monthlyAmount || 0) * 12;
+      }
+      if (s.previousAmount && s.monthlyAmount > s.previousAmount) {
+        priceHikedCount++;
+        totalPriceHikeAnnualImpact += (s.monthlyAmount - s.previousAmount) * 12;
+      }
+    }
+
+    return {
+      totalMonthly,
+      totalAnnual: totalMonthly * 12,
+      activeCount,
+      forgottenCount,
+      forgottenAnnualSavings,
+      priceHikedCount,
+      totalPriceHikeAnnualImpact,
+    };
+  },
+
+  addLifeGoal: (goalData) => {
+    const id = safeUUID();
+    const newGoal: LifeGoal = {
+      ...goalData,
+      id,
+      createdAt: new Date().toISOString(),
+    };
+    const updated = [...get().lifeGoals, newGoal];
+    storage.saveLifeGoals(updated);
+    set({ lifeGoals: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        lifeGoals: updated,
+      }).catch(console.error);
+    }
+  },
+
+  updateLifeGoal: (id, updates) => {
+    const updated = get().lifeGoals.map((g) => (g.id === id ? { ...g, ...updates } : g));
+    storage.saveLifeGoals(updated);
+    set({ lifeGoals: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        lifeGoals: updated,
+      }).catch(console.error);
+    }
+  },
+
+  deleteLifeGoal: (id) => {
+    const updated = get().lifeGoals.filter((g) => g.id !== id);
+    storage.saveLifeGoals(updated);
+    set({ lifeGoals: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        lifeGoals: updated,
+      }).catch(console.error);
+    }
+  },
+
+  contributeToLifeGoal: (id, amount) => {
+    if (amount <= 0) return;
+    const updated = get().lifeGoals.map((g) => {
+      if (g.id !== id) return g;
+      const newSaved = g.currentSaved + amount;
+      const isCompleted = newSaved >= g.targetAmount;
+      return {
+        ...g,
+        currentSaved: newSaved,
+        isCompleted: isCompleted || g.isCompleted,
+      };
+    });
+    storage.saveLifeGoals(updated);
+    set({ lifeGoals: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        lifeGoals: updated,
+      }).catch(console.error);
+    }
+  },
+
+  getGoalRoadmapSummary: (simulatedExtraSavings?: number) => {
+    const safeToSpend = get().getSafeToSpend();
+    return computeGoalRoadmap({
+      goals: get().lifeGoals,
+      monthlyDiscretionaryCapacity: Math.max(0, safeToSpend.safeToSpendPool),
+      simulatedExtraSavings: simulatedExtraSavings ?? 500,
+    });
+  },
+
+  updateRecurringBillAmount: (expenseId: string, newAmount: number) => {
+    if (newAmount <= 0) return;
+    const targetMonth = get().selectedMonth;
+    const allExpenses = [...get().expenses];
+    const targetExp = allExpenses.find((e) => e.id === expenseId);
+
+    if (targetExp) {
+      const oldAmount = targetExp.amount;
+      const cleanNote = (targetExp.note || "").replace(/\s*\(Recurring\)\s*/i, "").trim();
+      const prevMonthStr = format(subMonths(parse(targetMonth, "yyyy-MM", new Date()), 1), "yyyy-MM");
+
+      // Ensure a baseline record exists in previous month so Price-Hike detection has the prior cleared price
+      const hasPrevBaseline = allExpenses.some(
+        (e) =>
+          e.isRecurring &&
+          e.date.startsWith(prevMonthStr) &&
+          (e.note || "").replace(/\s*\(Recurring\)\s*/i, "").trim().toLowerCase() ===
+            cleanNote.toLowerCase()
+      );
+
+      if (!hasPrevBaseline && oldAmount !== newAmount) {
+        const dayPart = targetExp.date.slice(8, 10) || "01";
+        const baselineExp: Expense = {
+          id: safeUUID(),
+          amount: oldAmount,
+          categoryId: targetExp.categoryId,
+          note: targetExp.note,
+          date: `${prevMonthStr}-${dayPart}`,
+          paymentMethod: targetExp.paymentMethod,
+          isRecurring: true,
+          createdAt: new Date().toISOString(),
+        };
+        allExpenses.push(baselineExp);
+        const curUser = get().currentUser;
+        if (curUser?.id && isSupabaseConfigured()) {
+          insertSupabaseTransaction(baselineExp, curUser.id).catch(console.error);
+        }
+      }
+
+      const updatedExpenses = allExpenses.map((e) =>
+        e.id === expenseId ? { ...e, amount: newAmount } : e
+      );
+      storage.saveExpenses(updatedExpenses);
+      set({ expenses: updatedExpenses });
+
+      const curUser = get().currentUser;
+      if (curUser?.id && isSupabaseConfigured()) {
+        updateSupabaseTransaction(expenseId, { amount: newAmount }, curUser.id).catch(
+          console.error
+        );
+      }
+    }
+  },
+
   addExpense: (expenseData) => {
     const id = safeUUID();
     const newExpense: Expense = {
@@ -894,6 +1507,13 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const updated = [...get().categories, newCategory];
     storage.saveCategories(updated);
     set({ categories: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        categories: updated,
+      }).catch(console.error);
+    }
   },
 
   updateCategory: (id: string, updates: Partial<Category>) => {
@@ -902,12 +1522,26 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     );
     storage.saveCategories(updated);
     set({ categories: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        categories: updated,
+      }).catch(console.error);
+    }
   },
 
   deleteCategory: (id: string) => {
     const updated = get().categories.filter((cat) => cat.id !== id);
     storage.saveCategories(updated);
     set({ categories: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        categories: updated,
+      }).catch(console.error);
+    }
   },
 
   setBudget: (budget: Budget) => {
@@ -929,6 +1563,9 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const currentUser = get().currentUser;
     if (currentUser?.id && isSupabaseConfigured()) {
       upsertSupabaseBudget(budget, currentUser.id).catch(console.error);
+      upsertSupabaseUserPreferences(currentUser.id, {
+        recurringBudgets: recurring,
+      }).catch(console.error);
     }
   },
 
@@ -1145,6 +1782,17 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     storage.saveRecurringBudgets(recurringBudgets);
     storage.saveBudgets(updatedBudgets);
     set({ budgets: updatedBudgets, recurringBudgets });
+
+    const currentUser = get().currentUser;
+    const targetBudget = updatedBudgets.find((b) => b.month === month);
+    if (currentUser?.id && isSupabaseConfigured()) {
+      if (targetBudget) {
+        upsertSupabaseBudget(targetBudget, currentUser.id).catch(console.error);
+      }
+      upsertSupabaseUserPreferences(currentUser.id, {
+        recurringBudgets,
+      }).catch(console.error);
+    }
   },
 
   applyCurrentMonthBudgetsToAllMonths: (sourceMonth: string) => {
@@ -1164,6 +1812,17 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     storage.saveRecurringBudgets(recurringBudgets);
     storage.saveBudgets(updatedBudgets);
     set({ budgets: updatedBudgets, recurringBudgets });
+
+    const currentUser = get().currentUser;
+    const targetBudget = updatedBudgets.find((b) => b.month === sourceMonth);
+    if (currentUser?.id && isSupabaseConfigured()) {
+      if (targetBudget) {
+        upsertSupabaseBudget(targetBudget, currentUser.id).catch(console.error);
+      }
+      upsertSupabaseUserPreferences(currentUser.id, {
+        recurringBudgets,
+      }).catch(console.error);
+    }
   },
 
   isCategoryRecurring: (month: string, categoryId: string) => {
@@ -1188,6 +1847,18 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
 
     storage.saveClearedRecurring(cleared);
     set({ clearedRecurring: cleared });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      const timeline = get().getRecurringTimeline(month);
+      const item = timeline.items.find((i) => i.expenseId === expenseId);
+      if (item) {
+        upsertSupabaseDebitOrder({ id: expenseId, name: item.note, amount: item.amount, due_day: item.day, is_cleared: cleared[key], month }, currentUser.id).catch(console.error);
+      }
+      upsertSupabaseUserPreferences(currentUser.id, {
+        clearedRecurring: cleared,
+      }).catch(console.error);
+    }
   },
 
   isRecurringCleared: (month: string, expenseId: string, defaultCleared: boolean) => {
@@ -1214,6 +1885,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       budgets: get().budgets,
       recurringBudgets: get().recurringBudgets,
       debts: get().debts,
+      savingsGoals: get().savingsGoals,
+      subscriptions: get().subscriptions,
       incomes: get().incomes,
       paydayDay: get().paydayDay,
     };
@@ -1256,6 +1929,12 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       }
       if (Array.isArray(data.debts)) {
         storage.saveDebts(data.debts);
+      }
+      if (Array.isArray(data.savingsGoals)) {
+        storage.saveSavingsGoals(data.savingsGoals);
+      }
+      if (Array.isArray(data.subscriptions)) {
+        storage.saveSubscriptions(data.subscriptions);
       }
       if (data.incomes && typeof data.incomes === "object") {
         storage.saveIncomes(data.incomes);
@@ -1467,6 +2146,21 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const todayMonth = todayStr.slice(0, 7);
     const todayDay = parseInt(todayStr.slice(8, 10), 10);
 
+    // Map historical recurring bills from prior months by normalized merchant note to detect price hikes
+    const normalizeBillName = (note: string) =>
+      (note || "").replace(/\s*\(Recurring\)\s*/i, "").trim().toLowerCase();
+
+    const priorRecurringByNote = new Map<string, number>();
+    allExpenses
+      .filter((e) => e.isRecurring && e.date.slice(0, 7) < targetMonth)
+      .sort((a, b) => (a.date < b.date ? -1 : 1))
+      .forEach((e) => {
+        const key = `${e.categoryId}:${normalizeBillName(e.note)}`;
+        if (e.amount > 0) {
+          priorRecurringByNote.set(key, e.amount);
+        }
+      });
+
     const items: RecurringTimelineItem[] = recurringInMonth
       .map((exp) => {
         const cat = catMap.get(exp.categoryId) || {
@@ -1507,6 +2201,20 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
           status = "upcoming";
         }
 
+        const lookupKey = `${exp.categoryId}:${normalizeBillName(exp.note || cat.name)}`;
+        const previousAmount = priorRecurringByNote.get(lookupKey);
+        const hasPriceHike =
+          previousAmount !== undefined &&
+          previousAmount > 0 &&
+          exp.amount > previousAmount;
+        const priceHikeAmount = hasPriceHike
+          ? Math.round((exp.amount - previousAmount) * 100) / 100
+          : undefined;
+        const priceHikePercent =
+          hasPriceHike && previousAmount
+            ? Math.round(((exp.amount - previousAmount) / previousAmount) * 100)
+            : undefined;
+
         return {
           id: exp.id,
           expenseId: exp.id,
@@ -1520,6 +2228,9 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
           isCleared,
           status,
           daysUntil,
+          previousAmount: hasPriceHike ? previousAmount : undefined,
+          priceHikeAmount,
+          priceHikePercent,
         };
       })
       .sort((a, b) => a.day - b.day);
@@ -1538,6 +2249,13 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const percentageCleared =
       totalCommitted > 0 ? Math.round((clearedAmount / totalCommitted) * 100) : 0;
 
+    const hikedItems = items.filter((item) => (item.priceHikeAmount || 0) > 0);
+    const priceHikeCount = hikedItems.length;
+    const totalPriceHikeImpact = hikedItems.reduce(
+      (sum, item) => sum + (item.priceHikeAmount || 0),
+      0
+    );
+
     return {
       items,
       summary: {
@@ -1548,6 +2266,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         clearedCount,
         pendingCount,
         percentageCleared,
+        priceHikeCount,
+        totalPriceHikeImpact,
       },
     };
   },
@@ -1558,10 +2278,12 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const monthlyIncome = incomes[targetMonth] || incomes.default || 25000;
     const paydayDay = get().paydayDay || 25;
 
-    // 1. Fixed commitments (debit orders, contracts, recurring subscriptions)
+    // 1. Fixed commitments (debit orders, contracts, recurring subscriptions + ring-fenced savings/Stokvel goals)
     const timeline = get().getRecurringTimeline(targetMonth);
-    const fixedCommitments = timeline.summary.totalCommitted;
-    const pendingCommitments = timeline.summary.pendingAmount;
+    const savingsSummary = get().getSavingsSummary();
+    const ringFencedSavings = savingsSummary.totalMonthlyRingFenced;
+    const fixedCommitments = timeline.summary.totalCommitted + ringFencedSavings;
+    const pendingCommitments = timeline.summary.pendingAmount + ringFencedSavings;
     const clearedCommitments = timeline.summary.clearedAmount;
     const fixedCommitmentsCount = timeline.summary.totalCount;
 
@@ -1646,7 +2368,249 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       daysUntilPayday,
       status,
       fixedCommitmentsCount,
+      ringFencedSavings,
     };
+  },
+
+  getCashFlowCalendar: (month?: string) => {
+    const targetMonth = month || get().selectedMonth;
+    const { daysInMonth } = getMonthStats(targetMonth);
+    const incomes = get().incomes;
+    const monthlyIncome = incomes[targetMonth] || incomes.default || 25000;
+    const paydayDay = get().paydayDay || 25;
+    const todayStr = getTodayDateStr();
+    const isCurrentMonth = targetMonth === todayStr.slice(0, 7);
+    const currentDayNum = isCurrentMonth ? parseInt(todayStr.slice(8, 10), 10) : -1;
+
+    // 1. Gather all financial commitments
+    const timeline = get().getRecurringTimeline(targetMonth);
+    const debitOrders = timeline.items;
+    const subscriptions = get().subscriptions.filter((s) => s.isActive);
+    const debts = get().debts.filter((d) => !d.isPaidOff);
+    const savings = get().savingsGoals.filter((g) => !g.isCompleted);
+    const monthExpenses = get().expenses.filter(
+      (e) => e.date.startsWith(targetMonth) && !e.isRecurring
+    );
+
+    // Initial buffer calculation (opening balance from previous cycle)
+    const startingBalance = Math.round(monthlyIncome * 0.18);
+    let runningBalance = startingBalance;
+
+    let lowestBalance = Infinity;
+    let lowestBalanceDate = `${targetMonth}-01`;
+    let lowestBalanceDay = 1;
+    let tightDaysCount = 0;
+    let heavyOutflowDaysCount = 0;
+    let totalInflows = 0;
+    let totalOutflows = 0;
+
+    const days: CashFlowDay[] = [];
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${targetMonth}-${String(day).padStart(2, "0")}`;
+      let dateObj: Date;
+      try {
+        dateObj = parse(dateStr, "yyyy-MM-dd", new Date());
+      } catch {
+        dateObj = new Date();
+      }
+      const dayOfWeek = format(dateObj, "EEE");
+      const isCurrentDay = isCurrentMonth && day === currentDayNum;
+      const isPast = isCurrentMonth ? day < currentDayNum : targetMonth < todayStr.slice(0, 7);
+      const isPayday = day === paydayDay;
+
+      const events: CashFlowEvent[] = [];
+
+      // A. Salary on Payday
+      if (isPayday) {
+        events.push({
+          id: `salary-${dateStr}`,
+          type: "salary",
+          title: "Take-Home Salary",
+          amount: monthlyIncome,
+          isIncome: true,
+          category: "Income",
+        });
+      }
+
+      // B. Debit Orders on this day
+      for (const bill of debitOrders) {
+        if (bill.day === day) {
+          events.push({
+            id: `debit-${bill.id}`,
+            type: "debit_order",
+            title: bill.note,
+            amount: bill.amount,
+            isIncome: false,
+            category: bill.category?.name || "Bills",
+            isCleared: bill.isCleared,
+          });
+        }
+      }
+
+      // C. Subscriptions on this day (avoid duplicate if note matches)
+      for (const sub of subscriptions) {
+        if (sub.billingDay === day) {
+          const alreadyInDebit = events.some(
+            (ev) => ev.title.toLowerCase().includes(sub.name.toLowerCase())
+          );
+          if (!alreadyInDebit) {
+            events.push({
+              id: `sub-${sub.id}-${day}`,
+              type: "subscription",
+              title: sub.name,
+              amount: sub.monthlyAmount,
+              isIncome: false,
+              category: sub.category,
+            });
+          }
+        }
+      }
+
+      // D. Debt Repayments on this day (defaults to 1st or custom dueDay)
+      for (const debt of debts) {
+        const debtDay = debt.dueDay || 1;
+        if (debtDay === day) {
+          events.push({
+            id: `debt-${debt.id}-${day}`,
+            type: "debt",
+            title: `${debt.name} Instalment`,
+            amount: debt.monthlyAmount,
+            isIncome: false,
+            category: "Debt Financing",
+          });
+        }
+      }
+
+      // E. Savings Goals / Stokvel on this day (defaults to paydayDay or 25th)
+      for (const goal of savings) {
+        const goalDay = goal.dueDay || paydayDay;
+        if (goalDay === day && goal.monthlyContribution > 0) {
+          events.push({
+            id: `savings-${goal.id}-${day}`,
+            type: "savings",
+            title: `${goal.name} Contribution`,
+            amount: goal.monthlyContribution,
+            isIncome: false,
+            category: "Savings Vault",
+          });
+        }
+      }
+
+      // F. Variable expenses or planned purchases on this date
+      for (const exp of monthExpenses) {
+        const expDay = parseInt(exp.date.slice(8, 10), 10);
+        if (expDay === day) {
+          events.push({
+            id: exp.id,
+            type: exp.isPlanned ? "planned_purchase" : "expense",
+            title: exp.note || "Expense",
+            amount: exp.amount,
+            isIncome: false,
+            category: exp.categoryId,
+          });
+        }
+      }
+
+      // Calculate totals for this day
+      let dayInflows = 0;
+      let dayOutflows = 0;
+      for (const ev of events) {
+        if (ev.isIncome) {
+          dayInflows += ev.amount;
+        } else {
+          dayOutflows += ev.amount;
+        }
+      }
+
+      totalInflows += dayInflows;
+      totalOutflows += dayOutflows;
+      const netChange = dayInflows - dayOutflows;
+      runningBalance += netChange;
+
+      // Track lowest balance and tight days
+      if (runningBalance < lowestBalance) {
+        lowestBalance = runningBalance;
+        lowestBalanceDate = dateStr;
+        lowestBalanceDay = day;
+      }
+
+      const isLowBuffer = runningBalance < Math.max(1500, Math.round(monthlyIncome * 0.08));
+      const isHeavyDrain = dayOutflows >= Math.max(3000, Math.round(monthlyIncome * 0.15));
+      const isTight = (isLowBuffer || isHeavyDrain) && !isPayday;
+
+      if (isTight) tightDaysCount++;
+      if (isHeavyDrain) heavyOutflowDaysCount++;
+
+      let tightReason: string | undefined;
+      if (isLowBuffer) {
+        tightReason = "Low cash buffer (< R1,500)";
+      } else if (isHeavyDrain) {
+        tightReason = `Heavy clustered outlays (-R${dayOutflows.toLocaleString()})`;
+      }
+
+      days.push({
+        dayNumber: day,
+        dateStr,
+        dayOfWeek,
+        isCurrentDay,
+        isPast,
+        isPayday,
+        events,
+        inflowTotal: dayInflows,
+        outflowTotal: dayOutflows,
+        netChange,
+        projectedClosingBalance: runningBalance,
+        isTight,
+        tightReason,
+      });
+    }
+
+    return {
+      month: targetMonth,
+      startingBalance,
+      projectedEndingBalance: runningBalance,
+      totalInflows,
+      totalOutflows,
+      lowestBalance: lowestBalance === Infinity ? startingBalance : lowestBalance,
+      lowestBalanceDate,
+      lowestBalanceDay,
+      tightDaysCount,
+      heavyOutflowDaysCount,
+      days,
+    };
+  },
+
+  getFinancialHealthScore: (month?: string) => {
+    const targetMonth = month || get().selectedMonth;
+    const monthSummary = get().getMonthSummary(targetMonth);
+    const savingsSummary = get().getSavingsSummary();
+    const debtSummary = get().getDebtSummary();
+    const subSummary = get().getSubscriptionSummary();
+    const timeline = get().getRecurringTimeline(targetMonth);
+
+    const userSalary = (get().currentUser as any)?.monthlySalary || (get().currentUser as any)?.takeHomeSalary;
+    const monthIncome = get().incomes[targetMonth] || userSalary || 25000;
+    const isIncomeSet = Boolean(get().incomes[targetMonth] || userSalary);
+    const hasPaydayDay = Boolean(get().paydayDay || (get().currentUser as any)?.paydayDay);
+
+    const emergencyFundTotal = get().savingsGoals
+      .filter((g) => g.vaultType === "emergency")
+      .reduce((sum, g) => sum + g.savedAmount, 0);
+
+    return computeFinancialHealthScore({
+      monthIncome,
+      savingsMonthly: savingsSummary.totalMonthlyRingFenced,
+      emergencyFundTotal,
+      debtMonthly: debtSummary.totalMonthly,
+      debitOrdersMonthly: timeline.summary.totalCommitted,
+      subscriptionsMonthly: subSummary.totalMonthly,
+      totalBudget: monthSummary.totalBudget,
+      totalSpent: monthSummary.totalSpent,
+      isIncomeSet,
+      hasPaydayDay,
+      currencySymbol: "R",
+    });
   },
 
   getEditorialStory: (month?: string) => {

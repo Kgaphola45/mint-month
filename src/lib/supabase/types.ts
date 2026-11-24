@@ -156,6 +156,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      users: {
+        Row: {
+          id: string;
+          email: string;
+          name: string | null;
+          role: string | null;
+          monthly_salary: number | null;
+          payday_day: number | null;
+          avatar_color: string | null;
+          preferences: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          email: string;
+          name?: string | null;
+          role?: string | null;
+          monthly_salary?: number | null;
+          payday_day?: number | null;
+          avatar_color?: string | null;
+          preferences?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          name?: string | null;
+          role?: string | null;
+          monthly_salary?: number | null;
+          payday_day?: number | null;
+          avatar_color?: string | null;
+          preferences?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

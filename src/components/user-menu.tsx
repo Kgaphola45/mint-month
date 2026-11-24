@@ -10,9 +10,14 @@ import {
   ChevronDown,
   Settings,
   Trash2,
+  Shield,
+  Wallet,
+  Pencil,
+  User as UserIcon,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { DeleteAccountModal } from "@/components/delete-account-modal";
+import { isSuperUser } from "@/types";
 
 export function UserMenu() {
   const pathname = usePathname();
@@ -20,7 +25,12 @@ export function UserMenu() {
     currentUser,
     isAuthenticated,
     users,
+    incomes,
+    selectedMonth,
+    paydayDay,
     setAuthModalOpen,
+    setPaydayModalOpen,
+    setProfileModalOpen,
     switchUser,
     logout,
   } = useExpenseStore();
@@ -56,6 +66,8 @@ export function UserMenu() {
       </button>
     );
   }
+
+  const isSuper = isSuperUser(currentUser);
 
   // Generate initials
   const initials = currentUser.name
@@ -103,6 +115,11 @@ export function UserMenu() {
         <span className="text-xs font-medium text-[#0D0D0C] hidden sm:inline max-w-[90px] truncate">
           {firstName}
         </span>
+        {isSuper && (
+          <span className="hidden md:inline-flex items-center px-1.5 py-0.5 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-[9px] font-semibold uppercase tracking-wider">
+            Super
+          </span>
+        )}
         <ChevronDown className="w-3 h-3 text-[#0D0D0C]/50 stroke-[1.5]" />
       </button>
 
@@ -118,14 +135,55 @@ export function UserMenu() {
               >
                 {initials}
               </div>
-              <div className="truncate">
-                <span className="text-xs font-medium text-[#0D0D0C] block truncate">
-                  {currentUser.name}
-                </span>
+              <div className="truncate flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-medium text-[#0D0D0C] block truncate">
+                    {currentUser.name}
+                  </span>
+                </div>
                 <span className="text-[10px] text-[#0D0D0C]/50 block truncate">
                   {currentUser.email}
                 </span>
+                <span
+                  className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
+                    isSuper
+                      ? "bg-[#0D0D0C] text-[#FFFDFA]"
+                      : "bg-[#0D0D0C]/[0.07] text-[#0D0D0C]/70"
+                  }`}
+                >
+                  {isSuper ? (
+                    <>
+                      <Shield className="w-2.5 h-2.5" />
+                      <span>Super User</span>
+                    </>
+                  ) : (
+                    <span>Standard Account</span>
+                  )}
+                </span>
               </div>
+            </div>
+
+            {/* Take-Home Salary Quick Summary & 1-Click Edit inside Profile Card */}
+            <div className="mt-2.5 pt-2.5 border-t border-[#0D0D0C]/[0.06] flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <span className="text-[10px] text-[#0D0D0C]/45 uppercase tracking-wider font-medium block">
+                  Take-Home Pay
+                </span>
+                <span className="text-xs font-semibold text-[#0D0D0C] block truncate">
+                  R{(incomes[selectedMonth] || incomes.default || currentUser.monthlySalary || 25000).toLocaleString()}/mo · {paydayDay || currentUser.paydayDay || 25}th
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setPaydayModalOpen(true);
+                }}
+                className="px-2.5 py-1 rounded-full bg-[#0D0D0C] text-[#FFFDFA] hover:opacity-90 text-[10px] font-medium inline-flex items-center gap-1 shrink-0 transition-all shadow-sm"
+              >
+                <Pencil className="w-2.5 h-2.5" />
+                <span>Edit</span>
+              </button>
             </div>
           </div>
 
@@ -139,6 +197,7 @@ export function UserMenu() {
               <div className="space-y-0.5 mb-1 max-h-40 overflow-y-auto">
                 {users.map((u) => {
                   const isCurrent = u.id === currentUser.id;
+                  const uSuper = isSuperUser(u);
                   const uInitials = u.name
                     .split(" ")
                     .filter(Boolean)
@@ -171,6 +230,17 @@ export function UserMenu() {
                           {uInitials}
                         </div>
                         <span className="truncate">{u.name}</span>
+                        {uSuper && (
+                          <span
+                            className={`text-[9px] px-1.5 py-0.2 rounded-full font-semibold uppercase ${
+                              isCurrent
+                                ? "bg-[#FFFDFA]/20 text-[#FFFDFA]"
+                                : "bg-[#0D0D0C]/10 text-[#0D0D0C]"
+                            }`}
+                          >
+                            Super
+                          </span>
+                        )}
                       </div>
                       {isCurrent && <Check className="w-3.5 h-3.5 stroke-[2]" />}
                     </button>
@@ -181,15 +251,51 @@ export function UserMenu() {
           )}
 
           <div className="border-t border-[#0D0D0C]/[0.06] pt-1 space-y-0.5">
-            {/* Settings & Privacy link in User Menu */}
-            <Link
-              href="/settings"
-              onClick={() => setMenuOpen(false)}
-              className="w-full p-2 rounded-[14px] text-xs text-[#0D0D0C]/80 hover:bg-[#FBF6EF] hover:text-[#0D0D0C] flex items-center gap-2 transition-colors"
+            {/* My Profile & Preferences self-service modal available to EVERY user (Standard & Super User) */}
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                setProfileModalOpen(true);
+              }}
+              className="w-full p-2 rounded-[14px] text-xs text-[#0D0D0C]/80 hover:bg-[#FBF6EF] hover:text-[#0D0D0C] flex items-center justify-between transition-colors"
             >
-              <Settings className="w-3.5 h-3.5 stroke-[1.5]" />
-              <span>Settings & Privacy</span>
-            </Link>
+              <div className="flex items-center gap-2">
+                <UserIcon className="w-3.5 h-3.5 stroke-[1.5]" />
+                <span>My Profile &amp; Preferences</span>
+              </div>
+              <span className="text-[10px] font-medium text-[#0D0D0C]/45">
+                Self-Service
+              </span>
+            </button>
+
+            {/* Edit Take-Home Salary available to EVERY user */}
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                setPaydayModalOpen(true);
+              }}
+              className="w-full p-2 rounded-[14px] text-xs text-[#0D0D0C]/80 hover:bg-[#FBF6EF] hover:text-[#0D0D0C] flex items-center justify-between transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Wallet className="w-3.5 h-3.5 stroke-[1.5]" />
+                <span>Edit Take-Home Salary</span>
+              </div>
+              <span className="text-[10px] font-semibold text-[#0D0D0C]/55">
+                R{(incomes[selectedMonth] || incomes.default || currentUser.monthlySalary || 25000).toLocaleString()}
+              </span>
+            </button>
+
+            {/* Settings & Privacy link ONLY visible to Super User (RBAC) */}
+            {isSuper && (
+              <Link
+                href="/settings"
+                onClick={() => setMenuOpen(false)}
+                className="w-full p-2 rounded-[14px] text-xs text-[#0D0D0C]/80 hover:bg-[#FBF6EF] hover:text-[#0D0D0C] flex items-center gap-2 transition-colors"
+              >
+                <Settings className="w-3.5 h-3.5 stroke-[1.5]" />
+                <span>Settings & Privacy</span>
+              </Link>
+            )}
 
             <button
               onClick={handleRegisterNew}
@@ -207,16 +313,18 @@ export function UserMenu() {
               <span>Sign Out</span>
             </button>
 
-            <button
-              onClick={() => {
-                setMenuOpen(false);
-                setDeleteModalOpen(true);
-              }}
-              className="w-full p-2 rounded-[14px] text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
-            >
-              <Trash2 className="w-3.5 h-3.5 stroke-[1.5]" />
-              <span>Delete Account...</span>
-            </button>
+            {!isSuper && (
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  setDeleteModalOpen(true);
+                }}
+                className="w-full p-2 rounded-[14px] text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5 stroke-[1.5]" />
+                <span>Delete Account...</span>
+              </button>
+            )}
           </div>
         </div>
       )}

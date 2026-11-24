@@ -16,6 +16,7 @@ export interface Expense {
   date: string; // ISO date string YYYY-MM-DD
   paymentMethod: PaymentMethod;
   isRecurring?: boolean;
+  isPlanned?: boolean; // Planned future purchase for Cash Flow Calendar
   createdAt?: string;
 }
 
@@ -62,6 +63,9 @@ export interface RecurringTimelineItem {
   isCleared: boolean;   // Whether this debit order/bill has cleared
   status: "cleared" | "today" | "upcoming";
   daysUntil: number;    // negative if passed, 0 if today, positive if upcoming
+  previousAmount?: number;
+  priceHikeAmount?: number;
+  priceHikePercent?: number;
 }
 
 export interface RecurringTimelineSummary {
@@ -72,6 +76,68 @@ export interface RecurringTimelineSummary {
   clearedCount: number;
   pendingCount: number;
   percentageCleared: number;
+  priceHikeCount?: number;
+  totalPriceHikeImpact?: number;
+}
+
+export type SavingsVaultType = "emergency" | "stokvel" | "sinking" | "holiday";
+
+export interface SavingsGoal {
+  id: string;
+  name: string;
+  vaultType: SavingsVaultType;
+  targetAmount: number;
+  savedAmount: number;
+  monthlyContribution: number;
+  dueDay?: number;
+  ringFenceInSafeToSpend: boolean;
+  notes?: string;
+  isCompleted?: boolean;
+  createdAt?: string;
+}
+
+export interface SavingsSummary {
+  totalMonthlyRingFenced: number;
+  totalSaved: number;
+  totalTarget: number;
+  overallProgress: number;
+  activeCount: number;
+  completedCount: number;
+}
+
+export type SubscriptionCategory =
+  | "Streaming & TV"
+  | "Music & Audio"
+  | "Fitness & Health"
+  | "Connectivity & WiFi"
+  | "Software & AI"
+  | "Insurance & Finance"
+  | "Gaming & Cloud"
+  | "Other";
+
+export interface Subscription {
+  id: string;
+  name: string; // e.g. "Netflix Standard", "Showmax", "Virgin Active", "Spotify"
+  monthlyAmount: number; // monthly cost in ZAR
+  category: SubscriptionCategory;
+  billingDay: number; // 1 - 31
+  previousAmount?: number; // for price-hike detection
+  isForgotten?: boolean; // Flagged as forgotten / rarely used / candidate for cancellation
+  cancellationUrl?: string; // direct cancellation link, e.g. "https://www.netflix.com/youraccount"
+  cancellationNotes?: string; // cancellation instructions or notice period
+  notes?: string;
+  isActive: boolean;
+  createdAt?: string;
+}
+
+export interface SubscriptionSummary {
+  totalMonthly: number;
+  totalAnnual: number;
+  activeCount: number;
+  forgottenCount: number;
+  forgottenAnnualSavings: number;
+  priceHikedCount: number;
+  totalPriceHikeAnnualImpact: number;
 }
 
 export interface DebtInstalment {
@@ -83,6 +149,7 @@ export interface DebtInstalment {
   totalAmount?: number; // total contract value
   startDate?: string; // 'YYYY-MM'
   targetPayoffDate?: string; // e.g. 'Nov 2026'
+  dueDay?: number; // 1 - 31, monthly payment due day
   categoryId?: string; // 'cat-debt' or 'cat-clothing'
   notes?: string;
   isPaidOff?: boolean;
@@ -119,6 +186,7 @@ export interface SafeToSpendSummary {
   daysUntilPayday: number;
   status: "comfortable" | "balanced" | "tight" | "overspent";
   fixedCommitmentsCount: number;
+  ringFencedSavings?: number;
 }
 
 export interface PaydaySettings {
@@ -127,10 +195,21 @@ export interface PaydaySettings {
   incomesByMonth?: Record<string, number>;
 }
 
+export type UserRole = "superuser" | "standard";
+
+export const SUPER_USER_EMAIL = "proit45ma@gmail.com";
+
+export function isSuperUser(user?: { email?: string; role?: UserRole } | null): boolean {
+  if (!user) return false;
+  if (user.role === "superuser") return true;
+  return (user.email || "").trim().toLowerCase() === SUPER_USER_EMAIL;
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
+  role?: UserRole;
   passwordHash?: string;
   avatarColor?: string;
   monthlySalary?: number;
@@ -149,3 +228,167 @@ export interface LoginInput {
   email: string;
   password: string;
 }
+
+export type CashFlowEventType =
+  | "salary"
+  | "debit_order"
+  | "subscription"
+  | "debt"
+  | "savings"
+  | "planned_purchase"
+  | "expense";
+
+export interface CashFlowEvent {
+  id: string;
+  type: CashFlowEventType;
+  title: string;
+  amount: number;
+  isIncome: boolean;
+  category?: string;
+  isCleared?: boolean;
+}
+
+export interface CashFlowDay {
+  dayNumber: number;
+  dateStr: string; // 'YYYY-MM-DD'
+  dayOfWeek: string; // 'Mon', 'Tue', etc.
+  isCurrentDay: boolean;
+  isPast: boolean;
+  isPayday: boolean;
+  events: CashFlowEvent[];
+  inflowTotal: number;
+  outflowTotal: number;
+  netChange: number;
+  projectedClosingBalance: number;
+  isTight: boolean;
+  tightReason?: string;
+}
+
+export interface CashFlowCalendarSummary {
+  month: string;
+  startingBalance: number;
+  projectedEndingBalance: number;
+  totalInflows: number;
+  totalOutflows: number;
+  lowestBalance: number;
+  lowestBalanceDate: string;
+  lowestBalanceDay: number;
+  tightDaysCount: number;
+  heavyOutflowDaysCount: number;
+  days: CashFlowDay[];
+}
+
+// -------------------------------------------------------------
+// Financial Health Score & Assessment Types
+// -------------------------------------------------------------
+export type FinancialHealthGrade = "Excellent" | "Resilient" | "Moderate" | "Vulnerable";
+
+export type HealthPillarId =
+  | "savings_rate"
+  | "debt_to_income"
+  | "emergency_fund"
+  | "budget_adherence"
+  | "commitments"
+  | "income_stability";
+
+export interface HealthPillarAssessment {
+  id: HealthPillarId;
+  title: string;
+  score: number;
+  maxScore: number;
+  percentage: number;
+  metricValue: string;
+  statusLabel: string;
+  statusTier: "healthy" | "warning" | "critical";
+  prescription: string;
+  potentialPointsGain: number;
+}
+
+export interface HealthScoreRecommendation {
+  id: string;
+  pillarId: HealthPillarId;
+  title: string;
+  actionText: string;
+  pointsBoost: number;
+  targetAnchor?: string;
+}
+
+export interface FinancialHealthScoreSummary {
+  overallScore: number; // 0 - 100
+  maxScore: number; // 100
+  grade: FinancialHealthGrade;
+  tierNumber: number; // 1, 2, 3, 4
+  headline: string;
+  summaryText: string;
+  pillars: HealthPillarAssessment[];
+  topRecommendations: HealthScoreRecommendation[];
+  savingsRatePercent: number;
+  debtToIncomePercent: number;
+  emergencyFundMonths: number;
+  budgetAdherencePercent: number;
+  commitmentsRatioPercent: number;
+  isIncomeStable: boolean;
+}
+
+// -------------------------------------------------------------
+// Major Life Goals & Roadmap Types
+// -------------------------------------------------------------
+export type LifeGoalCategory =
+  | "car"
+  | "apartment"
+  | "house"
+  | "emergency"
+  | "travel"
+  | "debt_free"
+  | "custom";
+
+export type GoalFeasibility = "realistic" | "moderate" | "stretch" | "unrealistic";
+
+export interface LifeGoal {
+  id: string;
+  title: string;
+  category: LifeGoalCategory;
+  targetAmount: number;
+  currentSaved: number;
+  targetDate: string; // 'YYYY-MM'
+  monthlyContribution?: number;
+  notes?: string;
+  isCompleted?: boolean;
+  createdAt: string;
+}
+
+export interface LifeGoalCalculation {
+  goal: LifeGoal;
+  remainingAmount: number;
+  progressPercent: number;
+  monthsRemaining: number;
+  requiredMonthlySavings: number;
+  estimatedCompletionDate: string;
+  feasibility: GoalFeasibility;
+  feasibilityLabel: string;
+  feasibilityColor: "healthy" | "warning" | "critical";
+  feasibilityAdvice: string;
+  impactOfExtraSavings: {
+    extraAmount: number;
+    monthsSaved: number;
+    newCompletionDate: string;
+  };
+}
+
+export interface LifeGoalRoadmapSummary {
+  goals: LifeGoalCalculation[];
+  totalTargetAmount: number;
+  totalCurrentSaved: number;
+  totalMonthlyRequired: number;
+  overallProgressPercent: number;
+  realisticCount: number;
+  moderateCount: number;
+  stretchCount: number;
+  unrealisticCount: number;
+  activeCount: number;
+  completedCount: number;
+  monthlySavingsCapacity: number; // monthly safe to spend pool
+  capacityUtilizationPercent: number;
+}
+
+

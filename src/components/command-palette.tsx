@@ -24,8 +24,11 @@ import {
   Check,
   FileSpreadsheet,
   Zap,
+  ShieldCheck,
+  Compass,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
+import { isSuperUser } from "@/types";
 import { formatCurrency, formatMonthYear, getTodayDateStr } from "@/lib/utils";
 import { CURRENCIES } from "@/lib/currencies";
 
@@ -59,6 +62,7 @@ export function CommandPalette() {
     setPaydayModalOpen,
     setDigestModalOpen,
     getHistoricalTrends,
+    currentUser,
   } = useExpenseStore();
 
   const [query, setQuery] = useState("");
@@ -408,6 +412,62 @@ export function CommandPalette() {
           setDebtModalOpen(true);
         },
       },
+      {
+        id: "act-subscription-detective",
+        section: "Quick Actions",
+        title: "Subscription Detective",
+        subtitle: "Audit recurring subscriptions, hidden annual leaks, and price hikes",
+        icon: Sparkles,
+        badge: "Detective",
+        action: () => {
+          setCommandPaletteOpen(false);
+          router.push("/#subscriptions");
+          const el = document.getElementById("subscriptions");
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        },
+      },
+      {
+        id: "act-financial-health",
+        section: "Quick Actions",
+        title: "Financial Health Score",
+        subtitle: "View your monthly longevity index across 6 core pillars & prescriptive tips",
+        icon: ShieldCheck,
+        badge: "Score",
+        action: () => {
+          setCommandPaletteOpen(false);
+          router.push("/#financial-health");
+          const el = document.getElementById("financial-health");
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        },
+      },
+      {
+        id: "act-goal-roadmap",
+        section: "Quick Actions",
+        title: "Financial Goal Roadmap",
+        subtitle: "Set life goals (car, apartment, house, travel, debt-free) and calculate feasibility",
+        icon: Compass,
+        badge: "Roadmap",
+        action: () => {
+          setCommandPaletteOpen(false);
+          router.push("/#goal-roadmap");
+          const el = document.getElementById("goal-roadmap");
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        },
+      },
+      {
+        id: "act-cashflow-calendar",
+        section: "Quick Actions",
+        title: "Cash Flow Calendar",
+        subtitle: "Forecast daily balances, salary incoming dates, debit orders & tight days",
+        icon: Calendar,
+        badge: "Forecast",
+        action: () => {
+          setCommandPaletteOpen(false);
+          router.push("/#cashflow-calendar");
+          const el = document.getElementById("cashflow-calendar");
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        },
+      },
     ];
 
     // Filter quick actions if query matches
@@ -475,17 +535,21 @@ export function CommandPalette() {
           setCommandPaletteOpen(false);
         },
       },
-      {
-        id: "nav-settings",
-        section: "Navigation",
-        title: "Go to Settings",
-        subtitle: "Currency, accounts, data backup and restore",
-        icon: Settings,
-        action: () => {
-          router.push("/settings");
-          setCommandPaletteOpen(false);
-        },
-      },
+      ...(isSuperUser(currentUser)
+        ? [
+            {
+              id: "nav-settings",
+              section: "Navigation" as const,
+              title: "Go to Settings (Super User)",
+              subtitle: "Currency, accounts, data backup and restore",
+              icon: Settings,
+              action: () => {
+                router.push("/settings");
+                setCommandPaletteOpen(false);
+              },
+            },
+          ]
+        : []),
     ];
 
     navItems.forEach((item) => {
@@ -526,6 +590,7 @@ export function CommandPalette() {
     categories,
     selectedMonth,
     trends,
+    currentUser,
     addExpense,
     exportDataCSV,
     router,

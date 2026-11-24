@@ -478,7 +478,8 @@ export function SortedBoard({ onOpenSetLimits }: SortedBoardProps) {
                               {item.category.name}
                             </span>
                             <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-semibold flex items-center gap-1">
-                              Paid ✓
+                              <Check className="w-2.5 h-2.5 stroke-[2.5]" />
+                              <span>Paid</span>
                             </span>
                           </div>
                           <span className="text-[11px] text-[#0D0D0C]/50 block truncate">

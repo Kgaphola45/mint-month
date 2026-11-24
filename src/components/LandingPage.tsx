@@ -101,7 +101,7 @@ export function LandingPage() {
           <div className="lg:col-span-7 space-y-6">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#0D0D0C]/[0.1] bg-[#FFFDFA] text-xs font-medium text-[#0D0D0C] shadow-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>🇿🇦 Built for South Africans • 100% Local-First</span>
+              <span>Built for South Africans • 100% Local-First</span>
             </div>
 
             <h1 className="text-5xl sm:text-6xl lg:text-[72px] font-semibold tracking-[-0.035em] text-[#0D0D0C] leading-[1.06]">

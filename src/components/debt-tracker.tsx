@@ -298,8 +298,9 @@ export function DebtTracker() {
                           <span>+1 Month Paid</span>
                         </button>
                       ) : (
-                        <span className="text-xs text-[#0D0D0C]/60 font-medium px-2 py-1">
-                          🎉 Complete
+                        <span className="text-xs text-[#0D0D0C]/60 font-medium px-2 py-1 inline-flex items-center gap-1 text-emerald-800">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                          <span>Paid Off</span>
                         </span>
                       )}
                     </div>

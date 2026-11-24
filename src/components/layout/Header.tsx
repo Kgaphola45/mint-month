@@ -15,10 +15,12 @@ import {
   X,
   Settings,
   ChevronRight,
+  Calendar,
 } from "lucide-react";
 import { MonthPicker } from "../month-picker";
 import { UserMenu } from "../user-menu";
 import { useExpenseStore } from "@/store/useExpenseStore";
+import { isSuperUser } from "@/types";
 
 export function Header() {
   const pathname = usePathname();
@@ -26,10 +28,14 @@ export function Header() {
 
   const {
     currentUser,
+    incomes,
+    selectedMonth,
     setQuickAddOpen,
     setSimulatorModalOpen,
     setStoryModalOpen,
     setCommandPaletteOpen,
+    setPaydayModalOpen,
+    setProfileModalOpen,
   } = useExpenseStore();
 
   // Close mobile drawer on route change
@@ -231,14 +237,28 @@ export function Header() {
                       </span>
                     </div>
                   </div>
-                  <Link
-                    href="/settings"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="p-1.5 rounded-full hover:bg-[#0D0D0C]/5 text-[#0D0D0C]/60 hover:text-[#0D0D0C] shrink-0 transition-colors"
-                    title="Settings"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </Link>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setProfileModalOpen(true);
+                      }}
+                      className="px-2.5 py-1 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-[10px] font-medium hover:opacity-90 transition-all"
+                    >
+                      My Profile
+                    </button>
+                    {isSuperUser(currentUser) && (
+                      <Link
+                        href="/settings"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="p-1.5 rounded-full hover:bg-[#0D0D0C]/5 text-[#0D0D0C]/60 hover:text-[#0D0D0C] shrink-0 transition-colors"
+                        title="Settings"
+                      >
+                        <Settings className="w-4 h-4" />
+                      </Link>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -248,11 +268,33 @@ export function Header() {
                 <MonthPicker />
               </div>
 
+              {/* Quick Edit Take-Home Salary in Drawer for Every User */}
+              <div className="p-3.5 rounded-2xl bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] flex items-center justify-between gap-2">
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-[#0D0D0C]/45 font-medium block">
+                    Take-Home Salary
+                  </span>
+                  <span className="text-xs font-semibold text-[#0D0D0C]">
+                    R{(incomes[selectedMonth] || incomes.default || currentUser?.monthlySalary || 25000).toLocaleString()}/mo
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setPaydayModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-[11px] font-medium hover:opacity-90 transition-all"
+                >
+                  Edit Salary
+                </button>
+              </div>
+
               {/* Navigation Links */}
               <nav className="space-y-1">
                 {[
                   ...navLinks,
-                  { href: "/settings", label: "Settings & Preferences", icon: Settings },
+                  ...(isSuperUser(currentUser) ? [{ href: "/settings", label: "Settings & Preferences", icon: Settings }] : []),
                 ].map((link) => {
                   const Icon = link.icon;
                   const isActive = pathname === link.href;
@@ -275,6 +317,24 @@ export function Header() {
                     </Link>
                   );
                 })}
+
+                <Link
+                  href="/#cashflow-calendar"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    const el = document.getElementById("cashflow-calendar");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium text-[#0D0D0C]/70 hover:bg-[#FBF6EF] hover:text-[#0D0D0C] transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <Calendar className="w-4 h-4 stroke-[1.8] text-emerald-700" />
+                    <span>Cash Flow Calendar</span>
+                  </div>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                    Forecast
+                  </span>
+                </Link>
               </nav>
             </div>
 

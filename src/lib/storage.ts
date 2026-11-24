@@ -1,4 +1,16 @@
-import { Expense, Category, Budget, DebtInstalment, User } from "@/types";
+import { Expense, Category, Budget, DebtInstalment, SavingsGoal, Subscription, LifeGoal, User, isSuperUser, SUPER_USER_EMAIL } from "@/types";
+
+export const SUPER_USER_SEED: User = {
+  id: "3447bcb1-78e1-4f43-805f-247a3d171f56",
+  name: "Emmanuel Kgaphola",
+  email: SUPER_USER_EMAIL,
+  role: "superuser",
+  passwordHash: "Smt116hp625",
+  avatarColor: "#0D0D0C",
+  monthlySalary: 25000,
+  paydayDay: 25,
+  createdAt: "2026-01-01T00:00:00.000Z",
+};
 import { DEFAULT_CATEGORIES } from "./constants";
 
 const STORAGE_KEYS = {
@@ -8,6 +20,9 @@ const STORAGE_KEYS = {
   RECURRING_BUDGETS: "mint_month_recurring_budgets_v3",
   CLEARED_RECURRING: "mint_month_cleared_recurring_v3",
   DEBTS: "mint_month_debts_v3",
+  SAVINGS_GOALS: "mint_month_savings_goals_v3",
+  SUBSCRIPTIONS: "mint_month_subscriptions_v3",
+  LIFE_GOALS: "mint_month_life_goals_v3",
   INCOMES: "mint_month_incomes_v3",
   PAYDAY: "mint_month_payday_v3",
   CURRENCY: "mint_month_currency_v3",
@@ -17,6 +32,10 @@ const STORAGE_KEYS = {
 };
 
 export const DEFAULT_DEBTS: DebtInstalment[] = [];
+
+export const DEFAULT_SUBSCRIPTIONS: Subscription[] = [];
+
+export const DEFAULT_LIFE_GOALS: LifeGoal[] = [];
 
 export interface StorageAdapter {
   getExpenses(): Expense[];
@@ -31,6 +50,12 @@ export interface StorageAdapter {
   saveClearedRecurring(cleared: Record<string, boolean>): void;
   getDebts(): DebtInstalment[];
   saveDebts(debts: DebtInstalment[]): void;
+  getSavingsGoals(): SavingsGoal[];
+  saveSavingsGoals(goals: SavingsGoal[]): void;
+  getSubscriptions(): Subscription[];
+  saveSubscriptions(subs: Subscription[]): void;
+  getLifeGoals(): LifeGoal[];
+  saveLifeGoals(goals: LifeGoal[]): void;
   getCurrency(): string;
   saveCurrency(currency: string): void;
   initializeUserWorkspace(user: User): void;
@@ -78,9 +103,22 @@ export class LocalStorageAdapter implements StorageAdapter {
       keysToRemove.forEach((k) => localStorage.removeItem(k));
     } catch {}
 
-    if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
-      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([]));
+    const rawUsers = localStorage.getItem(STORAGE_KEYS.USERS);
+    let parsedUsers: User[] = [];
+    try { parsedUsers = rawUsers ? JSON.parse(rawUsers) : []; } catch { parsedUsers = []; }
+    const superIdx = parsedUsers.findIndex((u) => (u.email || "").toLowerCase() === SUPER_USER_EMAIL);
+    if (superIdx === -1) {
+      parsedUsers.unshift(SUPER_USER_SEED);
+    } else {
+      parsedUsers[superIdx] = {
+        ...parsedUsers[superIdx],
+        name: "Emmanuel Kgaphola",
+        email: SUPER_USER_EMAIL,
+        role: "superuser",
+        passwordHash: "Smt116hp625",
+      };
     }
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(parsedUsers));
 
     const initialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
     if (!initialized) {
@@ -142,7 +180,10 @@ export class LocalStorageAdapter implements StorageAdapter {
       const raw = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
       if (!raw) return null;
       const user = JSON.parse(raw);
-      return user && user.id ? user : null;
+      if (!user || !user.id) return null;
+      user.role = isSuperUser(user) ? "superuser" : "standard";
+      if (user.role === "superuser") user.name = "Emmanuel Kgaphola";
+      return user;
     } catch {
       return null;
     }
@@ -175,8 +216,9 @@ export class LocalStorageAdapter implements StorageAdapter {
     const avatarPalette = ["#0D0D0C", "#96CE96", "#F99654", "#ECD6E2", "#F6DE68"];
     const newUser: User = {
       id: `usr_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`,
-      name: name.trim(),
+      name: isSuperUser({ email: normalizedEmail }) ? "Emmanuel Kgaphola" : name.trim(),
       email: normalizedEmail,
+      role: isSuperUser({ email: normalizedEmail }) ? "superuser" : "standard",
       passwordHash: password,
       avatarColor: avatarPalette[Math.floor(Math.random() * avatarPalette.length)],
       monthlySalary: monthlySalary && monthlySalary > 0 ? monthlySalary : 25000,
@@ -235,6 +277,86 @@ export class LocalStorageAdapter implements StorageAdapter {
     return updated;
   }
 
+  updateUserRole(emailOrId: string, role: "superuser" | "standard"): boolean {
+    if (!this.isClient()) return false;
+    const target = emailOrId.trim().toLowerCase();
+    // Primary Super User cannot be demoted
+    if (target === SUPER_USER_EMAIL && role !== "superuser") return false;
+    const users = this.getUsers();
+    let updated = false;
+    const newUsers = users.map((u) => {
+      if (u.id === emailOrId || u.email.toLowerCase() === target) {
+        if (u.email.toLowerCase() === SUPER_USER_EMAIL && role !== "superuser") {
+          return u;
+        }
+        updated = true;
+        return { ...u, role };
+      }
+      return u;
+    });
+    if (updated) {
+      this.saveUsers(newUsers);
+      const current = this.getCurrentUser();
+      if (current && (current.id === emailOrId || current.email.toLowerCase() === target)) {
+        this.setCurrentUser({ ...current, role });
+      }
+    }
+    return updated;
+  }
+
+  updateUserProfile(
+    userIdOrEmail: string,
+    updates: { name?: string; avatarColor?: string; monthlySalary?: number; paydayDay?: number }
+  ): User | null {
+    if (!this.isClient()) return null;
+    const target = userIdOrEmail.trim().toLowerCase();
+    const users = this.getUsers();
+    let updatedUser: User | null = null;
+
+    const newUsers = users.map((u) => {
+      if (u.id === userIdOrEmail || u.email.toLowerCase() === target) {
+        const isOwner = u.email.toLowerCase() === SUPER_USER_EMAIL;
+        const merged: User = {
+          ...u,
+          ...(updates.name ? { name: isOwner ? "Emmanuel Kgaphola" : updates.name.trim() } : {}),
+          ...(updates.avatarColor ? { avatarColor: updates.avatarColor } : {}),
+          ...(typeof updates.monthlySalary === "number" && updates.monthlySalary > 0
+            ? { monthlySalary: updates.monthlySalary }
+            : {}),
+          ...(typeof updates.paydayDay === "number" && updates.paydayDay >= 1 && updates.paydayDay <= 31
+            ? { paydayDay: updates.paydayDay }
+            : {}),
+        };
+        updatedUser = merged;
+        return merged;
+      }
+      return u;
+    });
+
+    const current = this.getCurrentUser();
+    if (
+      current &&
+      (current.id === userIdOrEmail || current.email.toLowerCase() === target)
+    ) {
+      const isOwner = current.email.toLowerCase() === SUPER_USER_EMAIL;
+      updatedUser = {
+        ...current,
+        ...(updates.name ? { name: isOwner ? "Emmanuel Kgaphola" : updates.name.trim() } : {}),
+        ...(updates.avatarColor ? { avatarColor: updates.avatarColor } : {}),
+        ...(typeof updates.monthlySalary === "number" && updates.monthlySalary > 0
+          ? { monthlySalary: updates.monthlySalary }
+          : {}),
+        ...(typeof updates.paydayDay === "number" && updates.paydayDay >= 1 && updates.paydayDay <= 31
+          ? { paydayDay: updates.paydayDay }
+          : {}),
+      };
+      this.setCurrentUser(updatedUser);
+    }
+
+    this.saveUsers(newUsers);
+    return updatedUser;
+  }
+
   logoutUser(): void {
     this.setCurrentUser(null);
   }
@@ -256,6 +378,9 @@ export class LocalStorageAdapter implements StorageAdapter {
       `${STORAGE_KEYS.RECURRING_BUDGETS}_${userId}`,
       `${STORAGE_KEYS.CLEARED_RECURRING}_${userId}`,
       `${STORAGE_KEYS.DEBTS}_${userId}`,
+      `${STORAGE_KEYS.SAVINGS_GOALS}_${userId}`,
+      `${STORAGE_KEYS.SUBSCRIPTIONS}_${userId}`,
+      `${STORAGE_KEYS.LIFE_GOALS}_${userId}`,
       `${STORAGE_KEYS.INCOMES}_${userId}`,
       `${STORAGE_KEYS.PAYDAY}_${userId}`,
     ];
@@ -395,6 +520,68 @@ export class LocalStorageAdapter implements StorageAdapter {
     localStorage.setItem(this.getKey(STORAGE_KEYS.DEBTS), JSON.stringify(debts));
   }
 
+  getSavingsGoals(): SavingsGoal[] {
+    if (!this.isClient()) return [];
+    try {
+      const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.SAVINGS_GOALS));
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  saveSavingsGoals(goals: SavingsGoal[]): void {
+    if (!this.isClient()) return;
+    localStorage.setItem(this.getKey(STORAGE_KEYS.SAVINGS_GOALS), JSON.stringify(goals));
+  }
+
+  getSubscriptions(): Subscription[] {
+    if (!this.isClient()) return [];
+    try {
+      const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.SUBSCRIPTIONS));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(
+            (s) =>
+              s &&
+              s.id &&
+              !["sub-netflix", "sub-spotify", "sub-showmax", "sub-virgin", "sub-afrihost"].includes(
+                s.id
+              )
+          );
+        }
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  }
+
+  saveSubscriptions(subs: Subscription[]): void {
+    if (!this.isClient()) return;
+    localStorage.setItem(this.getKey(STORAGE_KEYS.SUBSCRIPTIONS), JSON.stringify(subs));
+  }
+
+  getLifeGoals(): LifeGoal[] {
+    if (!this.isClient()) return [];
+    try {
+      const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.LIFE_GOALS));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  }
+
+  saveLifeGoals(goals: LifeGoal[]): void {
+    if (!this.isClient()) return;
+    localStorage.setItem(this.getKey(STORAGE_KEYS.LIFE_GOALS), JSON.stringify(goals));
+  }
+
   getIncomes(): Record<string, number> {
     const user = this.getCurrentUser();
     const defaultIncome = user?.monthlySalary || 25000;
@@ -415,6 +602,19 @@ export class LocalStorageAdapter implements StorageAdapter {
   saveIncomes(incomes: Record<string, number>): void {
     if (!this.isClient()) return;
     localStorage.setItem(this.getKey(STORAGE_KEYS.INCOMES), JSON.stringify(incomes));
+    if (typeof incomes.default === "number" && incomes.default > 0) {
+      const current = this.getCurrentUser();
+      if (current) {
+        const updatedUser = { ...current, monthlySalary: incomes.default };
+        this.setCurrentUser(updatedUser);
+        const users = this.getUsers().map((u) =>
+          u.id === current.id || u.email.toLowerCase() === current.email.toLowerCase()
+            ? { ...u, monthlySalary: incomes.default }
+            : u
+        );
+        this.saveUsers(users);
+      }
+    }
   }
 
   getPaydayDay(): number {
@@ -433,6 +633,17 @@ export class LocalStorageAdapter implements StorageAdapter {
   savePaydayDay(day: number): void {
     if (!this.isClient()) return;
     localStorage.setItem(this.getKey(STORAGE_KEYS.PAYDAY), day.toString());
+    const current = this.getCurrentUser();
+    if (current) {
+      const updatedUser = { ...current, paydayDay: day };
+      this.setCurrentUser(updatedUser);
+      const users = this.getUsers().map((u) =>
+        u.id === current.id || u.email.toLowerCase() === current.email.toLowerCase()
+          ? { ...u, paydayDay: day }
+          : u
+      );
+      this.saveUsers(users);
+    }
   }
 
   getCurrency(): string {
@@ -454,6 +665,9 @@ export class LocalStorageAdapter implements StorageAdapter {
     localStorage.removeItem(STORAGE_KEYS.RECURRING_BUDGETS);
     localStorage.removeItem(STORAGE_KEYS.CLEARED_RECURRING);
     localStorage.removeItem(STORAGE_KEYS.DEBTS);
+    localStorage.removeItem(STORAGE_KEYS.SAVINGS_GOALS);
+    localStorage.removeItem(STORAGE_KEYS.SUBSCRIPTIONS);
+    localStorage.removeItem(STORAGE_KEYS.LIFE_GOALS);
     localStorage.removeItem(STORAGE_KEYS.INCOMES);
     localStorage.removeItem(STORAGE_KEYS.PAYDAY);
     localStorage.removeItem(STORAGE_KEYS.CURRENCY);
