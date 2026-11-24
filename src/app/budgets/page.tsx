@@ -35,7 +35,6 @@ export default function BudgetsPage() {
   const categoryStats = getCategorySpending(selectedMonth);
   const overallStatus = getBudgetStatus(summary.totalSpent, summary.totalBudget);
 
-  const budgetedCategories = categoryStats.filter((c) => c.budget > 0);
   const sortedCount = summary.sortedCount;
   const allSorted =
     summary.totalTransactions > 0 && sortedCount === summary.totalTransactions;
@@ -172,7 +171,7 @@ export default function BudgetsPage() {
                     {sortedCount} of {summary.totalTransactions} Transactions Sorted
                   </span>
                   <span className="text-[11px] text-[#0D0D0C]/42">
-                    Drag items to the right column below when paid off
+                    Move transactions to the right column below when settled
                   </span>
                 </div>
               </div>
