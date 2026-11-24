@@ -1,0 +1,465 @@
+================================================================================
+                                MINT MONTH
+                   EDITORIAL PERSONAL FINANCE ENGINE (ZAR)
+               COMPREHENSIVE TECHNICAL OVERVIEW & FEATURE MANUAL
+================================================================================
+
+TABLE OF CONTENTS:
+1. Executive Summary & Philosophy
+2. Complete Technology Stack
+3. Architecture & Data Flow (Local-First + Supabase Cloud)
+4. Role-Based Access Control (RBAC) System
+5. Database Schema & Security (PostgreSQL & RLS)
+6. Exhaustive Feature Catalog
+   6.1. Authentication, Onboarding & Security
+   6.2. Safe-to-Spend Daily Engine & Payday Cycle Planning
+   6.3. What-If Payday Runway Simulator
+   6.4. "Can I Afford It?" Purchase Decision Simulator
+   6.5. Recurring Bills & Debit Order Timeline (With Price-Hike Detection)
+   6.6. Savings Vaults, Emergency Fund & Stokvel Goal Tracker
+   6.7. Debt & Loan Snowball Paydown Tracker
+   6.8. Smart Budget Planner & Category Board
+   6.9. Transaction Ledger & Expense Tracking
+   6.10. Till Slip / Receipt OCR Quick-Scan
+   6.11. Monthly Editorial Financial Story ("Wrapped" Report)
+   6.12. Automated Email Dispatches (Payday & Debit Order Digest)
+   6.13. Super User Administrative Console (/settings)
+   6.14. User Profile & Preferences Self-Service Drawer
+7. Design System, Aesthetic & UI Tokens
+8. Environment Variables Reference (.env.local)
+9. Deployment & Production Setup
+
+================================================================================
+1. EXECUTIVE SUMMARY & PHILOSOPHY
+================================================================================
+Mint Month is a modern, privacy-first personal finance engine custom-tailored
+for South African earners (ZAR / R). Unlike traditional corporate budgeting apps
+that focus on historical guilt and endless transaction tagging, Mint Month is
+designed around an editorial, calm, magazine-like interface that prioritizes
+one primary question every single day:
+
+    "How much guilt-free money can I spend today without starving before payday?"
+
+The system automatically rings-fences recurring debit orders (rent, medical aid,
+vehicle financing, insurance, gym), debt instalments, and savings vault
+allocations (emergency funds, Stokvel, holiday funds) away from the user's
+take-home pay, dividing only true disposable income across remaining cycle days.
+
+Key Philosophy Pillars:
+- Zero Guilt: No punitive red alerts; clear, actionable math.
+- Local South African Context: Built around 25th / monthend payday schedules,
+  Stokvel savings goals, SASSA/SARS awareness, debit order clearance schedules,
+  and local merchants (Checkers, Woolworths, Pick n Pay, Sixty60, Engen).
+- Local-First Resilience: Operates offline with instant optimistic client-state
+  updates (Zustand + IndexedDB/localStorage), auto-syncing seamlessly to Supabase
+  PostgreSQL when network is available.
+- Privacy & Granular Control: Every user's financial records are locked behind
+  PostgreSQL Row Level Security (RLS). Users own their data and can export it as
+  standard CSV/JSON or purge their account with one click.
+
+================================================================================
+2. COMPLETE TECHNOLOGY STACK
+================================================================================
+FRONTEND CORE:
+- Next.js 14.2+ (App Router, Server Components & Client Components)
+- React 18.3
+- TypeScript 5.0+ (Strict Type Checking)
+- Tailwind CSS 3.4+ (Custom Vela editorial design system)
+- @tailwindcss/container-queries (Responsive modular cards)
+
+STATE & DATA ENGINE:
+- Zustand 4.5+ (Persistent reactive store with custom local-first storage adapter)
+- IndexedDB (High-capacity offline caching via idb-keyval)
+- Supabase JS Client 2.45+ (Realtime Cloud Sync & Authentication)
+
+BACKEND INFRASTRUCTURE & DATABASE:
+- Supabase PostgreSQL 15+ (Hosted cloud database)
+- Row Level Security (RLS) policies for complete tenant isolation
+- Database Triggers (Automatic public.users record synchronization on signup)
+- Next.js API Routes (Serverless endpoints for auth recovery, email dispatches,
+  and superuser administrative operations)
+
+EMAIL & COMMUNICATIONS:
+- Nodemailer (Direct SMTP engine supporting Gmail, Outlook, AWS SES)
+- TLS / SSL with automated fallback ports (465 SSL -> 587 STARTTLS)
+- HMAC-SHA256 Tokenization for stateless, serverless-safe password reset OTPs
+
+DATA VISUALIZATION & MICRO-INTERACTIONS:
+- Recharts (Custom SVG-based financial velocity and budget distribution charts)
+- Canvas-Confetti (Dopamine micro-rewards upon debt/savings milestones)
+- Lucide React (Crisp, modern iconography)
+- Date-fns (Robust date calculations and payday cycle offsets)
+
+================================================================================
+3. ARCHITECTURE & DATA FLOW (LOCAL-FIRST + SUPABASE CLOUD)
+================================================================================
+Mint Month uses a hybrid Local-First architecture:
+
+1. Optimistic Local Mutations:
+   When an expense is logged or a budget is updated, Zustand updates the
+   in-memory React state instantly (0ms latency) and persists to localStorage
+   and IndexedDB. The UI never hangs on loading spinners for common actions.
+
+2. Cloud Synchronization Pipeline:
+   If the user is logged into Supabase:
+   - On initial login/load: The app fetches remote records from PostgreSQL and
+     merges them into local state.
+   - On write: Mutations emit parallel async writes to Supabase tables
+     (`transactions`, `budgets`, `debit_orders`, `debt_contracts`, `users`).
+   - Preferences Sync: Custom categories, monthly salary overrides, paydayDay,
+     and UI preferences are mirrored into the `preferences` JSONB column of
+     `public.users`.
+
+3. Offline-Safe Fallback:
+   If the user travels, loses connectivity, or loads the app in an area with
+   load shedding / poor signal, the entire app remains fully functional. When
+   connectivity returns, the cloud layer accepts latest local modifications.
+
+================================================================================
+4. ROLE-BASED ACCESS CONTROL (RBAC) SYSTEM
+================================================================================
+Mint Month implements a secure two-tier role hierarchy:
+
+1. SUPER USER (`role = 'superuser'`)
+   - Primary Administrator: Emmanuel Kgaphola (Proit45ma@gmail.com)
+   - Capabilities:
+     * Full access to all personal finance features.
+     * Exclusive access to the administrative console at `/settings`.
+     * Direct visibility into all registered user accounts via the Super User
+       Management Directory.
+     * Ability to promote standard accounts to superusers or demote them.
+     * Ability to permanently delete test or inactive accounts.
+     * Direct visibility into system environment variables, database health,
+       and SMTP email delivery statuses.
+
+2. STANDARD USER (`role = 'standard'`)
+   - All self-registered users via the signup form.
+   - Capabilities:
+     * Full access to their own transactions, budgets, debit orders, debts,
+       savings vaults, what-if simulators, and editorial financial story.
+     * Complete isolation: Cannot see, edit, or delete any other user's data.
+     * Restricted from `/settings`: Any attempt to access `/settings` displays
+       an access-denied gate with a clear prompt to return to the dashboard.
+     * Self-Service Profile Drawer: Accessible via the top navigation user menu,
+       allowing standard users to edit their Full Name, Avatar Color, Take-Home
+       Salary, Payday Day, change passwords, and export their own CSV statement.
+
+================================================================================
+5. DATABASE SCHEMA & SECURITY (POSTGRESQL & RLS)
+================================================================================
+All data is stored in PostgreSQL tables managed via Supabase, protected by Row
+Level Security:
+
+1. `public.users`
+   - `id` (UUID, Primary Key, references auth.users.id ON DELETE CASCADE)
+   - `email` (TEXT, Unique)
+   - `full_name` (TEXT)
+   - `role` (TEXT, default 'standard', 'superuser')
+   - `preferences` (JSONB: holds custom categories, salary overrides, paydayDay)
+   - `created_at` (TIMESTAMPTZ)
+   - `updated_at` (TIMESTAMPTZ)
+
+2. `public.transactions`
+   - `id` (UUID, Primary Key)
+   - `user_id` (UUID, references auth.users.id)
+   - `amount` (NUMERIC)
+   - `category` (TEXT)
+   - `description` (TEXT)
+   - `date` (DATE)
+   - `payment_method` (TEXT)
+   - `is_cleared` (BOOLEAN)
+   - `receipt_url` (TEXT, optional)
+
+3. `public.budgets`
+   - `id` (UUID, Primary Key)
+   - `user_id` (UUID, references auth.users.id)
+   - `category` (TEXT)
+   - `cap` (NUMERIC)
+   - `month` (TEXT, e.g. '2025-05')
+
+4. `public.debit_orders`
+   - `id` (UUID, Primary Key)
+   - `user_id` (UUID, references auth.users.id)
+   - `name` (TEXT)
+   - `amount` (NUMERIC)
+   - `due_day` (INTEGER, 1-31)
+   - `category` (TEXT)
+   - `cleared` (BOOLEAN)
+   - `previous_amount` (NUMERIC, for price-hike alerts)
+
+5. `public.debt_contracts`
+   - `id` (UUID, Primary Key)
+   - `user_id` (UUID, references auth.users.id)
+   - `name` (TEXT)
+   - `creditor` (TEXT)
+   - `total_principal` (NUMERIC)
+   - `remaining_balance` (NUMERIC)
+   - `monthly_instalment` (NUMERIC)
+   - `interest_rate` (NUMERIC)
+   - `due_day` (INTEGER)
+
+6. `public.password_resets`
+   - `id` (UUID, Primary Key)
+   - `email` (TEXT)
+   - `otp_hash` (TEXT, bcrypt hash)
+   - `expires_at` (TIMESTAMPTZ, 15 min expiry)
+   - `created_at` (TIMESTAMPTZ)
+
+Row Level Security Rule:
+CREATE POLICY "Users can only view and manage their own data"
+  ON public.<table_name>
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+================================================================================
+6. EXHAUSTIVE FEATURE CATALOG
+================================================================================
+
+--------------------------------------------------------------------------------
+6.1. AUTHENTICATION, ONBOARDING & SECURITY
+--------------------------------------------------------------------------------
+- Full Registration & Login: Email and password authentication with instant
+  session management and password hashing via Supabase Auth.
+- Auto-Confirmation: New accounts are automatically verified for immediate
+  login access without waiting on external confirmation links.
+- 6-Digit OTP Password Reset Flow:
+  * Users click "Forgot Password?" to request a 6-digit numeric OTP.
+  * Delivered via Nodemailer directly to the user's inbox with clear branding.
+  * Uses stateless HMAC-SHA256 fallback tokens so password resets succeed even
+    across cold-starting serverless micro-instances on Vercel.
+  * 15-minute strict expiration window with rate-limiting.
+- Account Deletion & Data Wiping: Standard users can erase their account and all
+  associated transactions with a single confirmed action.
+
+--------------------------------------------------------------------------------
+6.2. SAFE-TO-SPEND DAILY ENGINE & PAYDAY CYCLE PLANNING
+--------------------------------------------------------------------------------
+- Real-Time Daily Allowance: Calculates the exact amount of money the user can
+  safely spend each day until the next payday.
+- Strict Quarantine Logic:
+  * Formula: Safe-to-Spend = (Net Take-Home Pay - Upcoming Debit Orders
+                              - Pending Debt Instalments - Savings Vault Ringfences
+                              - Variable Expenses Already Cleared) / Remaining Days.
+- Visual Velocity Dial: An interactive circular gauge that shifts from calm sage
+  green to editorial terracotta if spending velocity exceeds daily pace.
+- 1-Click Salary & Payday Editor: Accessible directly from the dashboard meter,
+  the user menu, or the profile drawer. Users can update their monthly take-home
+  amount and payday day (1st-31st) with instant recalculation.
+
+--------------------------------------------------------------------------------
+6.3. WHAT-IF PAYDAY RUNWAY SIMULATOR
+--------------------------------------------------------------------------------
+- Real-Time Zero-Spend Projection: Answers "If I don't spend a single cent on
+  unplanned items from today, how much cash will I land on payday with?"
+- Scenario Sliders: Allows the user to simulate:
+  * Reducing daily spend by 20%, 50%, or 100%.
+  * Adding an unexpected one-off expense (e.g. R850 tyre puncture).
+  * Receiving an unexpected cash inflow (e.g. freelance work, bonus).
+- Visual Runway Chart: Displays projected daily bank trajectory through payday.
+
+--------------------------------------------------------------------------------
+6.4. "CAN I AFFORD IT?" PURCHASE DECISION SIMULATOR
+--------------------------------------------------------------------------------
+- Pre-Purchase Calculator: Allows users to test a potential expense (e.g. R1,200
+  dinner or jacket) BEFORE swiping their card.
+- Impact Evaluation: Shows precisely how the expense reduces daily Safe-to-Spend
+  for every remaining day in the month.
+- Decision Verdicts:
+  * "Comfortable": Fits within the daily surplus without pinching future days.
+  * "Tight": Drops daily allowance below safe minimum threshold.
+  * "Critical": Breaches debit order ringfences; prompts postponing purchase.
+
+--------------------------------------------------------------------------------
+6.5. RECURRING BILLS & DEBIT ORDER TIMELINE (WITH PRICE-HIKE DETECTION)
+--------------------------------------------------------------------------------
+- Visual Timeline View: Chronological list of all debit orders mapped against
+  their respective day of the month (e.g. 1st, 15th, 25th, 28th).
+- Cleared vs. Pending Tracking: Single-click toggle to mark a debit order as
+  cleared once the bank notification arrives.
+- Automatic Ring-Fencing: Uncleared debit orders are subtracted from Safe-to-Spend;
+  cleared debit orders are marked off without double-counting.
+- Price-Hike Detection & Warning Flags:
+  * Compares current cleared amount against previous month's baseline.
+  * Automatically flags subscriptions (e.g. WiFi, insurance, gym, medical aid)
+    that increase in price, displaying a warning badge with the exact difference.
+- 1-Click Inline Amount & Due-Date Editing: Update amounts directly from the card.
+
+--------------------------------------------------------------------------------
+6.6. SAVINGS VAULTS, EMERGENCY FUND & STOKVEL GOAL TRACKER
+--------------------------------------------------------------------------------
+- Ring-Fenced Savings Funds: Protects savings goals by quarantining monthly
+  deposits out of the daily Safe-to-Spend pool.
+- South African Pre-Configured Templates:
+  * 3-Month Emergency Fund
+  * Stokvel Monthly Contribution Pool
+  * December Holiday / Festive Fund
+  * Car Service & Licence Disc Fund
+  * School Fees / Stationery Reserve
+- Progress Tracking & Milestones: Visual percentage progress bars, target date
+  estimators, and confetti celebration triggers upon completion.
+- Deposit Logging: Log monthly transfers into the vault with instant balance updates.
+
+--------------------------------------------------------------------------------
+6.7. DEBT & LOAN SNOWBALL PAYDOWN TRACKER
+--------------------------------------------------------------------------------
+- Full Contract Directory: Track vehicle financing, credit cards, student loans,
+  clothing accounts, and personal loans.
+- Debt Details: Principal balance, current balance, interest rate, monthly
+  instalment, and creditor name.
+- Snowball / Avalanche Milestone Calculator: Highlights which debt to attack first
+  to maximize interest savings or psychological momentum.
+- 1-Click Payment Logger: Log regular or extra lump-sum payments to see the
+  payoff date pull closer in real time.
+
+--------------------------------------------------------------------------------
+6.8. SMART BUDGET PLANNER & CATEGORY BOARD
+--------------------------------------------------------------------------------
+- Category Budget Caps: Set custom spending ceilings for Groceries, Fuel, Dining,
+  Entertainment, Health, Shopping, Utilities, etc.
+- Interactive Sorted Board:
+  * Automatically sorts categories by risk level: "Over Budget", "Near Limit",
+    and "On Track".
+- Real-Time Spent vs. Cap Progress Bars: Color-coded progress indicators with
+  exact remaining ZAR amounts.
+- Master Recurring Budgets: Carry forward recurring budgets across monthly cycles
+  without manual re-entry.
+- Custom Category Creation: Add custom lifestyle categories (e.g. "Specialty Coffee",
+  "Padel Tennis", "Pet Care") with cloud synchronization.
+
+--------------------------------------------------------------------------------
+6.9. TRANSACTION LEDGER & EXPENSE TRACKING
+--------------------------------------------------------------------------------
+- Quick Add Modal: Rapid expense entry with automatic category prediction.
+- Detailed Ledger Table:
+  * Search by merchant, description, or amount.
+  * Filter by category, payment method (Credit Card, Debit Card, EFT, Cash),
+    or date range.
+  * Inline editing and single-click deletion.
+- South African Quick-Picks: Fast buttons for common merchants (Woolies, Checkers,
+  Engen, Shell, Takealot, Uber, Dis-Chem).
+- CSV & JSON Statement Export: Download your full transaction history anytime.
+
+--------------------------------------------------------------------------------
+6.10. TILL SLIP / RECEIPT OCR QUICK-SCAN
+--------------------------------------------------------------------------------
+- Mobile Camera Snap / File Upload: Integrated directly into the Quick Add modal.
+- Client-Side Receipt Parsing:
+  * Extracts total ZAR amount, transaction date, and merchant name.
+  * Auto-categorizes based on identified store (e.g. "Checkers" -> Groceries,
+    "Sasol" -> Fuel).
+- Image Preview & Verification: Users review scanned figures before saving.
+
+--------------------------------------------------------------------------------
+6.11. MONTHLY EDITORIAL FINANCIAL STORY ("WRAPPED" REPORT)
+--------------------------------------------------------------------------------
+- 3-Slide Interactive Editorial Story:
+  * Slide 1: The Macro Picture (Net Income, Total Outflow, Net Savings Rate).
+  * Slide 2: Category Superlatives (Top spending category, biggest merchant,
+    frequent impulse day).
+  * Slide 3: Discipline & Victories (Debts crushed, debit orders cleared on time,
+    savings vaults funded).
+- Newspaper / Magazine Aesthetic: Styled in high-contrast editorial typography
+  reminiscent of financial periodicals (Financial Times, Monocle).
+- Print & PDF Friendly: Formatted for clean printing or saving as a monthly PDF.
+
+--------------------------------------------------------------------------------
+6.12. AUTOMATED EMAIL DISPATCHES (PAYDAY & DEBIT ORDER DIGEST)
+--------------------------------------------------------------------------------
+- Payday Celebration Digest: Automated email arriving on cycle start detailing
+  safe spend allowance and recommended allocations.
+- Debit Order Heads-Up Alert: Email warning sent 48 hours prior to major debit
+  orders (e.g. rent, car payment) to ensure account liquidity.
+- Direct SMTP Serverless Delivery: Powered by Nodemailer with automatic TLS/SSL
+  handling and retry failovers.
+
+--------------------------------------------------------------------------------
+6.13. SUPER USER ADMINISTRATIVE CONSOLE (/settings)
+--------------------------------------------------------------------------------
+- Role-Gated Access: Strict server and client gating ensuring only superusers
+  (Emmanuel Kgaphola) can view or execute actions.
+- User Management Directory:
+  * Live table of all registered accounts from `public.users`.
+  * View email, full name, role badge, registration date, and last active sync.
+  * Promote / Demote roles between `standard` and `superuser`.
+  * Delete test / inactive accounts with cascading database cleanup.
+- System Diagnostics:
+  * Supabase cloud connectivity health check.
+  * SMTP mailer handshake status.
+  * Environment variable presence inspection.
+
+--------------------------------------------------------------------------------
+6.14. USER PROFILE & PREFERENCES SELF-SERVICE DRAWER
+--------------------------------------------------------------------------------
+- Native Dialog Architecture: Modal with background lock and full keyboard
+  accessibility (ESC key dismiss).
+- Accessible to All Users: Standard users can access this drawer from the top
+  navigation user menu without needing access to `/settings`.
+- Profile Customization:
+  * Update Full Name and display greeting.
+  * Select personal Avatar Color swatch (Emerald, Amber, Ink, Crimson, Indigo).
+- Financial Preferences:
+  * Update Take-Home Monthly Salary (ZAR).
+  * Select Primary Payday Date (1st-31st).
+- Personal Data Portability:
+  * Export personal CSV ledger.
+  * Export complete JSON backup.
+- Password Security: Direct link to reset or change account password.
+
+================================================================================
+7. DESIGN SYSTEM, AESTHETIC & UI TOKENS
+================================================================================
+Mint Month is built on the bespoke "Vela" editorial design language:
+- Color Palette:
+  * Background: `#FBF6EF` (Warm antique paper / vellum cream)
+  * Surface Cards: `#FFFDFA` (Crisp bleached linen)
+  * Primary Text / Ink: `#0D0D0C` (Deep charcoal lampblack)
+  * Borders: `#E2D9CC` (Fine newspaper rule line)
+  * Accent Sage: `#2A5A43` (Disciplined wealth / positive runway)
+  * Accent Terracotta: `#8B3A2B` (Thoughtful warning / over-velocity)
+  * Accent Gold: `#C48427` (Vaults / Stokvel milestones)
+- Typography:
+  * Display: Newsreader / Editorial Serif (Warm, authoritative)
+  * UI & Metrics: Inter / Clean Sans-Serif (Legible, tabular numerals)
+- Texture: Subtle SVG fractal noise grain overlay creating an authentic paper
+  tactile experience.
+
+================================================================================
+8. ENVIRONMENT VARIABLES REFERENCE (.env.local)
+================================================================================
+The following variables configure the local and production runtime:
+
+# Supabase Cloud Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+DATABASE_URL=postgresql://postgres:<password>@db.<ref>.supabase.co:5432/postgres
+
+# Application URL
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Super User Configuration
+SUPERUSER_EMAIL=Proit45ma@gmail.com
+
+# SMTP Email Dispatcher (Gmail / Outlook / SES)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=Proit45ma@gmail.com
+SMTP_PASS=your-app-password
+SMTP_FROM="Mint Month <Proit45ma@gmail.com>"
+
+================================================================================
+9. DEPLOYMENT & PRODUCTION SETUP
+================================================================================
+Mint Month is fully optimized for Vercel, Supabase, and Node.js environments:
+1. Production Build Command: `npm run build`
+2. Start Command: `npm run start`
+3. Lint & Typecheck: `npm run lint` && `npx tsc --noEmit`
+4. Database Migrations: Run the provided SQL migration scripts in the Supabase
+   SQL Editor to create tables, triggers, and RLS policies.
+5. All sensitive credentials remain securely locked within environment variables.
+
+================================================================================
+                           END OF DOCUMENTATION
+================================================================================
