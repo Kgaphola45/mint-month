@@ -285,17 +285,19 @@ export function SafeToSpendMeter() {
           </p>
         </button>
 
-        {/* 2. Quarantined Debit Orders */}
+        {/* 2. Quarantined Debit Orders & Ring-Fenced Savings */}
         <div className="p-4 sm:p-5 rounded-[20px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06]">
           <div className="flex items-center justify-between text-xs text-[#0D0D0C]/56 mb-1">
-            <span>Quarantined for Debit Orders</span>
+            <span>Quarantined Bills &amp; Savings</span>
             <Lock className="w-4 h-4 stroke-[1.5] text-[#0D0D0C]/40" />
           </div>
           <div className="text-xl sm:text-2xl font-medium tracking-tight text-[#0D0D0C]">
             {formatCurrency(safe.fixedCommitments, currency)}
           </div>
           <p className="text-xs text-[#0D0D0C]/50 mt-1">
-            {safe.pendingCommitments > 0
+            {(safe.ringFencedSavings || 0) > 0
+              ? `Includes ${formatCurrency(safe.ringFencedSavings || 0, currency)} ring-fenced savings`
+              : safe.pendingCommitments > 0
               ? `${formatCurrency(safe.pendingCommitments, currency)} still to run`
               : "All debit orders cleared"}
           </p>

@@ -11,6 +11,9 @@ import {
   Building2,
   Banknote,
   Zap,
+  TrendingUp,
+  AlertTriangle,
+  Pencil,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, formatMonthYear } from "@/lib/utils";
@@ -23,10 +26,13 @@ export function RecurringTimeline() {
     currency,
     getRecurringTimeline,
     toggleRecurringCleared,
+    updateRecurringBillAmount,
     setQuickAddOpen,
   } = useExpenseStore();
 
   const [filter, setFilter] = useState<"all" | "pending" | "cleared">("all");
+  const [editingBillId, setEditingBillId] = useState<string | null>(null);
+  const [newBillAmount, setNewBillAmount] = useState<string>("");
 
   const { items, summary } = getRecurringTimeline(selectedMonth);
 
@@ -213,6 +219,30 @@ export function RecurringTimeline() {
         </div>
       </div>
 
+      {/* Recurring Debit Order Price-Hike Alert Banner */}
+      {(summary.priceHikeCount || 0) > 0 && (
+        <div className="p-4 sm:p-5 rounded-[20px] bg-[#F8DCC7]/70 border border-[#F99654]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-[#0D0D0C] text-[#FFFDFA] flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-4 h-4 stroke-[1.75]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#0D0D0C]">
+                  Debit Order Price-Hike Alert
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-[10px] font-semibold">
+                  +{formatCurrency(summary.totalPriceHikeImpact || 0, currency)}/mo impact
+                </span>
+              </div>
+              <p className="text-xs text-[#0D0D0C]/75 mt-0.5">
+                {summary.priceHikeCount} recurring debit order{summary.priceHikeCount === 1 ? " has" : "s have"} increased compared to previous monthly clearings. Your Safe-to-Spend buffer has been automatically adjusted.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Timeline List of Recurring Bills */}
       <div className="divide-y divide-[#0D0D0C]/[0.05] pt-2">
         {filteredItems.map((bill) => {
@@ -254,26 +284,81 @@ export function RecurringTimeline() {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 text-xs text-[#0D0D0C]/56 mt-0.5">
+                  <div className="flex items-center gap-2 text-xs text-[#0D0D0C]/56 mt-0.5 flex-wrap">
                     <span className="font-normal text-[#0D0D0C]/70">
                       {bill.category.name}
                     </span>
                     <span>•</span>
                     <span>Scheduled for day {bill.day}</span>
+                    {bill.priceHikeAmount && bill.priceHikeAmount > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F8DCC7] border border-[#F99654]/60 text-[10px] font-semibold text-[#0D0D0C]">
+                        <TrendingUp className="w-3 h-3 text-rose-700" />
+                        <span>
+                          Price Hike +{formatCurrency(bill.priceHikeAmount, currency)} (+{bill.priceHikePercent}%) vs {formatCurrency(bill.previousAmount || 0, currency)}
+                        </span>
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Right Column: Amount + Status Pill + Interactive Clear Tick */}
+              {/* Right Column: Amount + Price Edit + Status Pill + Interactive Clear Tick */}
               <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 ml-16 sm:ml-0">
-                <div className="text-right">
-                  <span className="text-base sm:text-lg font-medium tracking-tight text-[#0D0D0C] block">
-                    {formatCurrency(bill.amount, currency)}
-                  </span>
-                  <span className="text-[11px] text-[#0D0D0C]/42">
-                    monthly
-                  </span>
-                </div>
+                {editingBillId === bill.expenseId ? (
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      min="1"
+                      step="any"
+                      value={newBillAmount}
+                      onChange={(e) => setNewBillAmount(e.target.value)}
+                      className="w-24 h-8 px-2.5 rounded-full bg-[#FFFDFA] border border-[#0D0D0C] text-xs font-medium text-[#0D0D0C] focus:outline-none"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const parsed = parseFloat(newBillAmount);
+                        if (parsed > 0) {
+                          updateRecurringBillAmount(bill.expenseId, parsed);
+                        }
+                        setEditingBillId(null);
+                      }}
+                      className="px-2.5 h-8 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-[11px] font-medium"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingBillId(null)}
+                      className="px-2 h-8 rounded-full border border-[#0D0D0C]/20 text-[11px] text-[#0D0D0C]"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <span className="text-base sm:text-lg font-medium tracking-tight text-[#0D0D0C] block">
+                        {formatCurrency(bill.amount, currency)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingBillId(bill.expenseId);
+                          setNewBillAmount(bill.amount.toString());
+                        }}
+                        className="p-1 rounded-full hover:bg-[#0D0D0C]/[0.06] text-[#0D0D0C]/45 hover:text-[#0D0D0C] transition-colors"
+                        title="Update debit order amount (triggers price-hike comparison)"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <span className="text-[11px] text-[#0D0D0C]/42">
+                      monthly
+                    </span>
+                  </div>
+                )}
 
                 {/* Dynamic Status Pill */}
                 <div className="flex items-center gap-2">

@@ -10,6 +10,8 @@ import { StatsCards } from "@/components/stats-cards";
 import { SafeToSpendMeter } from "@/components/safe-to-spend-meter";
 import { PaydayWhatIfWidget } from "@/components/payday-what-if-widget";
 import { RecurringTimeline } from "@/components/recurring-timeline";
+import { SavingsVaultTracker } from "@/components/savings-vault-tracker";
+import { DebtTracker } from "@/components/debt-tracker";
 import { TransactionsList } from "@/components/transactions-list";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
@@ -173,6 +175,16 @@ export default function DashboardPage() {
         {/* 6. Upcoming Recurring Bills & Debit Orders Timeline */}
         <section>
           <RecurringTimeline />
+        </section>
+
+        {/* 6b. Emergency Fund, Savings Vaults & Stokvel Goal Tracker */}
+        <section>
+          <SavingsVaultTracker />
+        </section>
+
+        {/* 6c. Debt & Instalment Paydown Tracker */}
+        <section>
+          <DebtTracker />
         </section>
 
         {/* 7. Visual Charts Grid (Category Donut & Daily Bar Flow) */}

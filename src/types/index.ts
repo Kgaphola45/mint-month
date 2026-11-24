@@ -62,6 +62,9 @@ export interface RecurringTimelineItem {
   isCleared: boolean;   // Whether this debit order/bill has cleared
   status: "cleared" | "today" | "upcoming";
   daysUntil: number;    // negative if passed, 0 if today, positive if upcoming
+  previousAmount?: number;
+  priceHikeAmount?: number;
+  priceHikePercent?: number;
 }
 
 export interface RecurringTimelineSummary {
@@ -72,6 +75,33 @@ export interface RecurringTimelineSummary {
   clearedCount: number;
   pendingCount: number;
   percentageCleared: number;
+  priceHikeCount?: number;
+  totalPriceHikeImpact?: number;
+}
+
+export type SavingsVaultType = "emergency" | "stokvel" | "sinking" | "holiday";
+
+export interface SavingsGoal {
+  id: string;
+  name: string;
+  vaultType: SavingsVaultType;
+  targetAmount: number;
+  savedAmount: number;
+  monthlyContribution: number;
+  dueDay?: number;
+  ringFenceInSafeToSpend: boolean;
+  notes?: string;
+  isCompleted?: boolean;
+  createdAt?: string;
+}
+
+export interface SavingsSummary {
+  totalMonthlyRingFenced: number;
+  totalSaved: number;
+  totalTarget: number;
+  overallProgress: number;
+  activeCount: number;
+  completedCount: number;
 }
 
 export interface DebtInstalment {
@@ -119,6 +149,7 @@ export interface SafeToSpendSummary {
   daysUntilPayday: number;
   status: "comfortable" | "balanced" | "tight" | "overspent";
   fixedCommitmentsCount: number;
+  ringFencedSavings?: number;
 }
 
 export interface PaydaySettings {

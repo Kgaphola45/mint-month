@@ -15,6 +15,8 @@ import {
   RecurringTimelineSummary,
   DebtInstalment,
   DebtSummary,
+  SavingsGoal,
+  SavingsSummary,
   SafeToSpendSummary,
   User,
   RegisterInput,
@@ -65,6 +67,7 @@ interface ExpenseStore {
   recurringBudgets: Record<string, number>; // Category limits that automatically repeat every month
   clearedRecurring: Record<string, boolean>; // 'YYYY-MM:expenseId' -> boolean
   debts: DebtInstalment[]; // Debt & contract instalment plans
+  savingsGoals: SavingsGoal[]; // Emergency fund, Stokvel & sinking fund vaults
   incomes: Record<string, number>; // Month -> Income (or 'default' -> default income)
   paydayDay: number; // 1-31, default 25
   isLoaded: boolean;
@@ -151,6 +154,14 @@ interface ExpenseStore {
   decrementDebtInstalment: (id: string) => void;
   getDebtSummary: () => DebtSummary;
 
+  // Savings vaults & Stokvel goal actions
+  addSavingsGoal: (goal: Omit<SavingsGoal, "id">) => void;
+  updateSavingsGoal: (id: string, updates: Partial<SavingsGoal>) => void;
+  deleteSavingsGoal: (id: string) => void;
+  contributeToSavingsGoal: (id: string, amount?: number) => void;
+  getSavingsSummary: () => SavingsSummary;
+  updateRecurringBillAmount: (expenseId: string, newAmount: number) => void;
+
   resetToDefaults: () => void;
   exportDataJSON: () => string;
   exportDataCSV: () => string;
@@ -198,6 +209,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   recurringBudgets: {},
   clearedRecurring: {},
   debts: [],
+  savingsGoals: [],
   incomes: { default: 25000 },
   paydayDay: 25,
   isLoaded: false,
@@ -241,6 +253,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const recurringBudgets = storage.getRecurringBudgets();
     const clearedRecurring = storage.getClearedRecurring();
     const debts = storage.getDebts();
+    const savingsGoals = storage.getSavingsGoals();
     const incomes = storage.getIncomes();
     const paydayDay = storage.getPaydayDay();
     const currency = storage.getCurrency() || "ZAR";
@@ -291,6 +304,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       recurringBudgets,
       clearedRecurring,
       debts,
+      savingsGoals,
       incomes,
       paydayDay,
       currency,
@@ -358,6 +372,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       const localPayday = storage.getPaydayDay();
       const localRecurringBudgets = storage.getRecurringBudgets();
       const localClearedRecurring = storage.getClearedRecurring();
+      const localSavingsGoals =
+        cur.savingsGoals.length > 0 ? cur.savingsGoals : storage.getSavingsGoals();
 
       // 1. NON-DESTRUCTIVE TRANSACTIONS MERGE
       const txMap = new Map<string, Expense>();
@@ -466,6 +482,19 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         ...(remotePrefs?.clearedRecurring || {}),
       };
 
+      const savingsMap = new Map<string, SavingsGoal>();
+      for (const g of localSavingsGoals) {
+        savingsMap.set(g.id, g);
+      }
+      if (remotePrefs?.savingsGoals && Array.isArray(remotePrefs.savingsGoals)) {
+        for (const rg of remotePrefs.savingsGoals) {
+          if (rg && rg.id) {
+            savingsMap.set(rg.id, rg);
+          }
+        }
+      }
+      const mergedSavingsGoals = Array.from(savingsMap.values());
+
       const activeUser = get().currentUser;
       const updatedUser = activeUser
         ? {
@@ -480,6 +509,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         expenses: mergedExpenses,
         budgets: mergedBudgets,
         debts: mergedDebts,
+        savingsGoals: mergedSavingsGoals,
         categories: mergedCategories,
         incomes: mergedIncomes,
         paydayDay: mergedPaydayDay,
@@ -490,6 +520,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       storage.saveExpenses(mergedExpenses);
       storage.saveBudgets(mergedBudgets);
       storage.saveDebts(mergedDebts);
+      storage.saveSavingsGoals(mergedSavingsGoals);
       storage.saveCategories(mergedCategories);
       storage.saveIncomes(mergedIncomes);
       storage.savePaydayDay(mergedPaydayDay);
@@ -497,7 +528,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       storage.saveClearedRecurring(mergedClearedRecurring);
       saveCachedTransactions(mergedExpenses).catch(() => {});
 
-      // Push merged preferences (custom categories, salary, payday, recurring budgets) back to Supabase
+      // Push merged preferences (custom categories, salary, payday, recurring budgets, savings goals) back to Supabase
       upsertSupabaseUserPreferences(targetUserId, {
         categories: mergedCategories,
         incomes: mergedIncomes,
@@ -505,6 +536,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         monthlySalary: mergedIncomes.default || 25000,
         recurringBudgets: mergedRecurringBudgets,
         clearedRecurring: mergedClearedRecurring,
+        savingsGoals: mergedSavingsGoals,
       }).catch(console.error);
     } catch (err) {
       console.error("Supabase sync error:", err);
@@ -939,6 +971,169 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       nextPayoffMonths:
         minRemainingMonths < Infinity ? minRemainingMonths : undefined,
     };
+  },
+
+  addSavingsGoal: (goalData) => {
+    const id = safeUUID();
+    const isCompleted = (goalData.savedAmount || 0) >= goalData.targetAmount;
+    const newGoal: SavingsGoal = {
+      ...goalData,
+      id,
+      isCompleted,
+      createdAt: new Date().toISOString(),
+    };
+    const updated = [...get().savingsGoals, newGoal];
+    storage.saveSavingsGoals(updated);
+    set({ savingsGoals: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        savingsGoals: updated,
+      }).catch(console.error);
+    }
+  },
+
+  updateSavingsGoal: (id, updates) => {
+    const updated = get().savingsGoals.map((g) => {
+      if (g.id !== id) return g;
+      const merged = { ...g, ...updates };
+      merged.isCompleted = merged.savedAmount >= merged.targetAmount;
+      return merged;
+    });
+    storage.saveSavingsGoals(updated);
+    set({ savingsGoals: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        savingsGoals: updated,
+      }).catch(console.error);
+    }
+  },
+
+  deleteSavingsGoal: (id) => {
+    const updated = get().savingsGoals.filter((g) => g.id !== id);
+    storage.saveSavingsGoals(updated);
+    set({ savingsGoals: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        savingsGoals: updated,
+      }).catch(console.error);
+    }
+  },
+
+  contributeToSavingsGoal: (id, customAmount) => {
+    const updated = get().savingsGoals.map((g) => {
+      if (g.id !== id) return g;
+      const delta = customAmount !== undefined ? customAmount : g.monthlyContribution;
+      const nextSaved = Math.max(0, (g.savedAmount || 0) + delta);
+      return {
+        ...g,
+        savedAmount: nextSaved,
+        isCompleted: nextSaved >= g.targetAmount,
+      };
+    });
+    storage.saveSavingsGoals(updated);
+    set({ savingsGoals: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        savingsGoals: updated,
+      }).catch(console.error);
+    }
+  },
+
+  getSavingsSummary: () => {
+    const goals = get().savingsGoals;
+    let totalMonthlyRingFenced = 0;
+    let totalSaved = 0;
+    let totalTarget = 0;
+    let activeCount = 0;
+    let completedCount = 0;
+
+    for (const g of goals) {
+      const done = Boolean(g.isCompleted || g.savedAmount >= g.targetAmount);
+      totalSaved += g.savedAmount || 0;
+      totalTarget += g.targetAmount || 0;
+      if (done) {
+        completedCount++;
+      } else {
+        activeCount++;
+        if (g.ringFenceInSafeToSpend) {
+          totalMonthlyRingFenced += g.monthlyContribution || 0;
+        }
+      }
+    }
+
+    const overallProgress =
+      totalTarget > 0 ? Math.min(100, Math.round((totalSaved / totalTarget) * 100)) : 0;
+
+    return {
+      totalMonthlyRingFenced,
+      totalSaved,
+      totalTarget,
+      overallProgress,
+      activeCount,
+      completedCount,
+    };
+  },
+
+  updateRecurringBillAmount: (expenseId: string, newAmount: number) => {
+    if (newAmount <= 0) return;
+    const targetMonth = get().selectedMonth;
+    const allExpenses = [...get().expenses];
+    const targetExp = allExpenses.find((e) => e.id === expenseId);
+
+    if (targetExp) {
+      const oldAmount = targetExp.amount;
+      const cleanNote = (targetExp.note || "").replace(/\s*\(Recurring\)\s*/i, "").trim();
+      const prevMonthStr = format(subMonths(parse(targetMonth, "yyyy-MM", new Date()), 1), "yyyy-MM");
+
+      // Ensure a baseline record exists in previous month so Price-Hike detection has the prior cleared price
+      const hasPrevBaseline = allExpenses.some(
+        (e) =>
+          e.isRecurring &&
+          e.date.startsWith(prevMonthStr) &&
+          (e.note || "").replace(/\s*\(Recurring\)\s*/i, "").trim().toLowerCase() ===
+            cleanNote.toLowerCase()
+      );
+
+      if (!hasPrevBaseline && oldAmount !== newAmount) {
+        const dayPart = targetExp.date.slice(8, 10) || "01";
+        const baselineExp: Expense = {
+          id: safeUUID(),
+          amount: oldAmount,
+          categoryId: targetExp.categoryId,
+          note: targetExp.note,
+          date: `${prevMonthStr}-${dayPart}`,
+          paymentMethod: targetExp.paymentMethod,
+          isRecurring: true,
+          createdAt: new Date().toISOString(),
+        };
+        allExpenses.push(baselineExp);
+        const curUser = get().currentUser;
+        if (curUser?.id && isSupabaseConfigured()) {
+          insertSupabaseTransaction(baselineExp, curUser.id).catch(console.error);
+        }
+      }
+
+      const updatedExpenses = allExpenses.map((e) =>
+        e.id === expenseId ? { ...e, amount: newAmount } : e
+      );
+      storage.saveExpenses(updatedExpenses);
+      set({ expenses: updatedExpenses });
+
+      const curUser = get().currentUser;
+      if (curUser?.id && isSupabaseConfigured()) {
+        updateSupabaseTransaction(expenseId, { amount: newAmount }, curUser.id).catch(
+          console.error
+        );
+      }
+    }
   },
 
   addExpense: (expenseData) => {
@@ -1642,6 +1837,21 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const todayMonth = todayStr.slice(0, 7);
     const todayDay = parseInt(todayStr.slice(8, 10), 10);
 
+    // Map historical recurring bills from prior months by normalized merchant note to detect price hikes
+    const normalizeBillName = (note: string) =>
+      (note || "").replace(/\s*\(Recurring\)\s*/i, "").trim().toLowerCase();
+
+    const priorRecurringByNote = new Map<string, number>();
+    allExpenses
+      .filter((e) => e.isRecurring && e.date.slice(0, 7) < targetMonth)
+      .sort((a, b) => (a.date < b.date ? -1 : 1))
+      .forEach((e) => {
+        const key = `${e.categoryId}:${normalizeBillName(e.note)}`;
+        if (e.amount > 0) {
+          priorRecurringByNote.set(key, e.amount);
+        }
+      });
+
     const items: RecurringTimelineItem[] = recurringInMonth
       .map((exp) => {
         const cat = catMap.get(exp.categoryId) || {
@@ -1682,6 +1892,20 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
           status = "upcoming";
         }
 
+        const lookupKey = `${exp.categoryId}:${normalizeBillName(exp.note || cat.name)}`;
+        const previousAmount = priorRecurringByNote.get(lookupKey);
+        const hasPriceHike =
+          previousAmount !== undefined &&
+          previousAmount > 0 &&
+          exp.amount > previousAmount;
+        const priceHikeAmount = hasPriceHike
+          ? Math.round((exp.amount - previousAmount) * 100) / 100
+          : undefined;
+        const priceHikePercent =
+          hasPriceHike && previousAmount
+            ? Math.round(((exp.amount - previousAmount) / previousAmount) * 100)
+            : undefined;
+
         return {
           id: exp.id,
           expenseId: exp.id,
@@ -1695,6 +1919,9 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
           isCleared,
           status,
           daysUntil,
+          previousAmount: hasPriceHike ? previousAmount : undefined,
+          priceHikeAmount,
+          priceHikePercent,
         };
       })
       .sort((a, b) => a.day - b.day);
@@ -1713,6 +1940,13 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const percentageCleared =
       totalCommitted > 0 ? Math.round((clearedAmount / totalCommitted) * 100) : 0;
 
+    const hikedItems = items.filter((item) => (item.priceHikeAmount || 0) > 0);
+    const priceHikeCount = hikedItems.length;
+    const totalPriceHikeImpact = hikedItems.reduce(
+      (sum, item) => sum + (item.priceHikeAmount || 0),
+      0
+    );
+
     return {
       items,
       summary: {
@@ -1723,6 +1957,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         clearedCount,
         pendingCount,
         percentageCleared,
+        priceHikeCount,
+        totalPriceHikeImpact,
       },
     };
   },
@@ -1733,10 +1969,12 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const monthlyIncome = incomes[targetMonth] || incomes.default || 25000;
     const paydayDay = get().paydayDay || 25;
 
-    // 1. Fixed commitments (debit orders, contracts, recurring subscriptions)
+    // 1. Fixed commitments (debit orders, contracts, recurring subscriptions + ring-fenced savings/Stokvel goals)
     const timeline = get().getRecurringTimeline(targetMonth);
-    const fixedCommitments = timeline.summary.totalCommitted;
-    const pendingCommitments = timeline.summary.pendingAmount;
+    const savingsSummary = get().getSavingsSummary();
+    const ringFencedSavings = savingsSummary.totalMonthlyRingFenced;
+    const fixedCommitments = timeline.summary.totalCommitted + ringFencedSavings;
+    const pendingCommitments = timeline.summary.pendingAmount + ringFencedSavings;
     const clearedCommitments = timeline.summary.clearedAmount;
     const fixedCommitmentsCount = timeline.summary.totalCount;
 
@@ -1821,6 +2059,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       daysUntilPayday,
       status,
       fixedCommitmentsCount,
+      ringFencedSavings,
     };
   },
 

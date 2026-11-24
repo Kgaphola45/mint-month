@@ -1,4 +1,4 @@
-import { Expense, Category, Budget, DebtInstalment, User, isSuperUser, SUPER_USER_EMAIL } from "@/types";
+import { Expense, Category, Budget, DebtInstalment, SavingsGoal, User, isSuperUser, SUPER_USER_EMAIL } from "@/types";
 
 export const SUPER_USER_SEED: User = {
   id: "3447bcb1-78e1-4f43-805f-247a3d171f56",
@@ -20,6 +20,7 @@ const STORAGE_KEYS = {
   RECURRING_BUDGETS: "mint_month_recurring_budgets_v3",
   CLEARED_RECURRING: "mint_month_cleared_recurring_v3",
   DEBTS: "mint_month_debts_v3",
+  SAVINGS_GOALS: "mint_month_savings_goals_v3",
   INCOMES: "mint_month_incomes_v3",
   PAYDAY: "mint_month_payday_v3",
   CURRENCY: "mint_month_currency_v3",
@@ -449,6 +450,21 @@ export class LocalStorageAdapter implements StorageAdapter {
   saveDebts(debts: DebtInstalment[]): void {
     if (!this.isClient()) return;
     localStorage.setItem(this.getKey(STORAGE_KEYS.DEBTS), JSON.stringify(debts));
+  }
+
+  getSavingsGoals(): SavingsGoal[] {
+    if (!this.isClient()) return [];
+    try {
+      const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.SAVINGS_GOALS));
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  saveSavingsGoals(goals: SavingsGoal[]): void {
+    if (!this.isClient()) return;
+    localStorage.setItem(this.getKey(STORAGE_KEYS.SAVINGS_GOALS), JSON.stringify(goals));
   }
 
   getIncomes(): Record<string, number> {

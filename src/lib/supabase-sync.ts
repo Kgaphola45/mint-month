@@ -1,5 +1,5 @@
 import { getSupabaseClient } from "./supabase/client";
-import { Expense, Budget, DebtInstalment, PaymentMethod, User, Category, isSuperUser, SUPER_USER_EMAIL } from "@/types";
+import { Expense, Budget, DebtInstalment, SavingsGoal, PaymentMethod, User, Category, isSuperUser, SUPER_USER_EMAIL } from "@/types";
 import { storage } from "./storage";
 
 // Helper to check if a string is a valid UUID
@@ -849,6 +849,7 @@ export interface CloudUserPreferences {
   monthlySalary?: number;
   recurringBudgets?: Record<string, number>;
   clearedRecurring?: Record<string, boolean>;
+  savingsGoals?: SavingsGoal[];
 }
 
 export async function fetchSupabaseUserPreferences(
@@ -888,6 +889,9 @@ export async function fetchSupabaseUserPreferences(
     if (metaPrefs.clearedRecurring && typeof metaPrefs.clearedRecurring === "object") {
       result.clearedRecurring = metaPrefs.clearedRecurring;
     }
+    if (Array.isArray(metaPrefs.savingsGoals)) {
+      result.savingsGoals = metaPrefs.savingsGoals;
+    }
 
     // 2. Read from public.users table (overrides/merges with metadata if present)
     const { data: userRow } = await supabase
@@ -921,6 +925,9 @@ export async function fetchSupabaseUserPreferences(
           ...(result.clearedRecurring || {}),
           ...rowPrefs.clearedRecurring,
         };
+      }
+      if (Array.isArray(rowPrefs.savingsGoals) && rowPrefs.savingsGoals.length > 0) {
+        result.savingsGoals = rowPrefs.savingsGoals;
       }
     }
 
@@ -961,6 +968,9 @@ export async function upsertSupabaseUserPreferences(
         : {}),
       ...(updates.clearedRecurring !== undefined
         ? { clearedRecurring: updates.clearedRecurring }
+        : {}),
+      ...(updates.savingsGoals !== undefined
+        ? { savingsGoals: updates.savingsGoals }
         : {}),
     };
 
