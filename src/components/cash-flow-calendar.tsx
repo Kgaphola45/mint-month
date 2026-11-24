@@ -416,13 +416,15 @@ export function CashFlowCalendar() {
                           {day.dateStr}
                         </span>
                         {day.isPayday && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 font-bold uppercase">
-                            🎉 Payday
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 font-bold uppercase inline-flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-emerald-800" />
+                            <span>Payday</span>
                           </span>
                         )}
                         {day.isTight && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-900 font-medium">
-                            ⚠️ {day.tightReason || "Tight day"}
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-900 font-medium inline-flex items-center gap-1">
+                            <AlertTriangle className="w-3 h-3 text-rose-700" />
+                            <span>{day.tightReason || "Tight day"}</span>
                           </span>
                         )}
                       </div>

@@ -19,6 +19,7 @@ import {
   Award,
   RefreshCw,
   Info,
+  AlertTriangle,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, formatMonthYear } from "@/lib/utils";
@@ -229,7 +230,7 @@ export function PaydayWhatIfWidget() {
               </>
             ) : (
               <>
-                <span>Payday has arrived! 🎉</span>{" "}
+                <span>Payday has arrived!</span>{" "}
                 <span className="text-[#0D0D0C]/75 font-normal">
                   Your new salary deposit resets your daily runway.
                 </span>
@@ -417,17 +418,29 @@ export function PaydayWhatIfWidget() {
               <div className="text-xs text-[#0D0D0C]/65 max-w-sm">
                 {spendAmount === 0 ? (
                   <p>
-                    🌿 <strong>Maximum Acceleration:</strong> By spending R0 tomorrow, your daily budget increases by{" "}
+                    <span className="inline-flex items-center gap-1 font-semibold text-emerald-800">
+                      <TrendingUp className="w-3.5 h-3.5 text-emerald-700" />
+                      Maximum Acceleration:
+                    </span>{" "}
+                    By spending R0 tomorrow, your daily budget increases by{" "}
                     <strong>+{formatCurrency(delta, currency)}/day</strong> for every remaining day until payday.
                   </p>
                 ) : isPositive ? (
                   <p>
-                    ✨ <strong>Ahead of Pace:</strong> Spending {formatCurrency(spendAmount, currency)} is below your daily allowance, leaving you with an extra{" "}
+                    <span className="inline-flex items-center gap-1 font-semibold text-amber-800">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                      Ahead of Pace:
+                    </span>{" "}
+                    Spending {formatCurrency(spendAmount, currency)} is below your daily allowance, leaving you with an extra{" "}
                     <strong>+{formatCurrency(delta, currency)}/day</strong> thereafter.
                   </p>
                 ) : (
                   <p>
-                    ⚠️ <strong>Runway Impact:</strong> Spending {formatCurrency(spendAmount, currency)} tomorrow lowers your subsequent daily allowance from {formatCurrency(currentDaily, currency)} to{" "}
+                    <span className="inline-flex items-center gap-1 font-semibold text-rose-800">
+                      <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                      Runway Impact:
+                    </span>{" "}
+                    Spending {formatCurrency(spendAmount, currency)} tomorrow lowers your subsequent daily allowance from {formatCurrency(currentDaily, currency)} to{" "}
                     <strong>{formatCurrency(simulatedDaily, currency)}/day</strong>.
                   </p>
                 )}

@@ -253,7 +253,7 @@ export default function BudgetsPage() {
             <p className="text-xs text-[#0D0D0C]/56 mt-0.5">
               {viewMode === "board"
                 ? "Drag items to the right as you pay them off to track settled bills"
-                : "Tick when paid / sorted • Toggle 🔁 to repeat in every month"}
+                : "Tick when paid or sorted • Toggle Repeat to carry over every month"}
             </p>
           </div>
 

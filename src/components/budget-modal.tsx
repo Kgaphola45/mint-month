@@ -170,7 +170,7 @@ export function BudgetModal() {
             <div className="flex items-center gap-2.5 text-[#0D0D0C]">
               <Repeat className="w-4 h-4 shrink-0 stroke-[1.8]" />
               <span className="text-[#0D0D0C]/80">
-                <strong>Every-Month Option:</strong> Toggle 🔁 on any category to make it persist across every month.
+                <strong>Every-Month Option:</strong> Toggle Repeat on any category to make it persist across every month.
               </span>
             </div>
             <button
