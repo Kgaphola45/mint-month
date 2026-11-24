@@ -13,6 +13,7 @@ import {
   Shield,
   Wallet,
   Pencil,
+  User as UserIcon,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { DeleteAccountModal } from "@/components/delete-account-modal";
@@ -29,6 +30,7 @@ export function UserMenu() {
     paydayDay,
     setAuthModalOpen,
     setPaydayModalOpen,
+    setProfileModalOpen,
     switchUser,
     logout,
   } = useExpenseStore();
@@ -249,6 +251,23 @@ export function UserMenu() {
           )}
 
           <div className="border-t border-[#0D0D0C]/[0.06] pt-1 space-y-0.5">
+            {/* My Profile & Preferences self-service modal available to EVERY user (Standard & Super User) */}
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                setProfileModalOpen(true);
+              }}
+              className="w-full p-2 rounded-[14px] text-xs text-[#0D0D0C]/80 hover:bg-[#FBF6EF] hover:text-[#0D0D0C] flex items-center justify-between transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <UserIcon className="w-3.5 h-3.5 stroke-[1.5]" />
+                <span>My Profile &amp; Preferences</span>
+              </div>
+              <span className="text-[10px] font-medium text-[#0D0D0C]/45">
+                Self-Service
+              </span>
+            </button>
+
             {/* Edit Take-Home Salary available to EVERY user */}
             <button
               onClick={() => {

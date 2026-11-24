@@ -34,6 +34,7 @@ export function Header() {
     setStoryModalOpen,
     setCommandPaletteOpen,
     setPaydayModalOpen,
+    setProfileModalOpen,
   } = useExpenseStore();
 
   // Close mobile drawer on route change
@@ -235,16 +236,28 @@ export function Header() {
                       </span>
                     </div>
                   </div>
-                  {isSuperUser(currentUser) && (
-                    <Link
-                      href="/settings"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="p-1.5 rounded-full hover:bg-[#0D0D0C]/5 text-[#0D0D0C]/60 hover:text-[#0D0D0C] shrink-0 transition-colors"
-                      title="Settings"
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setProfileModalOpen(true);
+                      }}
+                      className="px-2.5 py-1 rounded-full bg-[#0D0D0C] text-[#FFFDFA] text-[10px] font-medium hover:opacity-90 transition-all"
                     >
-                      <Settings className="w-4 h-4" />
-                    </Link>
-                  )}
+                      My Profile
+                    </button>
+                    {isSuperUser(currentUser) && (
+                      <Link
+                        href="/settings"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="p-1.5 rounded-full hover:bg-[#0D0D0C]/5 text-[#0D0D0C]/60 hover:text-[#0D0D0C] shrink-0 transition-colors"
+                        title="Settings"
+                      >
+                        <Settings className="w-4 h-4" />
+                      </Link>
+                    )}
+                  </div>
                 </div>
               )}
 

@@ -46,6 +46,10 @@ const AuthModal = dynamic(
   () => import("./auth-modal").then((m) => m.AuthModal),
   { ssr: false }
 );
+const UserProfileModal = dynamic(
+  () => import("./user-profile-modal").then((m) => m.UserProfileModal),
+  { ssr: false }
+);
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -151,6 +155,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onClose={() => setDigestModalOpen(false)}
       />
       <AuthModal />
+      <UserProfileModal />
     </div>
   );
 }
