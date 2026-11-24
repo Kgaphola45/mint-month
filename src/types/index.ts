@@ -25,6 +25,7 @@ export interface Budget {
   total: number;
   categories: Record<string, number>; // categoryId -> amount
   sortedCategories?: string[]; // category IDs that have a tick (marked sorted)
+  sortedTransactions?: string[]; // transaction IDs marked sorted for this month
   isTotalSorted?: boolean;     // whether total budget is marked sorted
   recurringCategories?: string[]; // category IDs configured to appear in every month's budget
 }
@@ -46,7 +47,7 @@ export interface MonthSummary {
   daysInMonth: number;
   percentageUsed: number;
   sortedCount: number;
-  totalCategoriesWithBudget: number;
+  totalTransactions: number;
   recurringCount: number;
 }
 

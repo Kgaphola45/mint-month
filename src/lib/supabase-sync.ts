@@ -383,6 +383,7 @@ export async function fetchSupabaseBudgets(userId: string): Promise<Budget[]> {
       total: Number(row.total) || 0,
       categories: cleanCats,
       sortedCategories: Array.isArray(meta.sortedCategories) ? meta.sortedCategories : [],
+      sortedTransactions: Array.isArray(meta.sortedTransactions) ? meta.sortedTransactions : [],
       recurringCategories: Array.isArray(meta.recurringCategories) ? meta.recurringCategories : [],
       isTotalSorted: Boolean(meta.isTotalSorted),
     };
@@ -403,6 +404,7 @@ export async function upsertSupabaseBudget(
     ...budget.categories,
     _meta: {
       sortedCategories: budget.sortedCategories || [],
+      sortedTransactions: budget.sortedTransactions || [],
       recurringCategories: budget.recurringCategories || [],
       isTotalSorted: Boolean(budget.isTotalSorted),
     },

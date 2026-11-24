@@ -158,6 +158,8 @@ interface ExpenseStore {
   toggleCategorySorted: (month: string, categoryId: string) => void;
   toggleTotalSorted: (month: string) => void;
   isCategorySorted: (month: string, categoryId: string) => boolean;
+  setTransactionsSorted: (month: string, transactionIds: string[], isSorted: boolean) => void;
+  isTransactionSorted: (month: string, transactionId: string) => boolean;
 
   // Options to make budget items appear in every month's budget
   toggleCategoryRecurring: (month: string, categoryId: string, amount?: number) => void;
@@ -507,6 +509,9 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
             categories: { ...local.categories, ...r.categories },
             sortedCategories: Array.from(
               new Set([...(local.sortedCategories || []), ...(r.sortedCategories || [])])
+            ),
+            sortedTransactions: Array.from(
+              new Set([...(local.sortedTransactions || []), ...(r.sortedTransactions || [])])
             ),
             recurringCategories: Array.from(
               new Set([...(local.recurringCategories || []), ...(r.recurringCategories || [])])
@@ -1545,14 +1550,20 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   },
 
   setBudget: (budget: Budget) => {
-    const existing = get().budgets.filter((b) => b.month !== budget.month);
-    const updated = [...existing, budget];
+    const currentBudgets = get().budgets;
+    const currentBudget = currentBudgets.find((b) => b.month === budget.month);
+    const budgetToSave = {
+      ...budget,
+      sortedTransactions: budget.sortedTransactions ?? currentBudget?.sortedTransactions ?? [],
+    };
+    const existing = currentBudgets.filter((b) => b.month !== budget.month);
+    const updated = [...existing, budgetToSave];
 
     // If budget has recurring categories, also update master recurringBudgets
     const recurring = { ...get().recurringBudgets };
-    for (const catId of budget.recurringCategories || []) {
-      if (budget.categories[catId] && budget.categories[catId] > 0) {
-        recurring[catId] = budget.categories[catId];
+    for (const catId of budgetToSave.recurringCategories || []) {
+      if (budgetToSave.categories[catId] && budgetToSave.categories[catId] > 0) {
+        recurring[catId] = budgetToSave.categories[catId];
       }
     }
 
@@ -1562,7 +1573,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
 
     const currentUser = get().currentUser;
     if (currentUser?.id && isSupabaseConfigured()) {
-      upsertSupabaseBudget(budget, currentUser.id).catch(console.error);
+      upsertSupabaseBudget(budgetToSave, currentUser.id).catch(console.error);
       upsertSupabaseUserPreferences(currentUser.id, {
         recurringBudgets: recurring,
       }).catch(console.error);
@@ -1725,6 +1736,47 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   isCategorySorted: (month: string, categoryId: string) => {
     const budget = get().budgets.find((b) => b.month === month);
     return Boolean(budget?.sortedCategories?.includes(categoryId));
+  },
+
+  setTransactionsSorted: (month: string, transactionIds: string[], isSorted: boolean) => {
+    const currentBudgets = get().budgets;
+    const existing = currentBudgets.find((b) => b.month === month);
+    const sortedTransactions = new Set(existing?.sortedTransactions || []);
+
+    for (const transactionId of transactionIds) {
+      if (isSorted) {
+        sortedTransactions.add(transactionId);
+      } else {
+        sortedTransactions.delete(transactionId);
+      }
+    }
+
+    const targetBudget: Budget = existing
+      ? { ...existing, sortedTransactions: Array.from(sortedTransactions) }
+      : {
+          month,
+          total: 0,
+          categories: {},
+          sortedCategories: [],
+          sortedTransactions: Array.from(sortedTransactions),
+          recurringCategories: [],
+        };
+    const updated = existing
+      ? currentBudgets.map((budget) => (budget.month === month ? targetBudget : budget))
+      : [...currentBudgets, targetBudget];
+
+    storage.saveBudgets(updated);
+    set({ budgets: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseBudget(targetBudget, currentUser.id).catch(console.error);
+    }
+  },
+
+  isTransactionSorted: (month: string, transactionId: string) => {
+    const budget = get().budgets.find((b) => b.month === month);
+    return Boolean(budget?.sortedTransactions?.includes(transactionId));
   },
 
   // Toggle whether an item / category budget appears in every month's budget
@@ -1988,10 +2040,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const remaining = totalBudget > 0 ? totalBudget - totalSpent : 0;
     const percentageUsed = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
 
-    const sortedCategories = budget?.sortedCategories || [];
-    const budgetCategoryKeys = Object.keys(catBudgets).filter((k) => catBudgets[k] > 0);
-    const totalCategoriesWithBudget = budgetCategoryKeys.length;
-    const sortedCount = budgetCategoryKeys.filter((k) => sortedCategories.includes(k)).length;
+    const sortedTransactions = new Set(budget?.sortedTransactions || []);
+    const sortedCount = monthExpenses.filter((expense) => sortedTransactions.has(expense.id)).length;
 
     const recurringCategories = budget?.recurringCategories || Object.keys(get().recurringBudgets || {});
     const recurringCount = budgetCategoryKeys.filter(
@@ -2008,7 +2058,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       daysInMonth,
       percentageUsed,
       sortedCount,
-      totalCategoriesWithBudget,
+      totalTransactions: monthExpenses.length,
       recurringCount,
     };
   },
