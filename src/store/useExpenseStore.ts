@@ -40,6 +40,8 @@ import {
   deleteSupabaseDebtContract,
   pushLocalDataToSupabase,
   updateSupabaseUserSalaryAndPayday,
+  fetchSupabaseUserPreferences,
+  upsertSupabaseUserPreferences,
 } from "@/lib/supabase-sync";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 
@@ -339,16 +341,23 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
 
     try {
       set({ isSyncingSupabase: true });
-      const [remoteTxs, remoteBgs, remoteDebts] = await Promise.all([
+      const [remoteTxs, remoteBgs, remoteDebts, remotePrefs] = await Promise.all([
         fetchSupabaseTransactions(targetUserId),
         fetchSupabaseBudgets(targetUserId),
         fetchSupabaseDebtContracts(targetUserId),
+        fetchSupabaseUserPreferences(targetUserId),
       ]);
 
       const cur = get();
       const localExpenses = cur.expenses.length > 0 ? cur.expenses : storage.getExpenses();
       const localBudgets = cur.budgets.length > 0 ? cur.budgets : storage.getBudgets();
       const localDebts = cur.debts.length > 0 ? cur.debts : storage.getDebts();
+      const localCategories =
+        cur.categories.length > 0 ? cur.categories : storage.getCategories();
+      const localIncomes = storage.getIncomes();
+      const localPayday = storage.getPaydayDay();
+      const localRecurringBudgets = storage.getRecurringBudgets();
+      const localClearedRecurring = storage.getClearedRecurring();
 
       // 1. NON-DESTRUCTIVE TRANSACTIONS MERGE
       const txMap = new Map<string, Expense>();
@@ -417,16 +426,86 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         Promise.all(localOnlyDebts.map((d) => upsertSupabaseDebtContract(d, targetUserId))).catch(console.error);
       }
 
+      // 4. NON-DESTRUCTIVE CATEGORIES, INCOMES (SALARY), PAYDAY & PREFERENCES MERGE
+      const catMap = new Map<string, Category>();
+      for (const c of DEFAULT_CATEGORIES) {
+        catMap.set(c.id, c);
+      }
+      for (const c of localCategories) {
+        catMap.set(c.id, c);
+      }
+      if (remotePrefs?.categories && Array.isArray(remotePrefs.categories)) {
+        for (const rc of remotePrefs.categories) {
+          if (rc && rc.id) {
+            catMap.set(rc.id, rc);
+          }
+        }
+      }
+      const mergedCategories = Array.from(catMap.values());
+
+      const mergedIncomes: Record<string, number> = {
+        ...localIncomes,
+        ...(remotePrefs?.incomes || {}),
+      };
+      if (remotePrefs?.monthlySalary && remotePrefs.monthlySalary > 0) {
+        mergedIncomes.default = remotePrefs.monthlySalary;
+      }
+
+      const mergedPaydayDay =
+        remotePrefs?.paydayDay && remotePrefs.paydayDay >= 1 && remotePrefs.paydayDay <= 31
+          ? remotePrefs.paydayDay
+          : localPayday || 25;
+
+      const mergedRecurringBudgets: Record<string, number> = {
+        ...localRecurringBudgets,
+        ...(remotePrefs?.recurringBudgets || {}),
+      };
+
+      const mergedClearedRecurring: Record<string, boolean> = {
+        ...localClearedRecurring,
+        ...(remotePrefs?.clearedRecurring || {}),
+      };
+
+      const activeUser = get().currentUser;
+      const updatedUser = activeUser
+        ? {
+            ...activeUser,
+            monthlySalary: mergedIncomes.default || activeUser.monthlySalary || 25000,
+            paydayDay: mergedPaydayDay,
+          }
+        : null;
+
       // Commit merged data everywhere
       set({
         expenses: mergedExpenses,
         budgets: mergedBudgets,
         debts: mergedDebts,
+        categories: mergedCategories,
+        incomes: mergedIncomes,
+        paydayDay: mergedPaydayDay,
+        recurringBudgets: mergedRecurringBudgets,
+        clearedRecurring: mergedClearedRecurring,
+        ...(updatedUser ? { currentUser: updatedUser } : {}),
       });
       storage.saveExpenses(mergedExpenses);
       storage.saveBudgets(mergedBudgets);
       storage.saveDebts(mergedDebts);
+      storage.saveCategories(mergedCategories);
+      storage.saveIncomes(mergedIncomes);
+      storage.savePaydayDay(mergedPaydayDay);
+      storage.saveRecurringBudgets(mergedRecurringBudgets);
+      storage.saveClearedRecurring(mergedClearedRecurring);
       saveCachedTransactions(mergedExpenses).catch(() => {});
+
+      // Push merged preferences (custom categories, salary, payday, recurring budgets) back to Supabase
+      upsertSupabaseUserPreferences(targetUserId, {
+        categories: mergedCategories,
+        incomes: mergedIncomes,
+        paydayDay: mergedPaydayDay,
+        monthlySalary: mergedIncomes.default || 25000,
+        recurringBudgets: mergedRecurringBudgets,
+        clearedRecurring: mergedClearedRecurring,
+      }).catch(console.error);
     } catch (err) {
       console.error("Supabase sync error:", err);
     } finally {
@@ -444,6 +523,11 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         expenses: get().expenses,
         budgets: get().budgets,
         debts: get().debts,
+        categories: get().categories,
+        incomes: get().incomes,
+        paydayDay: get().paydayDay,
+        recurringBudgets: get().recurringBudgets,
+        clearedRecurring: get().clearedRecurring,
       },
       currentUser.id
     );
@@ -657,9 +741,10 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       ...(updatedUser ? { currentUser: updatedUser, users: storage.getUsers() } : {}),
     });
     if (curUser?.id && isSupabaseConfigured()) {
-      updateSupabaseUserSalaryAndPayday(curUser.id, { monthlySalary: amount }).catch(
-        console.error
-      );
+      upsertSupabaseUserPreferences(curUser.id, {
+        incomes: updated,
+        monthlySalary: updated.default || amount,
+      }).catch(console.error);
     }
   },
 
@@ -673,9 +758,10 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       ...(updatedUser ? { currentUser: updatedUser, users: storage.getUsers() } : {}),
     });
     if (curUser?.id && isSupabaseConfigured()) {
-      updateSupabaseUserSalaryAndPayday(curUser.id, { monthlySalary: amount }).catch(
-        console.error
-      );
+      upsertSupabaseUserPreferences(curUser.id, {
+        incomes: updated,
+        monthlySalary: amount,
+      }).catch(console.error);
     }
   },
 
@@ -689,9 +775,9 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       ...(updatedUser ? { currentUser: updatedUser, users: storage.getUsers() } : {}),
     });
     if (curUser?.id && isSupabaseConfigured()) {
-      updateSupabaseUserSalaryAndPayday(curUser.id, { paydayDay: clamped }).catch(
-        console.error
-      );
+      upsertSupabaseUserPreferences(curUser.id, {
+        paydayDay: clamped,
+      }).catch(console.error);
     }
   },
 
@@ -925,6 +1011,13 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const updated = [...get().categories, newCategory];
     storage.saveCategories(updated);
     set({ categories: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        categories: updated,
+      }).catch(console.error);
+    }
   },
 
   updateCategory: (id: string, updates: Partial<Category>) => {
@@ -933,12 +1026,26 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     );
     storage.saveCategories(updated);
     set({ categories: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        categories: updated,
+      }).catch(console.error);
+    }
   },
 
   deleteCategory: (id: string) => {
     const updated = get().categories.filter((cat) => cat.id !== id);
     storage.saveCategories(updated);
     set({ categories: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        categories: updated,
+      }).catch(console.error);
+    }
   },
 
   setBudget: (budget: Budget) => {
@@ -960,6 +1067,9 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const currentUser = get().currentUser;
     if (currentUser?.id && isSupabaseConfigured()) {
       upsertSupabaseBudget(budget, currentUser.id).catch(console.error);
+      upsertSupabaseUserPreferences(currentUser.id, {
+        recurringBudgets: recurring,
+      }).catch(console.error);
     }
   },
 
@@ -1179,8 +1289,13 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
 
     const currentUser = get().currentUser;
     const targetBudget = updatedBudgets.find((b) => b.month === month);
-    if (targetBudget && currentUser?.id && isSupabaseConfigured()) {
-      upsertSupabaseBudget(targetBudget, currentUser.id).catch(console.error);
+    if (currentUser?.id && isSupabaseConfigured()) {
+      if (targetBudget) {
+        upsertSupabaseBudget(targetBudget, currentUser.id).catch(console.error);
+      }
+      upsertSupabaseUserPreferences(currentUser.id, {
+        recurringBudgets,
+      }).catch(console.error);
     }
   },
 
@@ -1204,8 +1319,13 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
 
     const currentUser = get().currentUser;
     const targetBudget = updatedBudgets.find((b) => b.month === sourceMonth);
-    if (targetBudget && currentUser?.id && isSupabaseConfigured()) {
-      upsertSupabaseBudget(targetBudget, currentUser.id).catch(console.error);
+    if (currentUser?.id && isSupabaseConfigured()) {
+      if (targetBudget) {
+        upsertSupabaseBudget(targetBudget, currentUser.id).catch(console.error);
+      }
+      upsertSupabaseUserPreferences(currentUser.id, {
+        recurringBudgets,
+      }).catch(console.error);
     }
   },
 
@@ -1239,6 +1359,9 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       if (item) {
         upsertSupabaseDebitOrder({ id: expenseId, name: item.note, amount: item.amount, due_day: item.day, is_cleared: cleared[key], month }, currentUser.id).catch(console.error);
       }
+      upsertSupabaseUserPreferences(currentUser.id, {
+        clearedRecurring: cleared,
+      }).catch(console.error);
     }
   },
 

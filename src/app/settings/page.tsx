@@ -898,7 +898,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
           <div className="p-3.5 rounded-[16px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06]">
             <span className="text-[11px] text-[#0D0D0C]/50 block">transactions</span>
             <span className="text-xs font-medium text-[#0D0D0C] mt-0.5 block">RLS: auth.uid()</span>
@@ -914,6 +914,10 @@ export default function SettingsPage() {
           <div className="p-3.5 rounded-[16px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06]">
             <span className="text-[11px] text-[#0D0D0C]/50 block">debt_contracts</span>
             <span className="text-xs font-medium text-[#0D0D0C] mt-0.5 block">RLS: auth.uid()</span>
+          </div>
+          <div className="p-3.5 rounded-[16px] bg-[#FBF6EF] border border-[#0D0D0C]/[0.06] col-span-2 sm:col-span-1">
+            <span className="text-[11px] text-[#0D0D0C]/50 block">users &amp; prefs</span>
+            <span className="text-xs font-medium text-[#0D0D0C] mt-0.5 block">Categories + Salary</span>
           </div>
         </div>
 
