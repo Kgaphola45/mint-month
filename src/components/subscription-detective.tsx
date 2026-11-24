@@ -736,10 +736,7 @@ export function SubscriptionDetective() {
           }
         }}
         onCancel={() => setIsModalOpen(false)}
-        className="w-full max-w-lg rounded-[28px] bg-[#FFFDFA] text-[#0D0D0C] p-0 shadow-[0_24px_48px_rgba(0,0,0,0.18)] border border-[#0D0D0C]/[0.1] backdrop:bg-[#0D0D0C]/40 backdrop:backdrop-blur-sm m-auto"
-        style={{
-          overscrollBehavior: "contain",
-        }}
+        className="vela-native-dialog m-auto"
       >
         <div className="p-6 sm:p-7 space-y-6">
           <div className="flex items-center justify-between pb-3 border-b border-[#0D0D0C]/[0.08]">
