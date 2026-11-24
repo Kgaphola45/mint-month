@@ -277,3 +277,56 @@ export interface CashFlowCalendarSummary {
   heavyOutflowDaysCount: number;
   days: CashFlowDay[];
 }
+
+// -------------------------------------------------------------
+// Financial Health Score & Assessment Types
+// -------------------------------------------------------------
+export type FinancialHealthGrade = "Excellent" | "Resilient" | "Moderate" | "Vulnerable";
+
+export type HealthPillarId =
+  | "savings_rate"
+  | "debt_to_income"
+  | "emergency_fund"
+  | "budget_adherence"
+  | "commitments"
+  | "income_stability";
+
+export interface HealthPillarAssessment {
+  id: HealthPillarId;
+  title: string;
+  score: number;
+  maxScore: number;
+  percentage: number;
+  metricValue: string;
+  statusLabel: string;
+  statusTier: "healthy" | "warning" | "critical";
+  prescription: string;
+  potentialPointsGain: number;
+}
+
+export interface HealthScoreRecommendation {
+  id: string;
+  pillarId: HealthPillarId;
+  title: string;
+  actionText: string;
+  pointsBoost: number;
+  targetAnchor?: string;
+}
+
+export interface FinancialHealthScoreSummary {
+  overallScore: number; // 0 - 100
+  maxScore: number; // 100
+  grade: FinancialHealthGrade;
+  tierNumber: number; // 1, 2, 3, 4
+  headline: string;
+  summaryText: string;
+  pillars: HealthPillarAssessment[];
+  topRecommendations: HealthScoreRecommendation[];
+  savingsRatePercent: number;
+  debtToIncomePercent: number;
+  emergencyFundMonths: number;
+  budgetAdherencePercent: number;
+  commitmentsRatioPercent: number;
+  isIncomeStable: boolean;
+}
+

@@ -23,6 +23,7 @@ import {
   CashFlowDay,
   CashFlowEvent,
   SafeToSpendSummary,
+  FinancialHealthScoreSummary,
   User,
   RegisterInput,
   LoginInput,
@@ -31,6 +32,7 @@ import { storage } from "@/lib/storage";
 import { DEFAULT_CATEGORIES } from "@/lib/constants";
 import { getCurrentMonthStr, getMonthStats, getTodayDateStr } from "@/lib/utils";
 import { computeEditorialStory, EditorialStoryData } from "@/lib/editorial-story";
+import { computeFinancialHealthScore } from "@/lib/financial-health";
 import {
   supabaseSignIn,
   supabaseSignUp,
@@ -220,6 +222,7 @@ interface ExpenseStore {
   getCategoryById: (id: string) => Category;
   getSafeToSpend: (month?: string) => SafeToSpendSummary;
   getCashFlowCalendar: (month?: string) => CashFlowCalendarSummary;
+  getFinancialHealthScore: (month?: string) => FinancialHealthScoreSummary;
   getEditorialStory: (month?: string) => EditorialStoryData;
 }
 
@@ -2467,6 +2470,38 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       heavyOutflowDaysCount,
       days,
     };
+  },
+
+  getFinancialHealthScore: (month?: string) => {
+    const targetMonth = month || get().selectedMonth;
+    const monthSummary = get().getMonthSummary(targetMonth);
+    const savingsSummary = get().getSavingsSummary();
+    const debtSummary = get().getDebtSummary();
+    const subSummary = get().getSubscriptionSummary();
+    const timeline = get().getRecurringTimeline(targetMonth);
+
+    const userSalary = (get().currentUser as any)?.monthlySalary || (get().currentUser as any)?.takeHomeSalary;
+    const monthIncome = get().incomes[targetMonth] || userSalary || 25000;
+    const isIncomeSet = Boolean(get().incomes[targetMonth] || userSalary);
+    const hasPaydayDay = Boolean(get().paydayDay || (get().currentUser as any)?.paydayDay);
+
+    const emergencyFundTotal = get().savingsGoals
+      .filter((g) => g.vaultType === "emergency")
+      .reduce((sum, g) => sum + g.savedAmount, 0);
+
+    return computeFinancialHealthScore({
+      monthIncome,
+      savingsMonthly: savingsSummary.totalMonthlyRingFenced,
+      emergencyFundTotal,
+      debtMonthly: debtSummary.totalMonthly,
+      debitOrdersMonthly: timeline.summary.totalCommitted,
+      subscriptionsMonthly: subSummary.totalMonthly,
+      totalBudget: monthSummary.totalBudget,
+      totalSpent: monthSummary.totalSpent,
+      isIncomeSet,
+      hasPaydayDay,
+      currencySymbol: "R",
+    });
   },
 
   getEditorialStory: (month?: string) => {

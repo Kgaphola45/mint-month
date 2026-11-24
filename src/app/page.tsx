@@ -7,6 +7,7 @@ import { useExpenseStore } from "@/store/useExpenseStore";
 import { formatCurrency, getBudgetStatus } from "@/lib/utils";
 import { HeroPanel } from "@/components/hero-panel";
 import { StatsCards } from "@/components/stats-cards";
+import { FinancialHealthScore } from "@/components/financial-health-score";
 import { SafeToSpendMeter } from "@/components/safe-to-spend-meter";
 import { PaydayWhatIfWidget } from "@/components/payday-what-if-widget";
 import { RecurringTimeline } from "@/components/recurring-timeline";
@@ -162,6 +163,11 @@ export default function DashboardPage() {
         {/* 3. The 4 Stat Cards */}
         <section>
           <StatsCards />
+        </section>
+
+        {/* 3b. Monthly Financial Health Score & Longevity Index */}
+        <section id="financial-health">
+          <FinancialHealthScore />
         </section>
 
         {/* 4. Safe-to-Spend Daily Meter & Payday Planner */}

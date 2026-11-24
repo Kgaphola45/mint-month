@@ -24,6 +24,7 @@ import {
   Check,
   FileSpreadsheet,
   Zap,
+  ShieldCheck,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { isSuperUser } from "@/types";
@@ -421,6 +422,20 @@ export function CommandPalette() {
           setCommandPaletteOpen(false);
           router.push("/#subscriptions");
           const el = document.getElementById("subscriptions");
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        },
+      },
+      {
+        id: "act-financial-health",
+        section: "Quick Actions",
+        title: "Financial Health Score",
+        subtitle: "View your monthly longevity index across 6 core pillars & prescriptive tips",
+        icon: ShieldCheck,
+        badge: "Score",
+        action: () => {
+          setCommandPaletteOpen(false);
+          router.push("/#financial-health");
+          const el = document.getElementById("financial-health");
           if (el) el.scrollIntoView({ behavior: "smooth" });
         },
       },
