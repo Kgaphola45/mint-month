@@ -12,6 +12,7 @@ import { SafeToSpendMeter } from "@/components/safe-to-spend-meter";
 import { PaydayWhatIfWidget } from "@/components/payday-what-if-widget";
 import { RecurringTimeline } from "@/components/recurring-timeline";
 import { SavingsVaultTracker } from "@/components/savings-vault-tracker";
+import { FinancialGoalRoadmap } from "@/components/financial-goal-roadmap";
 import { DebtTracker } from "@/components/debt-tracker";
 import { SubscriptionDetective } from "@/components/subscription-detective";
 import { CashFlowCalendar } from "@/components/cash-flow-calendar";
@@ -186,12 +187,17 @@ export default function DashboardPage() {
         </section>
 
         {/* 6b. Emergency Fund, Savings Vaults & Stokvel Goal Tracker */}
-        <section>
+        <section id="savings-vaults">
           <SavingsVaultTracker />
         </section>
 
-        {/* 6c. Debt & Instalment Paydown Tracker */}
-        <section>
+        {/* 6c. Financial Goal Roadmap (Buy a Car, Apartment, House, Travel, Debt-Free) */}
+        <section id="goal-roadmap">
+          <FinancialGoalRoadmap />
+        </section>
+
+        {/* 6d. Debt & Instalment Paydown Tracker */}
+        <section id="debt-tracker">
           <DebtTracker />
         </section>
 

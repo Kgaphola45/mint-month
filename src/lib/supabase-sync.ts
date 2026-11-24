@@ -1,5 +1,5 @@
 import { getSupabaseClient } from "./supabase/client";
-import { Expense, Budget, DebtInstalment, SavingsGoal, Subscription, PaymentMethod, User, Category, isSuperUser, SUPER_USER_EMAIL } from "@/types";
+import { Expense, Budget, DebtInstalment, SavingsGoal, Subscription, LifeGoal, PaymentMethod, User, Category, isSuperUser, SUPER_USER_EMAIL } from "@/types";
 import { storage } from "./storage";
 
 // Helper to check if a string is a valid UUID
@@ -851,6 +851,7 @@ export interface CloudUserPreferences {
   clearedRecurring?: Record<string, boolean>;
   savingsGoals?: SavingsGoal[];
   subscriptions?: Subscription[];
+  lifeGoals?: LifeGoal[];
 }
 
 export async function fetchSupabaseUserPreferences(
@@ -896,6 +897,9 @@ export async function fetchSupabaseUserPreferences(
     if (Array.isArray(metaPrefs.subscriptions)) {
       result.subscriptions = metaPrefs.subscriptions;
     }
+    if (Array.isArray(metaPrefs.lifeGoals)) {
+      result.lifeGoals = metaPrefs.lifeGoals;
+    }
 
     // 2. Read from public.users table (overrides/merges with metadata if present)
     const { data: userRow } = await supabase
@@ -935,6 +939,9 @@ export async function fetchSupabaseUserPreferences(
       }
       if (Array.isArray(rowPrefs.subscriptions) && rowPrefs.subscriptions.length > 0) {
         result.subscriptions = rowPrefs.subscriptions;
+      }
+      if (Array.isArray(rowPrefs.lifeGoals) && rowPrefs.lifeGoals.length > 0) {
+        result.lifeGoals = rowPrefs.lifeGoals;
       }
     }
 

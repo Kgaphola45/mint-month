@@ -24,6 +24,8 @@ import {
   CashFlowEvent,
   SafeToSpendSummary,
   FinancialHealthScoreSummary,
+  LifeGoal,
+  LifeGoalRoadmapSummary,
   User,
   RegisterInput,
   LoginInput,
@@ -33,6 +35,7 @@ import { DEFAULT_CATEGORIES } from "@/lib/constants";
 import { getCurrentMonthStr, getMonthStats, getTodayDateStr } from "@/lib/utils";
 import { computeEditorialStory, EditorialStoryData } from "@/lib/editorial-story";
 import { computeFinancialHealthScore } from "@/lib/financial-health";
+import { computeGoalRoadmap } from "@/lib/goal-roadmap";
 import {
   supabaseSignIn,
   supabaseSignUp,
@@ -223,7 +226,15 @@ interface ExpenseStore {
   getSafeToSpend: (month?: string) => SafeToSpendSummary;
   getCashFlowCalendar: (month?: string) => CashFlowCalendarSummary;
   getFinancialHealthScore: (month?: string) => FinancialHealthScoreSummary;
+  getGoalRoadmapSummary: (simulatedExtraSavings?: number) => LifeGoalRoadmapSummary;
   getEditorialStory: (month?: string) => EditorialStoryData;
+
+  // Life Goal Roadmap actions
+  lifeGoals: LifeGoal[];
+  addLifeGoal: (goal: Omit<LifeGoal, "id" | "createdAt">) => void;
+  updateLifeGoal: (id: string, updates: Partial<LifeGoal>) => void;
+  deleteLifeGoal: (id: string) => void;
+  contributeToLifeGoal: (id: string, amount: number) => void;
 }
 
 export const useExpenseStore = create<ExpenseStore>((set, get) => ({
@@ -237,6 +248,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   debts: [],
   savingsGoals: [],
   subscriptions: [],
+  lifeGoals: [],
   incomes: { default: 25000 },
   paydayDay: 25,
   isLoaded: false,
@@ -284,6 +296,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const debts = storage.getDebts();
     const savingsGoals = storage.getSavingsGoals();
     const subscriptions = storage.getSubscriptions();
+    const lifeGoals = storage.getLifeGoals();
     const incomes = storage.getIncomes();
     const paydayDay = storage.getPaydayDay();
     const currency = storage.getCurrency() || "ZAR";
@@ -336,6 +349,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       debts,
       savingsGoals,
       subscriptions,
+      lifeGoals,
       incomes,
       paydayDay,
       currency,
@@ -457,6 +471,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         cur.savingsGoals.length > 0 ? cur.savingsGoals : storage.getSavingsGoals();
       const localSubscriptions =
         cur.subscriptions.length > 0 ? cur.subscriptions : storage.getSubscriptions();
+      const localLifeGoals =
+        cur.lifeGoals.length > 0 ? cur.lifeGoals : storage.getLifeGoals();
 
       // 1. NON-DESTRUCTIVE TRANSACTIONS MERGE
       const txMap = new Map<string, Expense>();
@@ -591,6 +607,19 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       }
       const mergedSubscriptions = Array.from(subsMap.values());
 
+      const lifeGoalsMap = new Map<string, LifeGoal>();
+      for (const lg of localLifeGoals) {
+        lifeGoalsMap.set(lg.id, lg);
+      }
+      if (remotePrefs?.lifeGoals && Array.isArray(remotePrefs.lifeGoals)) {
+        for (const rlg of remotePrefs.lifeGoals) {
+          if (rlg && rlg.id) {
+            lifeGoalsMap.set(rlg.id, rlg);
+          }
+        }
+      }
+      const mergedLifeGoals = Array.from(lifeGoalsMap.values());
+
       const activeUser = get().currentUser;
       const updatedUser = activeUser
         ? {
@@ -607,6 +636,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         debts: mergedDebts,
         savingsGoals: mergedSavingsGoals,
         subscriptions: mergedSubscriptions,
+        lifeGoals: mergedLifeGoals,
         categories: mergedCategories,
         incomes: mergedIncomes,
         paydayDay: mergedPaydayDay,
@@ -619,6 +649,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       storage.saveDebts(mergedDebts);
       storage.saveSavingsGoals(mergedSavingsGoals);
       storage.saveSubscriptions(mergedSubscriptions);
+      storage.saveLifeGoals(mergedLifeGoals);
       storage.saveCategories(mergedCategories);
       storage.saveIncomes(mergedIncomes);
       storage.savePaydayDay(mergedPaydayDay);
@@ -626,7 +657,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       storage.saveClearedRecurring(mergedClearedRecurring);
       saveCachedTransactions(mergedExpenses).catch(() => {});
 
-      // Push merged preferences (custom categories, salary, payday, recurring budgets, savings goals, subscriptions) back to Supabase
+      // Push merged preferences (custom categories, salary, payday, recurring budgets, savings goals, subscriptions, life goals) back to Supabase
       upsertSupabaseUserPreferences(targetUserId, {
         categories: mergedCategories,
         incomes: mergedIncomes,
@@ -636,6 +667,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         clearedRecurring: mergedClearedRecurring,
         savingsGoals: mergedSavingsGoals,
         subscriptions: mergedSubscriptions,
+        lifeGoals: mergedLifeGoals,
       }).catch(console.error);
     } catch (err) {
       console.error("Supabase sync error:", err);
@@ -1272,6 +1304,83 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       priceHikedCount,
       totalPriceHikeAnnualImpact,
     };
+  },
+
+  addLifeGoal: (goalData) => {
+    const id = safeUUID();
+    const newGoal: LifeGoal = {
+      ...goalData,
+      id,
+      createdAt: new Date().toISOString(),
+    };
+    const updated = [...get().lifeGoals, newGoal];
+    storage.saveLifeGoals(updated);
+    set({ lifeGoals: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        lifeGoals: updated,
+      }).catch(console.error);
+    }
+  },
+
+  updateLifeGoal: (id, updates) => {
+    const updated = get().lifeGoals.map((g) => (g.id === id ? { ...g, ...updates } : g));
+    storage.saveLifeGoals(updated);
+    set({ lifeGoals: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        lifeGoals: updated,
+      }).catch(console.error);
+    }
+  },
+
+  deleteLifeGoal: (id) => {
+    const updated = get().lifeGoals.filter((g) => g.id !== id);
+    storage.saveLifeGoals(updated);
+    set({ lifeGoals: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        lifeGoals: updated,
+      }).catch(console.error);
+    }
+  },
+
+  contributeToLifeGoal: (id, amount) => {
+    if (amount <= 0) return;
+    const updated = get().lifeGoals.map((g) => {
+      if (g.id !== id) return g;
+      const newSaved = g.currentSaved + amount;
+      const isCompleted = newSaved >= g.targetAmount;
+      return {
+        ...g,
+        currentSaved: newSaved,
+        isCompleted: isCompleted || g.isCompleted,
+      };
+    });
+    storage.saveLifeGoals(updated);
+    set({ lifeGoals: updated });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseUserPreferences(currentUser.id, {
+        lifeGoals: updated,
+      }).catch(console.error);
+    }
+  },
+
+  getGoalRoadmapSummary: (simulatedExtraSavings?: number) => {
+    const safeToSpend = get().getSafeToSpend();
+    return computeGoalRoadmap({
+      goals: get().lifeGoals,
+      monthlyDiscretionaryCapacity: Math.max(0, safeToSpend.safeToSpendPool),
+      simulatedExtraSavings: simulatedExtraSavings ?? 500,
+    });
   },
 
   updateRecurringBillAmount: (expenseId: string, newAmount: number) => {

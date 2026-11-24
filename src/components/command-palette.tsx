@@ -25,6 +25,7 @@ import {
   FileSpreadsheet,
   Zap,
   ShieldCheck,
+  Compass,
 } from "lucide-react";
 import { useExpenseStore } from "@/store/useExpenseStore";
 import { isSuperUser } from "@/types";
@@ -436,6 +437,20 @@ export function CommandPalette() {
           setCommandPaletteOpen(false);
           router.push("/#financial-health");
           const el = document.getElementById("financial-health");
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        },
+      },
+      {
+        id: "act-goal-roadmap",
+        section: "Quick Actions",
+        title: "Financial Goal Roadmap",
+        subtitle: "Set life goals (car, apartment, house, travel, debt-free) and calculate feasibility",
+        icon: Compass,
+        badge: "Roadmap",
+        action: () => {
+          setCommandPaletteOpen(false);
+          router.push("/#goal-roadmap");
+          const el = document.getElementById("goal-roadmap");
           if (el) el.scrollIntoView({ behavior: "smooth" });
         },
       },

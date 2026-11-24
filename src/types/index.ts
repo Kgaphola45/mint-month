@@ -330,3 +330,65 @@ export interface FinancialHealthScoreSummary {
   isIncomeStable: boolean;
 }
 
+// -------------------------------------------------------------
+// Major Life Goals & Roadmap Types
+// -------------------------------------------------------------
+export type LifeGoalCategory =
+  | "car"
+  | "apartment"
+  | "house"
+  | "emergency"
+  | "travel"
+  | "debt_free"
+  | "custom";
+
+export type GoalFeasibility = "realistic" | "moderate" | "stretch" | "unrealistic";
+
+export interface LifeGoal {
+  id: string;
+  title: string;
+  category: LifeGoalCategory;
+  targetAmount: number;
+  currentSaved: number;
+  targetDate: string; // 'YYYY-MM'
+  monthlyContribution?: number;
+  notes?: string;
+  isCompleted?: boolean;
+  createdAt: string;
+}
+
+export interface LifeGoalCalculation {
+  goal: LifeGoal;
+  remainingAmount: number;
+  progressPercent: number;
+  monthsRemaining: number;
+  requiredMonthlySavings: number;
+  estimatedCompletionDate: string;
+  feasibility: GoalFeasibility;
+  feasibilityLabel: string;
+  feasibilityColor: "healthy" | "warning" | "critical";
+  feasibilityAdvice: string;
+  impactOfExtraSavings: {
+    extraAmount: number;
+    monthsSaved: number;
+    newCompletionDate: string;
+  };
+}
+
+export interface LifeGoalRoadmapSummary {
+  goals: LifeGoalCalculation[];
+  totalTargetAmount: number;
+  totalCurrentSaved: number;
+  totalMonthlyRequired: number;
+  overallProgressPercent: number;
+  realisticCount: number;
+  moderateCount: number;
+  stretchCount: number;
+  unrealisticCount: number;
+  activeCount: number;
+  completedCount: number;
+  monthlySavingsCapacity: number; // monthly safe to spend pool
+  capacityUtilizationPercent: number;
+}
+
+

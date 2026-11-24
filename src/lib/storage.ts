@@ -1,4 +1,4 @@
-import { Expense, Category, Budget, DebtInstalment, SavingsGoal, Subscription, User, isSuperUser, SUPER_USER_EMAIL } from "@/types";
+import { Expense, Category, Budget, DebtInstalment, SavingsGoal, Subscription, LifeGoal, User, isSuperUser, SUPER_USER_EMAIL } from "@/types";
 
 export const SUPER_USER_SEED: User = {
   id: "3447bcb1-78e1-4f43-805f-247a3d171f56",
@@ -22,6 +22,7 @@ const STORAGE_KEYS = {
   DEBTS: "mint_month_debts_v3",
   SAVINGS_GOALS: "mint_month_savings_goals_v3",
   SUBSCRIPTIONS: "mint_month_subscriptions_v3",
+  LIFE_GOALS: "mint_month_life_goals_v3",
   INCOMES: "mint_month_incomes_v3",
   PAYDAY: "mint_month_payday_v3",
   CURRENCY: "mint_month_currency_v3",
@@ -33,6 +34,8 @@ const STORAGE_KEYS = {
 export const DEFAULT_DEBTS: DebtInstalment[] = [];
 
 export const DEFAULT_SUBSCRIPTIONS: Subscription[] = [];
+
+export const DEFAULT_LIFE_GOALS: LifeGoal[] = [];
 
 export interface StorageAdapter {
   getExpenses(): Expense[];
@@ -51,6 +54,8 @@ export interface StorageAdapter {
   saveSavingsGoals(goals: SavingsGoal[]): void;
   getSubscriptions(): Subscription[];
   saveSubscriptions(subs: Subscription[]): void;
+  getLifeGoals(): LifeGoal[];
+  saveLifeGoals(goals: LifeGoal[]): void;
   getCurrency(): string;
   saveCurrency(currency: string): void;
   initializeUserWorkspace(user: User): void;
@@ -375,6 +380,7 @@ export class LocalStorageAdapter implements StorageAdapter {
       `${STORAGE_KEYS.DEBTS}_${userId}`,
       `${STORAGE_KEYS.SAVINGS_GOALS}_${userId}`,
       `${STORAGE_KEYS.SUBSCRIPTIONS}_${userId}`,
+      `${STORAGE_KEYS.LIFE_GOALS}_${userId}`,
       `${STORAGE_KEYS.INCOMES}_${userId}`,
       `${STORAGE_KEYS.PAYDAY}_${userId}`,
     ];
@@ -557,6 +563,25 @@ export class LocalStorageAdapter implements StorageAdapter {
     localStorage.setItem(this.getKey(STORAGE_KEYS.SUBSCRIPTIONS), JSON.stringify(subs));
   }
 
+  getLifeGoals(): LifeGoal[] {
+    if (!this.isClient()) return [];
+    try {
+      const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.LIFE_GOALS));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  }
+
+  saveLifeGoals(goals: LifeGoal[]): void {
+    if (!this.isClient()) return;
+    localStorage.setItem(this.getKey(STORAGE_KEYS.LIFE_GOALS), JSON.stringify(goals));
+  }
+
   getIncomes(): Record<string, number> {
     const user = this.getCurrentUser();
     const defaultIncome = user?.monthlySalary || 25000;
@@ -642,6 +667,7 @@ export class LocalStorageAdapter implements StorageAdapter {
     localStorage.removeItem(STORAGE_KEYS.DEBTS);
     localStorage.removeItem(STORAGE_KEYS.SAVINGS_GOALS);
     localStorage.removeItem(STORAGE_KEYS.SUBSCRIPTIONS);
+    localStorage.removeItem(STORAGE_KEYS.LIFE_GOALS);
     localStorage.removeItem(STORAGE_KEYS.INCOMES);
     localStorage.removeItem(STORAGE_KEYS.PAYDAY);
     localStorage.removeItem(STORAGE_KEYS.CURRENCY);
