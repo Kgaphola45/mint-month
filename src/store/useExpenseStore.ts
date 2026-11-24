@@ -1145,6 +1145,12 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     storage.saveRecurringBudgets(recurringBudgets);
     storage.saveBudgets(updatedBudgets);
     set({ budgets: updatedBudgets, recurringBudgets });
+
+    const currentUser = get().currentUser;
+    const targetBudget = updatedBudgets.find((b) => b.month === month);
+    if (targetBudget && currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseBudget(targetBudget, currentUser.id).catch(console.error);
+    }
   },
 
   applyCurrentMonthBudgetsToAllMonths: (sourceMonth: string) => {
@@ -1164,6 +1170,12 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     storage.saveRecurringBudgets(recurringBudgets);
     storage.saveBudgets(updatedBudgets);
     set({ budgets: updatedBudgets, recurringBudgets });
+
+    const currentUser = get().currentUser;
+    const targetBudget = updatedBudgets.find((b) => b.month === sourceMonth);
+    if (targetBudget && currentUser?.id && isSupabaseConfigured()) {
+      upsertSupabaseBudget(targetBudget, currentUser.id).catch(console.error);
+    }
   },
 
   isCategoryRecurring: (month: string, categoryId: string) => {
@@ -1188,6 +1200,15 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
 
     storage.saveClearedRecurring(cleared);
     set({ clearedRecurring: cleared });
+
+    const currentUser = get().currentUser;
+    if (currentUser?.id && isSupabaseConfigured()) {
+      const timeline = get().getRecurringTimeline(month);
+      const item = timeline.items.find((i) => i.expenseId === expenseId);
+      if (item) {
+        upsertSupabaseDebitOrder({ id: expenseId, name: item.note, amount: item.amount, due_day: item.day, is_cleared: cleared[key], month }, currentUser.id).catch(console.error);
+      }
+    }
   },
 
   isRecurringCleared: (month: string, expenseId: string, defaultCleared: boolean) => {

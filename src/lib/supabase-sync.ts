@@ -1,4 +1,4 @@
-import { getSupabaseClient, isSupabaseConfigured } from "./supabase/client";
+import { getSupabaseClient } from "./supabase/client";
 import { Expense, Budget, DebtInstalment, PaymentMethod, User } from "@/types";
 
 // Helper to check if a string is a valid UUID
@@ -6,6 +6,41 @@ export function isUUID(str: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     str
   );
+}
+
+// Deterministic UUIDv4-formatted ID from any legacy string ID (e.g. "exp-1", "rec-...")
+export function toDeterministicUUID(input: string): string {
+  if (isUUID(input)) return input;
+  let h1 = 0xdeadbeef ^ input.length;
+  let h2 = 0x41c6ce57 ^ input.length;
+  let h3 = 0x9e3779b9 ^ input.length;
+  let h4 = 0x85ebca6b ^ input.length;
+  for (let i = 0; i < input.length; i++) {
+    const ch = input.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+    h3 = Math.imul(h3 ^ ch, 2246822519);
+    h4 = Math.imul(h4 ^ ch, 3266489917);
+  }
+  const hex = (n: number) => (n >>> 0).toString(16).padStart(8, "0");
+  const raw = `${hex(h1)}${hex(h2)}${hex(h3)}${hex(h4)}`;
+  return `${raw.slice(0, 8)}-${raw.slice(8, 12)}-4${raw.slice(13, 16)}-a${raw.slice(17, 20)}-${raw.slice(20, 32)}`;
+}
+
+async function resolveAuthenticatedUserId(fallbackUserId?: string): Promise<string | null> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session?.user?.id) {
+      return session.user.id;
+    }
+  } catch {
+    // ignore
+  }
+  return fallbackUserId && isUUID(fallbackUserId) ? fallbackUserId : null;
 }
 
 // ==========================================
@@ -117,10 +152,13 @@ export async function fetchSupabaseTransactions(userId: string): Promise<Expense
   const supabase = getSupabaseClient();
   if (!supabase) return [];
 
+  const effectiveUserId = await resolveAuthenticatedUserId(userId);
+  if (!effectiveUserId) return [];
+
   const { data, error } = await supabase
     .from("transactions")
     .select("*")
-    .eq("user_id", userId)
+    .eq("user_id", effectiveUserId)
     .order("date", { ascending: false });
 
   if (error || !data) {
@@ -147,8 +185,12 @@ export async function insertSupabaseTransaction(
   const supabase = getSupabaseClient();
   if (!supabase) return null;
 
+  const effectiveUserId = await resolveAuthenticatedUserId(userId);
+  if (!effectiveUserId) return null;
+
   const payload: any = {
-    user_id: userId,
+    id: expense.id ? toDeterministicUUID(expense.id) : undefined,
+    user_id: effectiveUserId,
     amount: expense.amount,
     category: expense.categoryId,
     note: expense.note || "",
@@ -157,14 +199,9 @@ export async function insertSupabaseTransaction(
     is_recurring: Boolean(expense.isRecurring),
   };
 
-  // If already a valid UUID, preserve it
-  if (expense.id && isUUID(expense.id)) {
-    payload.id = expense.id;
-  }
-
   const { data, error } = await supabase
     .from("transactions")
-    .insert(payload)
+    .upsert(payload)
     .select()
     .single();
 
@@ -193,6 +230,9 @@ export async function updateSupabaseTransaction(
   const supabase = getSupabaseClient();
   if (!supabase) return false;
 
+  const effectiveUserId = await resolveAuthenticatedUserId(userId);
+  if (!effectiveUserId) return false;
+
   const payload: any = {};
   if (updates.amount !== undefined) payload.amount = updates.amount;
   if (updates.categoryId !== undefined) payload.category = updates.categoryId;
@@ -203,11 +243,12 @@ export async function updateSupabaseTransaction(
   if (updates.isRecurring !== undefined)
     payload.is_recurring = updates.isRecurring;
 
+  const targetId = toDeterministicUUID(id);
   const { error } = await supabase
     .from("transactions")
     .update(payload)
-    .eq("id", id)
-    .eq("user_id", userId);
+    .eq("id", targetId)
+    .eq("user_id", effectiveUserId);
 
   return !error;
 }
@@ -219,11 +260,15 @@ export async function deleteSupabaseTransaction(
   const supabase = getSupabaseClient();
   if (!supabase) return false;
 
+  const effectiveUserId = await resolveAuthenticatedUserId(userId);
+  if (!effectiveUserId) return false;
+
+  const targetId = toDeterministicUUID(id);
   const { error } = await supabase
     .from("transactions")
     .delete()
-    .eq("id", id)
-    .eq("user_id", userId);
+    .eq("id", targetId)
+    .eq("user_id", effectiveUserId);
 
   return !error;
 }
@@ -236,10 +281,13 @@ export async function fetchSupabaseBudgets(userId: string): Promise<Budget[]> {
   const supabase = getSupabaseClient();
   if (!supabase) return [];
 
+  const effectiveUserId = await resolveAuthenticatedUserId(userId);
+  if (!effectiveUserId) return [];
+
   const { data, error } = await supabase
     .from("budgets")
     .select("*")
-    .eq("user_id", userId);
+    .eq("user_id", effectiveUserId);
 
   if (error || !data) {
     console.error("Error fetching budgets from Supabase:", error);
@@ -273,6 +321,9 @@ export async function upsertSupabaseBudget(
   const supabase = getSupabaseClient();
   if (!supabase) return false;
 
+  const effectiveUserId = await resolveAuthenticatedUserId(userId);
+  if (!effectiveUserId) return false;
+
   const categoriesWithMeta = {
     ...budget.categories,
     _meta: {
@@ -282,11 +333,10 @@ export async function upsertSupabaseBudget(
     },
   };
 
-  // Check if budget exists for month using maybeSingle to avoid 406 on no rows
   const { data: existing } = await supabase
     .from("budgets")
     .select("id")
-    .eq("user_id", userId)
+    .eq("user_id", effectiveUserId)
     .eq("month", budget.month)
     .maybeSingle();
 
@@ -301,7 +351,7 @@ export async function upsertSupabaseBudget(
     return !error;
   } else {
     const { error } = await supabase.from("budgets").insert({
-      user_id: userId,
+      user_id: effectiveUserId,
       month: budget.month,
       total: budget.total,
       categories: categoriesWithMeta,
@@ -331,10 +381,13 @@ export async function fetchSupabaseDebitOrders(
   const supabase = getSupabaseClient();
   if (!supabase) return [];
 
+  const effectiveUserId = await resolveAuthenticatedUserId(userId);
+  if (!effectiveUserId) return [];
+
   const { data, error } = await supabase
     .from("debit_orders")
     .select("*")
-    .eq("user_id", userId)
+    .eq("user_id", effectiveUserId)
     .eq("month", month);
 
   if (error || !data) {
@@ -367,18 +420,18 @@ export async function upsertSupabaseDebitOrder(
   const supabase = getSupabaseClient();
   if (!supabase) return false;
 
+  const effectiveUserId = await resolveAuthenticatedUserId(userId);
+  if (!effectiveUserId) return false;
+
   const payload: any = {
-    user_id: userId,
+    id: debit.id ? toDeterministicUUID(`${debit.month}:${debit.id}`) : undefined,
+    user_id: effectiveUserId,
     name: debit.name,
     amount: debit.amount,
     due_day: debit.due_day || 1,
     is_cleared: Boolean(debit.is_cleared),
     month: debit.month,
   };
-
-  if (debit.id && isUUID(debit.id)) {
-    payload.id = debit.id;
-  }
 
   const { error } = await supabase.from("debit_orders").upsert(payload);
   return !error;
@@ -392,11 +445,14 @@ export async function toggleSupabaseDebitOrderCleared(
   const supabase = getSupabaseClient();
   if (!supabase) return false;
 
+  const effectiveUserId = await resolveAuthenticatedUserId(userId);
+  if (!effectiveUserId) return false;
+
   const { error } = await supabase
     .from("debit_orders")
     .update({ is_cleared: isCleared })
-    .eq("id", id)
-    .eq("user_id", userId);
+    .eq("id", toDeterministicUUID(id))
+    .eq("user_id", effectiveUserId);
 
   return !error;
 }
@@ -411,10 +467,13 @@ export async function fetchSupabaseDebtContracts(
   const supabase = getSupabaseClient();
   if (!supabase) return [];
 
+  const effectiveUserId = await resolveAuthenticatedUserId(userId);
+  if (!effectiveUserId) return [];
+
   const { data, error } = await supabase
     .from("debt_contracts")
     .select("*")
-    .eq("user_id", userId);
+    .eq("user_id", effectiveUserId);
 
   if (error || !data) {
     console.error("Error fetching debt contracts from Supabase:", error);
@@ -452,6 +511,9 @@ export async function upsertSupabaseDebtContract(
   const supabase = getSupabaseClient();
   if (!supabase) return false;
 
+  const effectiveUserId = await resolveAuthenticatedUserId(userId);
+  if (!effectiveUserId) return false;
+
   const remaining = Math.max(
     0,
     (debt.totalAmount || 0) - debt.paidInstalments * debt.monthlyAmount
@@ -459,17 +521,14 @@ export async function upsertSupabaseDebtContract(
   const monthsLeft = Math.max(0, debt.totalInstalments - debt.paidInstalments);
 
   const payload: any = {
-    user_id: userId,
+    id: debt.id ? toDeterministicUUID(debt.id) : undefined,
+    user_id: effectiveUserId,
     name: debt.name,
     total_amount: debt.totalAmount || debt.monthlyAmount * debt.totalInstalments,
     monthly_instalment: debt.monthlyAmount,
     remaining_balance: remaining,
     months_left: monthsLeft,
   };
-
-  if (debt.id && isUUID(debt.id)) {
-    payload.id = debt.id;
-  }
 
   const { error } = await supabase.from("debt_contracts").upsert(payload);
   return !error;
@@ -482,15 +541,17 @@ export async function deleteSupabaseDebtContract(
   const supabase = getSupabaseClient();
   if (!supabase) return false;
 
+  const effectiveUserId = await resolveAuthenticatedUserId(userId);
+  if (!effectiveUserId) return false;
+
   const { error } = await supabase
     .from("debt_contracts")
     .delete()
-    .eq("id", id)
-    .eq("user_id", userId);
+    .eq("id", toDeterministicUUID(id))
+    .eq("user_id", effectiveUserId);
 
   return !error;
 }
-
 
 // ==========================================
 // 6. BULK LOCAL-TO-CLOUD DATA PUSH
@@ -508,13 +569,24 @@ export async function pushLocalDataToSupabase(
   if (!supabase)
     return { success: false, pushedCount: 0, error: "Supabase not configured" };
 
+  const effectiveUserId = await resolveAuthenticatedUserId(userId);
+  if (!effectiveUserId) {
+    return {
+      success: false,
+      pushedCount: 0,
+      error: "No active Supabase Auth session found. Please sign out and sign in again to connect your cloud session.",
+    };
+  }
+
   try {
     let count = 0;
+    const errors: string[] = [];
+
     // 1. Transactions
     if (data.expenses && data.expenses.length > 0) {
       const txRows = data.expenses.map((e) => ({
-        id: isUUID(e.id) ? e.id : undefined,
-        user_id: userId,
+        id: toDeterministicUUID(e.id),
+        user_id: effectiveUserId,
         amount: e.amount,
         category: e.categoryId,
         note: e.note || "",
@@ -523,33 +595,26 @@ export async function pushLocalDataToSupabase(
         is_recurring: Boolean(e.isRecurring),
       }));
       const { error: txErr } = await supabase.from("transactions").upsert(txRows as any);
-      if (!txErr) count += txRows.length;
+      if (!txErr) {
+        count += txRows.length;
+      } else {
+        errors.push(`transactions: ${txErr.message}`);
+      }
     }
 
-    // 2. Budgets
+    // 2. Budgets (use upsertSupabaseBudget per month to avoid missing primary key conflict)
     if (data.budgets && data.budgets.length > 0) {
-      const budgetRows = data.budgets.map((b) => ({
-        user_id: userId,
-        month: b.month,
-        total: b.total,
-        categories: {
-          ...b.categories,
-          _meta: {
-            sortedCategories: b.sortedCategories || [],
-            recurringCategories: b.recurringCategories || [],
-            isTotalSorted: Boolean(b.isTotalSorted),
-          },
-        } as any,
-      }));
-      const { error: bgErr } = await supabase.from("budgets").upsert(budgetRows as any);
-      if (!bgErr) count += budgetRows.length;
+      for (const b of data.budgets) {
+        const ok = await upsertSupabaseBudget(b, effectiveUserId);
+        if (ok) count += 1;
+      }
     }
 
     // 3. Debts
     if (data.debts && data.debts.length > 0) {
       const debtRows = data.debts.map((d) => ({
-        id: isUUID(d.id) ? d.id : undefined,
-        user_id: userId,
+        id: toDeterministicUUID(d.id),
+        user_id: effectiveUserId,
         name: d.name,
         total_amount: d.totalAmount || d.monthlyAmount * d.totalInstalments,
         monthly_instalment: d.monthlyAmount,
@@ -557,7 +622,15 @@ export async function pushLocalDataToSupabase(
         months_left: Math.max(0, d.totalInstalments - d.paidInstalments),
       }));
       const { error: debtErr } = await supabase.from("debt_contracts").upsert(debtRows as any);
-      if (!debtErr) count += debtRows.length;
+      if (!debtErr) {
+        count += debtRows.length;
+      } else {
+        errors.push(`debt_contracts: ${debtErr.message}`);
+      }
+    }
+
+    if (errors.length > 0 && count === 0) {
+      return { success: false, pushedCount: 0, error: errors.join("; ") };
     }
 
     return { success: true, pushedCount: count };
