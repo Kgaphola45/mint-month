@@ -165,6 +165,7 @@ export type Database = {
           monthly_salary: number | null;
           payday_day: number | null;
           avatar_color: string | null;
+          preferences: Json | null;
           created_at: string;
         };
         Insert: {
@@ -175,6 +176,7 @@ export type Database = {
           monthly_salary?: number | null;
           payday_day?: number | null;
           avatar_color?: string | null;
+          preferences?: Json | null;
           created_at?: string;
         };
         Update: {
@@ -185,6 +187,7 @@ export type Database = {
           monthly_salary?: number | null;
           payday_day?: number | null;
           avatar_color?: string | null;
+          preferences?: Json | null;
           created_at?: string;
         };
         Relationships: [];

@@ -1,5 +1,5 @@
 import { getSupabaseClient } from "./supabase/client";
-import { Expense, Budget, DebtInstalment, PaymentMethod, User, isSuperUser, SUPER_USER_EMAIL } from "@/types";
+import { Expense, Budget, DebtInstalment, PaymentMethod, User, Category, isSuperUser, SUPER_USER_EMAIL } from "@/types";
 import { storage } from "./storage";
 
 // Helper to check if a string is a valid UUID
@@ -637,6 +637,11 @@ export async function pushLocalDataToSupabase(
     expenses: Expense[];
     budgets: Budget[];
     debts: DebtInstalment[];
+    categories?: Category[];
+    incomes?: Record<string, number>;
+    paydayDay?: number;
+    recurringBudgets?: Record<string, number>;
+    clearedRecurring?: Record<string, boolean>;
   },
   userId: string
 ): Promise<{ success: boolean; pushedCount: number; error?: string }> {
@@ -702,6 +707,25 @@ export async function pushLocalDataToSupabase(
       } else {
         errors.push(`debt_contracts: ${debtErr.message}`);
       }
+    }
+
+    // 4. User Preferences (Custom Categories, Incomes/Salary, PaydayDay, Recurring Budgets, Cleared Recurring)
+    if (
+      data.categories ||
+      data.incomes ||
+      data.paydayDay ||
+      data.recurringBudgets ||
+      data.clearedRecurring
+    ) {
+      const prefOk = await upsertSupabaseUserPreferences(effectiveUserId, {
+        categories: data.categories,
+        incomes: data.incomes,
+        paydayDay: data.paydayDay,
+        monthlySalary: data.incomes?.default,
+        recurringBudgets: data.recurringBudgets,
+        clearedRecurring: data.clearedRecurring,
+      });
+      if (prefOk) count += 1;
     }
 
     if (errors.length > 0 && count === 0) {
@@ -818,9 +842,102 @@ export async function deleteSupabaseUserRecord(
   return { success: true };
 }
 
-export async function updateSupabaseUserSalaryAndPayday(
+export interface CloudUserPreferences {
+  categories?: Category[];
+  incomes?: Record<string, number>;
+  paydayDay?: number;
+  monthlySalary?: number;
+  recurringBudgets?: Record<string, number>;
+  clearedRecurring?: Record<string, boolean>;
+}
+
+export async function fetchSupabaseUserPreferences(
+  userId: string
+): Promise<CloudUserPreferences | null> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+
+  const effectiveUserId = await resolveAuthenticatedUserId(userId);
+  if (!effectiveUserId) return null;
+
+  const result: CloudUserPreferences = {};
+
+  try {
+    // 1. Read from Supabase Auth session user_metadata (always available)
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const meta = session?.user?.user_metadata || {};
+    const metaPrefs = (meta.preferences as Record<string, any>) || {};
+
+    if (typeof meta.monthlySalary === "number" && meta.monthlySalary > 0) {
+      result.monthlySalary = meta.monthlySalary;
+    }
+    if (typeof meta.paydayDay === "number" && meta.paydayDay >= 1 && meta.paydayDay <= 31) {
+      result.paydayDay = meta.paydayDay;
+    }
+    if (Array.isArray(metaPrefs.categories)) {
+      result.categories = metaPrefs.categories;
+    }
+    if (metaPrefs.incomes && typeof metaPrefs.incomes === "object") {
+      result.incomes = metaPrefs.incomes;
+    }
+    if (metaPrefs.recurringBudgets && typeof metaPrefs.recurringBudgets === "object") {
+      result.recurringBudgets = metaPrefs.recurringBudgets;
+    }
+    if (metaPrefs.clearedRecurring && typeof metaPrefs.clearedRecurring === "object") {
+      result.clearedRecurring = metaPrefs.clearedRecurring;
+    }
+
+    // 2. Read from public.users table (overrides/merges with metadata if present)
+    const { data: userRow } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", effectiveUserId)
+      .maybeSingle();
+
+    if (userRow) {
+      if (typeof userRow.monthly_salary === "number" && Number(userRow.monthly_salary) > 0) {
+        result.monthlySalary = Number(userRow.monthly_salary);
+      }
+      if (typeof userRow.payday_day === "number" && Number(userRow.payday_day) >= 1) {
+        result.paydayDay = Number(userRow.payday_day);
+      }
+      const rowPrefs = ((userRow as any).preferences as Record<string, any>) || {};
+      if (Array.isArray(rowPrefs.categories) && rowPrefs.categories.length > 0) {
+        result.categories = rowPrefs.categories;
+      }
+      if (rowPrefs.incomes && typeof rowPrefs.incomes === "object") {
+        result.incomes = { ...(result.incomes || {}), ...rowPrefs.incomes };
+      }
+      if (rowPrefs.recurringBudgets && typeof rowPrefs.recurringBudgets === "object") {
+        result.recurringBudgets = {
+          ...(result.recurringBudgets || {}),
+          ...rowPrefs.recurringBudgets,
+        };
+      }
+      if (rowPrefs.clearedRecurring && typeof rowPrefs.clearedRecurring === "object") {
+        result.clearedRecurring = {
+          ...(result.clearedRecurring || {}),
+          ...rowPrefs.clearedRecurring,
+        };
+      }
+    }
+
+    if (result.monthlySalary && (!result.incomes || !result.incomes.default)) {
+      result.incomes = { ...(result.incomes || {}), default: result.monthlySalary };
+    }
+
+    return result;
+  } catch (err) {
+    console.error("Error fetching user preferences from Supabase:", err);
+    return null;
+  }
+}
+
+export async function upsertSupabaseUserPreferences(
   userId: string,
-  updates: { monthlySalary?: number; paydayDay?: number }
+  updates: CloudUserPreferences
 ): Promise<boolean> {
   const supabase = getSupabaseClient();
   if (!supabase) return false;
@@ -828,25 +945,72 @@ export async function updateSupabaseUserSalaryAndPayday(
   const effectiveUserId = await resolveAuthenticatedUserId(userId);
   if (!effectiveUserId) return false;
 
-  const dbPayload: Record<string, number> = {};
-  const metaPayload: Record<string, number> = {};
-
-  if (typeof updates.monthlySalary === "number" && updates.monthlySalary > 0) {
-    dbPayload.monthly_salary = updates.monthlySalary;
-    metaPayload.monthlySalary = updates.monthlySalary;
-  }
-  if (typeof updates.paydayDay === "number" && updates.paydayDay >= 1 && updates.paydayDay <= 31) {
-    dbPayload.payday_day = updates.paydayDay;
-    metaPayload.paydayDay = updates.paydayDay;
-  }
-
-  if (Object.keys(dbPayload).length === 0) return false;
-
   try {
-    await supabase.from("users").update(dbPayload).eq("id", effectiveUserId);
-    await supabase.auth.updateUser({ data: metaPayload });
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const existingMeta = session?.user?.user_metadata || {};
+    const existingPrefs = (existingMeta.preferences as Record<string, any>) || {};
+
+    const mergedPrefs = {
+      ...existingPrefs,
+      ...(updates.categories !== undefined ? { categories: updates.categories } : {}),
+      ...(updates.incomes !== undefined ? { incomes: updates.incomes } : {}),
+      ...(updates.recurringBudgets !== undefined
+        ? { recurringBudgets: updates.recurringBudgets }
+        : {}),
+      ...(updates.clearedRecurring !== undefined
+        ? { clearedRecurring: updates.clearedRecurring }
+        : {}),
+    };
+
+    const resolvedSalary =
+      updates.monthlySalary ||
+      updates.incomes?.default ||
+      existingMeta.monthlySalary ||
+      25000;
+    const resolvedPayday =
+      updates.paydayDay || existingMeta.paydayDay || 25;
+
+    // 1. Update Supabase Auth user_metadata (works on all schemas immediately)
+    await supabase.auth.updateUser({
+      data: {
+        monthlySalary: resolvedSalary,
+        paydayDay: resolvedPayday,
+        preferences: mergedPrefs,
+      },
+    });
+
+    // 2. Update public.users table (with preferences column if available, falling back to core columns)
+    const { error: fullErr } = await supabase
+      .from("users")
+      .update({
+        monthly_salary: resolvedSalary,
+        payday_day: resolvedPayday,
+        preferences: mergedPrefs as any,
+      })
+      .eq("id", effectiveUserId);
+
+    if (fullErr) {
+      await supabase
+        .from("users")
+        .update({
+          monthly_salary: resolvedSalary,
+          payday_day: resolvedPayday,
+        })
+        .eq("id", effectiveUserId);
+    }
+
     return true;
-  } catch {
+  } catch (err) {
+    console.error("Error syncing user preferences to Supabase:", err);
     return false;
   }
+}
+
+export async function updateSupabaseUserSalaryAndPayday(
+  userId: string,
+  updates: { monthlySalary?: number; paydayDay?: number; incomes?: Record<string, number> }
+): Promise<boolean> {
+  return upsertSupabaseUserPreferences(userId, updates);
 }
