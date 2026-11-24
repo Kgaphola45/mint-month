@@ -314,7 +314,34 @@ CREATE POLICY "Users can only view and manage their own data"
   payoff date pull closer in real time.
 
 --------------------------------------------------------------------------------
-6.8. SMART BUDGET PLANNER & CATEGORY BOARD
+6.8. SUBSCRIPTION DETECTIVE (MONTHLY & ANNUAL DRAIN AUDITOR)
+--------------------------------------------------------------------------------
+- Dedicated Recurring Subscription Management: Track Netflix, Spotify, Showmax,
+  gym memberships (Virgin Active, Planet Fitness), home WiFi/fibre (Afrihost,
+  Webafrica, Rain), AI tools (ChatGPT Plus), and digital insurance policies.
+- Monthly & Annual Total Impact: Shows both monthly burn and true cumulative
+  annual outflow (e.g. R1,881/mo translates to R22,572/year).
+- Per-Service Annual Spend: Clearly displays annual cost per service to eliminate
+  recurring expense underestimation (e.g. Netflix Standard = R2,388/yr;
+  Virgin Active Gym = R7,800/yr).
+- Forgotten & Wasteful Subscription Flags:
+  * Users can flag unused or rarely opened subscriptions for cancellation review.
+  * Displays total potential annual savings in highlighted alert cards (e.g.
+    "⚠️ 1 Forgotten Service: R7,800/yr leak flagged for cancellation!").
+- Price-Hike Detection & Alerting:
+  * Compares current monthly subscription cost against baseline previous price.
+  * Immediately flags price increases (e.g. Showmax R99 -> R115, +16% hike)
+    and computes cumulative annual price increase damage.
+- Cancellation Notes & Direct Links:
+  * 1-click external direct links to cancellation portals (e.g. Netflix, Spotify,
+    Afrihost ClientZone, ChatGPT).
+  * Built-in cancellation instructions and notice requirements (e.g. "Requires 1
+    calendar month written notice to club manager", "Cancel before 23rd").
+- South African Quick-Add Presets: One-click chips for popular SA services with
+  real local pricing, cancellation links, and notice terms pre-filled.
+
+--------------------------------------------------------------------------------
+6.9. SMART BUDGET PLANNER & CATEGORY BOARD
 --------------------------------------------------------------------------------
 - Category Budget Caps: Set custom spending ceilings for Groceries, Fuel, Dining,
   Entertainment, Health, Shopping, Utilities, etc.
@@ -329,7 +356,7 @@ CREATE POLICY "Users can only view and manage their own data"
   "Padel Tennis", "Pet Care") with cloud synchronization.
 
 --------------------------------------------------------------------------------
-6.9. TRANSACTION LEDGER & EXPENSE TRACKING
+6.10. TRANSACTION LEDGER & EXPENSE TRACKING
 --------------------------------------------------------------------------------
 - Quick Add Modal: Rapid expense entry with automatic category prediction.
 - Detailed Ledger Table:
@@ -342,7 +369,7 @@ CREATE POLICY "Users can only view and manage their own data"
 - CSV & JSON Statement Export: Download your full transaction history anytime.
 
 --------------------------------------------------------------------------------
-6.10. TILL SLIP / RECEIPT OCR QUICK-SCAN
+6.11. TILL SLIP / RECEIPT OCR QUICK-SCAN
 --------------------------------------------------------------------------------
 - Mobile Camera Snap / File Upload: Integrated directly into the Quick Add modal.
 - Client-Side Receipt Parsing:
@@ -352,7 +379,7 @@ CREATE POLICY "Users can only view and manage their own data"
 - Image Preview & Verification: Users review scanned figures before saving.
 
 --------------------------------------------------------------------------------
-6.11. MONTHLY EDITORIAL FINANCIAL STORY ("WRAPPED" REPORT)
+6.12. MONTHLY EDITORIAL FINANCIAL STORY ("WRAPPED" REPORT)
 --------------------------------------------------------------------------------
 - 3-Slide Interactive Editorial Story:
   * Slide 1: The Macro Picture (Net Income, Total Outflow, Net Savings Rate).
@@ -365,7 +392,7 @@ CREATE POLICY "Users can only view and manage their own data"
 - Print & PDF Friendly: Formatted for clean printing or saving as a monthly PDF.
 
 --------------------------------------------------------------------------------
-6.12. AUTOMATED EMAIL DISPATCHES (PAYDAY & DEBIT ORDER DIGEST)
+6.13. AUTOMATED EMAIL DISPATCHES (PAYDAY & DEBIT ORDER DIGEST)
 --------------------------------------------------------------------------------
 - Payday Celebration Digest: Automated email arriving on cycle start detailing
   safe spend allowance and recommended allocations.
@@ -375,7 +402,7 @@ CREATE POLICY "Users can only view and manage their own data"
   handling and retry failovers.
 
 --------------------------------------------------------------------------------
-6.13. SUPER USER ADMINISTRATIVE CONSOLE (/settings)
+6.14. SUPER USER ADMINISTRATIVE CONSOLE (/settings)
 --------------------------------------------------------------------------------
 - Role-Gated Access: Strict server and client gating ensuring only superusers
   (Emmanuel Kgaphola) can view or execute actions.
@@ -390,7 +417,7 @@ CREATE POLICY "Users can only view and manage their own data"
   * Environment variable presence inspection.
 
 --------------------------------------------------------------------------------
-6.14. USER PROFILE & PREFERENCES SELF-SERVICE DRAWER
+6.15. USER PROFILE & PREFERENCES SELF-SERVICE DRAWER
 --------------------------------------------------------------------------------
 - Native Dialog Architecture: Modal with background lock and full keyboard
   accessibility (ESC key dismiss).

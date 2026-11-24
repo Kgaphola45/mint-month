@@ -2266,8 +2266,6 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       budgets: get().budgets,
       recurringBudgets: get().recurringBudgets,
       debts: get().debts,
-      savingsGoals: get().savingsGoals,
-      subscriptions: get().subscriptions,
       incomes: get().incomes,
       currency: get().currency,
     });
