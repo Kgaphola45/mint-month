@@ -104,6 +104,17 @@ export async function supabaseSignUp(
     return { success: false, error: error?.message || "Failed to register." };
   }
 
+  let activeSession = data.session;
+  if (!activeSession) {
+    const signInRes = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (signInRes.data?.session) {
+      activeSession = signInRes.data.session;
+    }
+  }
+
   const user: User = {
     id: data.user.id,
     name: name.trim(),
@@ -114,7 +125,7 @@ export async function supabaseSignUp(
     createdAt: data.user.created_at,
   };
 
-  return { success: true, user, session: data.session };
+  return { success: true, user, session: activeSession };
 }
 
 export async function supabaseSignOut() {
