@@ -371,6 +371,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   setCommandPaletteOpen: (open: boolean) => set({ commandPaletteOpen: open }),
   setDigestModalOpen: (open: boolean) => set({ digestModalOpen: open }),
   setProfileModalOpen: (open: boolean) => set({ profileModalOpen: open }),
+  setSubscriptionModalOpen: (open: boolean) => set({ subscriptionModalOpen: open }),
   setAuthModalOpen: (open: boolean, mode: "login" | "register" = "login") =>
     set({ authModalOpen: open, authModalMode: mode }),
 
@@ -570,6 +571,19 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       }
       const mergedSavingsGoals = Array.from(savingsMap.values());
 
+      const subsMap = new Map<string, Subscription>();
+      for (const s of localSubscriptions) {
+        subsMap.set(s.id, s);
+      }
+      if (remotePrefs?.subscriptions && Array.isArray(remotePrefs.subscriptions)) {
+        for (const rs of remotePrefs.subscriptions) {
+          if (rs && rs.id) {
+            subsMap.set(rs.id, rs);
+          }
+        }
+      }
+      const mergedSubscriptions = Array.from(subsMap.values());
+
       const activeUser = get().currentUser;
       const updatedUser = activeUser
         ? {
@@ -585,6 +599,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         budgets: mergedBudgets,
         debts: mergedDebts,
         savingsGoals: mergedSavingsGoals,
+        subscriptions: mergedSubscriptions,
         categories: mergedCategories,
         incomes: mergedIncomes,
         paydayDay: mergedPaydayDay,
@@ -596,6 +611,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       storage.saveBudgets(mergedBudgets);
       storage.saveDebts(mergedDebts);
       storage.saveSavingsGoals(mergedSavingsGoals);
+      storage.saveSubscriptions(mergedSubscriptions);
       storage.saveCategories(mergedCategories);
       storage.saveIncomes(mergedIncomes);
       storage.savePaydayDay(mergedPaydayDay);
@@ -603,7 +619,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       storage.saveClearedRecurring(mergedClearedRecurring);
       saveCachedTransactions(mergedExpenses).catch(() => {});
 
-      // Push merged preferences (custom categories, salary, payday, recurring budgets, savings goals) back to Supabase
+      // Push merged preferences (custom categories, salary, payday, recurring budgets, savings goals, subscriptions) back to Supabase
       upsertSupabaseUserPreferences(targetUserId, {
         categories: mergedCategories,
         incomes: mergedIncomes,
@@ -612,6 +628,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         recurringBudgets: mergedRecurringBudgets,
         clearedRecurring: mergedClearedRecurring,
         savingsGoals: mergedSavingsGoals,
+        subscriptions: mergedSubscriptions,
       }).catch(console.error);
     } catch (err) {
       console.error("Supabase sync error:", err);
