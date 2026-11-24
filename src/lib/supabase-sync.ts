@@ -1,5 +1,6 @@
 import { getSupabaseClient } from "./supabase/client";
-import { Expense, Budget, DebtInstalment, PaymentMethod, User, isSuperUser } from "@/types";
+import { Expense, Budget, DebtInstalment, PaymentMethod, User, isSuperUser, SUPER_USER_EMAIL } from "@/types";
+import { storage } from "./storage";
 
 // Helper to check if a string is a valid UUID
 export function isUUID(str: string): boolean {
@@ -30,12 +31,66 @@ export function toDeterministicUUID(input: string): string {
 async function resolveAuthenticatedUserId(fallbackUserId?: string): Promise<string | null> {
   const supabase = getSupabaseClient();
   if (!supabase) return null;
+
+  const localCurrentUser = storage.getCurrentUser();
+  const targetEmail = localCurrentUser?.email?.trim().toLowerCase();
+
   try {
     const {
       data: { session },
     } = await supabase.auth.getSession();
+
     if (session?.user?.id) {
-      return session.user.id;
+      const sessionEmail = session.user.email?.trim().toLowerCase();
+      if (!targetEmail || sessionEmail === targetEmail) {
+        return session.user.id;
+      }
+    }
+
+    // Auto-establish Supabase Auth session if user is logged in locally or switched accounts
+    if (localCurrentUser && targetEmail) {
+      const allLocalUsers = storage.getUsers();
+      const matchedLocal = allLocalUsers.find(
+        (u) => u.email?.trim().toLowerCase() === targetEmail
+      );
+      const password =
+        targetEmail === SUPER_USER_EMAIL
+          ? "Smt116hp625"
+          : localCurrentUser.passwordHash || matchedLocal?.passwordHash;
+
+      if (password) {
+        const signInRes = await supabase.auth.signInWithPassword({
+          email: targetEmail,
+          password,
+        });
+        if (signInRes.data?.session?.user?.id) {
+          return signInRes.data.session.user.id;
+        }
+
+        // If local account doesn't exist in Supabase Auth yet, auto-provision it
+        const signUpRes = await supabase.auth.signUp({
+          email: targetEmail,
+          password,
+          options: {
+            data: {
+              name: localCurrentUser.name || "User",
+              monthlySalary: localCurrentUser.monthlySalary || 25000,
+              paydayDay: localCurrentUser.paydayDay || 25,
+              avatarColor: localCurrentUser.avatarColor || "#0D0D0C",
+            },
+          },
+        });
+        if (signUpRes.data?.session?.user?.id) {
+          return signUpRes.data.session.user.id;
+        }
+        const retrySignIn = await supabase.auth.signInWithPassword({
+          email: targetEmail,
+          password,
+        });
+        if (retrySignIn.data?.session?.user?.id) {
+          return retrySignIn.data.session.user.id;
+        }
+      }
     }
   } catch {
     // ignore

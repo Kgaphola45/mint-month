@@ -1,7 +1,7 @@
 import { Expense, Category, Budget, DebtInstalment, User, isSuperUser, SUPER_USER_EMAIL } from "@/types";
 
 export const SUPER_USER_SEED: User = {
-  id: "usr_superuser_emmanuel",
+  id: "3447bcb1-78e1-4f43-805f-247a3d171f56",
   name: "Emmanuel Kgaphola",
   email: SUPER_USER_EMAIL,
   role: "superuser",
