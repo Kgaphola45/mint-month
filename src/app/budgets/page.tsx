@@ -24,7 +24,6 @@ export default function BudgetsPage() {
     getCategorySpending,
     currency,
     setBudgetModalOpen,
-    toggleCategorySorted,
     toggleCategoryRecurring,
     applyCurrentMonthBudgetsToAllMonths,
   } = useExpenseStore();
@@ -37,25 +36,9 @@ export default function BudgetsPage() {
   const overallStatus = getBudgetStatus(summary.totalSpent, summary.totalBudget);
 
   const budgetedCategories = categoryStats.filter((c) => c.budget > 0);
-  const sortedCount = budgetedCategories.filter((c) => c.isSorted).length;
+  const sortedCount = summary.sortedCount;
   const allSorted =
-    budgetedCategories.length > 0 && sortedCount === budgetedCategories.length;
-
-  const handleToggleSorted = (catId: string, isCurrentlySorted: boolean) => {
-    toggleCategorySorted(selectedMonth, catId);
-    if (!isCurrentlySorted) {
-      try {
-        confetti({
-          particleCount: 30,
-          spread: 50,
-          origin: { y: 0.7 },
-          colors: ["#0D0D0C", "#96CE96", "#F99654"],
-        });
-      } catch {
-        // ignore
-      }
-    }
-  };
+    summary.totalTransactions > 0 && sortedCount === summary.totalTransactions;
 
   const handleToggleRecurring = (catId: string, amount: number) => {
     toggleCategoryRecurring(selectedMonth, catId, amount);
@@ -186,7 +169,7 @@ export default function BudgetsPage() {
                 </div>
                 <div>
                   <span className="text-xs font-medium text-[#0D0D0C] block">
-                    {sortedCount} of {budgetedCategories.length} Budgets Sorted
+                    {sortedCount} of {summary.totalTransactions} Transactions Sorted
                   </span>
                   <span className="text-[11px] text-[#0D0D0C]/42">
                     Drag items to the right column below when paid off
@@ -195,8 +178,8 @@ export default function BudgetsPage() {
               </div>
 
               <span className="text-xs font-medium text-[#0D0D0C]">
-                {budgetedCategories.length > 0
-                  ? `${Math.round((sortedCount / budgetedCategories.length) * 100)}%`
+                {summary.totalTransactions > 0
+                  ? `${Math.round((sortedCount / summary.totalTransactions) * 100)}%`
                   : "0%"}
               </span>
             </div>
@@ -206,8 +189,8 @@ export default function BudgetsPage() {
               <div
                 className="h-full bg-[#0D0D0C] rounded-full transition-all duration-500"
                 style={{
-                  width: `${budgetedCategories.length > 0
-                    ? (sortedCount / budgetedCategories.length) * 100
+                  width: `${summary.totalTransactions > 0
+                    ? (sortedCount / summary.totalTransactions) * 100
                     : 0
                     }%`,
                 }}
