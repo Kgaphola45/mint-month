@@ -1,4 +1,4 @@
-import { Expense, Category, Budget, DebtInstalment, SavingsGoal, User, isSuperUser, SUPER_USER_EMAIL } from "@/types";
+import { Expense, Category, Budget, DebtInstalment, SavingsGoal, Subscription, User, isSuperUser, SUPER_USER_EMAIL } from "@/types";
 
 export const SUPER_USER_SEED: User = {
   id: "3447bcb1-78e1-4f43-805f-247a3d171f56",
@@ -21,6 +21,7 @@ const STORAGE_KEYS = {
   CLEARED_RECURRING: "mint_month_cleared_recurring_v3",
   DEBTS: "mint_month_debts_v3",
   SAVINGS_GOALS: "mint_month_savings_goals_v3",
+  SUBSCRIPTIONS: "mint_month_subscriptions_v3",
   INCOMES: "mint_month_incomes_v3",
   PAYDAY: "mint_month_payday_v3",
   CURRENCY: "mint_month_currency_v3",
@@ -30,6 +31,61 @@ const STORAGE_KEYS = {
 };
 
 export const DEFAULT_DEBTS: DebtInstalment[] = [];
+
+export const DEFAULT_SUBSCRIPTIONS: Subscription[] = [
+  {
+    id: "sub-netflix",
+    name: "Netflix Standard",
+    monthlyAmount: 199,
+    category: "Streaming & TV",
+    billingDay: 25,
+    cancellationUrl: "https://www.netflix.com/youraccount",
+    cancellationNotes: "Cancel in Account > Cancel Membership. Access continues until billing cycle end.",
+    isActive: true,
+  },
+  {
+    id: "sub-spotify",
+    name: "Spotify Premium",
+    monthlyAmount: 69.99,
+    category: "Music & Audio",
+    billingDay: 1,
+    cancellationUrl: "https://www.spotify.com/account/change-plan/",
+    cancellationNotes: "In account under 'Your plan' click Change Plan, scroll down to Spotify Free, click Cancel Premium.",
+    isActive: true,
+  },
+  {
+    id: "sub-showmax",
+    name: "Showmax Entertainment",
+    monthlyAmount: 115,
+    previousAmount: 99,
+    category: "Streaming & TV",
+    billingDay: 25,
+    cancellationUrl: "https://www.showmax.com/account",
+    cancellationNotes: "Log in, go to Plans & Payment, select your active subscription and click Cancel.",
+    isActive: true,
+  },
+  {
+    id: "sub-virgin",
+    name: "Virgin Active Gym",
+    monthlyAmount: 650,
+    category: "Fitness & Health",
+    billingDay: 1,
+    isForgotten: true,
+    cancellationNotes: "Requires 1 calendar month written cancellation notice to the club manager via email or at reception.",
+    notes: "Reviewing attendance: haven't checked in over 45 days",
+    isActive: true,
+  },
+  {
+    id: "sub-afrihost",
+    name: "Afrihost Pure Fibre",
+    monthlyAmount: 847,
+    category: "Connectivity & WiFi",
+    billingDay: 1,
+    cancellationUrl: "https://clientzone.afrihost.com",
+    cancellationNotes: "Submit cancellation via ClientZone by the 23rd of the month to take effect at monthend.",
+    isActive: true,
+  },
+];
 
 export interface StorageAdapter {
   getExpenses(): Expense[];
@@ -44,6 +100,10 @@ export interface StorageAdapter {
   saveClearedRecurring(cleared: Record<string, boolean>): void;
   getDebts(): DebtInstalment[];
   saveDebts(debts: DebtInstalment[]): void;
+  getSavingsGoals(): SavingsGoal[];
+  saveSavingsGoals(goals: SavingsGoal[]): void;
+  getSubscriptions(): Subscription[];
+  saveSubscriptions(subs: Subscription[]): void;
   getCurrency(): string;
   saveCurrency(currency: string): void;
   initializeUserWorkspace(user: User): void;
@@ -366,6 +426,8 @@ export class LocalStorageAdapter implements StorageAdapter {
       `${STORAGE_KEYS.RECURRING_BUDGETS}_${userId}`,
       `${STORAGE_KEYS.CLEARED_RECURRING}_${userId}`,
       `${STORAGE_KEYS.DEBTS}_${userId}`,
+      `${STORAGE_KEYS.SAVINGS_GOALS}_${userId}`,
+      `${STORAGE_KEYS.SUBSCRIPTIONS}_${userId}`,
       `${STORAGE_KEYS.INCOMES}_${userId}`,
       `${STORAGE_KEYS.PAYDAY}_${userId}`,
     ];
@@ -520,6 +582,25 @@ export class LocalStorageAdapter implements StorageAdapter {
     localStorage.setItem(this.getKey(STORAGE_KEYS.SAVINGS_GOALS), JSON.stringify(goals));
   }
 
+  getSubscriptions(): Subscription[] {
+    if (!this.isClient()) return DEFAULT_SUBSCRIPTIONS;
+    try {
+      const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.SUBSCRIPTIONS));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return DEFAULT_SUBSCRIPTIONS;
+    } catch {
+      return DEFAULT_SUBSCRIPTIONS;
+    }
+  }
+
+  saveSubscriptions(subs: Subscription[]): void {
+    if (!this.isClient()) return;
+    localStorage.setItem(this.getKey(STORAGE_KEYS.SUBSCRIPTIONS), JSON.stringify(subs));
+  }
+
   getIncomes(): Record<string, number> {
     const user = this.getCurrentUser();
     const defaultIncome = user?.monthlySalary || 25000;
@@ -603,6 +684,8 @@ export class LocalStorageAdapter implements StorageAdapter {
     localStorage.removeItem(STORAGE_KEYS.RECURRING_BUDGETS);
     localStorage.removeItem(STORAGE_KEYS.CLEARED_RECURRING);
     localStorage.removeItem(STORAGE_KEYS.DEBTS);
+    localStorage.removeItem(STORAGE_KEYS.SAVINGS_GOALS);
+    localStorage.removeItem(STORAGE_KEYS.SUBSCRIPTIONS);
     localStorage.removeItem(STORAGE_KEYS.INCOMES);
     localStorage.removeItem(STORAGE_KEYS.PAYDAY);
     localStorage.removeItem(STORAGE_KEYS.CURRENCY);

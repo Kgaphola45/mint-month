@@ -17,6 +17,8 @@ import {
   DebtSummary,
   SavingsGoal,
   SavingsSummary,
+  Subscription,
+  SubscriptionSummary,
   SafeToSpendSummary,
   User,
   RegisterInput,
@@ -69,6 +71,7 @@ interface ExpenseStore {
   clearedRecurring: Record<string, boolean>; // 'YYYY-MM:expenseId' -> boolean
   debts: DebtInstalment[]; // Debt & contract instalment plans
   savingsGoals: SavingsGoal[]; // Emergency fund, Stokvel & sinking fund vaults
+  subscriptions: Subscription[]; // Subscription Detective: Netflix, Spotify, Showmax, Gym, etc.
   incomes: Record<string, number>; // Month -> Income (or 'default' -> default income)
   paydayDay: number; // 1-31, default 25
   isLoaded: boolean;
@@ -91,6 +94,7 @@ interface ExpenseStore {
   commandPaletteOpen: boolean;
   digestModalOpen: boolean;
   profileModalOpen: boolean;
+  subscriptionModalOpen: boolean;
   editingExpense: Expense | null;
   editingDebt: DebtInstalment | null;
 
@@ -110,6 +114,7 @@ interface ExpenseStore {
   setCommandPaletteOpen: (open: boolean) => void;
   setDigestModalOpen: (open: boolean) => void;
   setProfileModalOpen: (open: boolean) => void;
+  setSubscriptionModalOpen: (open: boolean) => void;
   updateUserProfile: (updates: {
     name?: string;
     avatarColor?: string;
@@ -169,6 +174,11 @@ interface ExpenseStore {
   deleteSavingsGoal: (id: string) => void;
   contributeToSavingsGoal: (id: string, amount?: number) => void;
   getSavingsSummary: () => SavingsSummary;
+  addSubscription: (sub: Omit<Subscription, "id">) => void;
+  updateSubscription: (id: string, updates: Partial<Subscription>) => void;
+  deleteSubscription: (id: string) => void;
+  toggleSubscriptionForgotten: (id: string) => void;
+  getSubscriptionSummary: () => SubscriptionSummary;
   updateRecurringBillAmount: (expenseId: string, newAmount: number) => void;
 
   resetToDefaults: () => void;
@@ -219,6 +229,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   clearedRecurring: {},
   debts: [],
   savingsGoals: [],
+  subscriptions: [],
   incomes: { default: 25000 },
   paydayDay: 25,
   isLoaded: false,
@@ -240,6 +251,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   commandPaletteOpen: false,
   digestModalOpen: false,
   profileModalOpen: false,
+  subscriptionModalOpen: false,
   editingExpense: null,
   editingDebt: null,
 
@@ -264,6 +276,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     const clearedRecurring = storage.getClearedRecurring();
     const debts = storage.getDebts();
     const savingsGoals = storage.getSavingsGoals();
+    const subscriptions = storage.getSubscriptions();
     const incomes = storage.getIncomes();
     const paydayDay = storage.getPaydayDay();
     const currency = storage.getCurrency() || "ZAR";
@@ -315,6 +328,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       clearedRecurring,
       debts,
       savingsGoals,
+      subscriptions,
       incomes,
       paydayDay,
       currency,
@@ -433,6 +447,8 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
       const localClearedRecurring = storage.getClearedRecurring();
       const localSavingsGoals =
         cur.savingsGoals.length > 0 ? cur.savingsGoals : storage.getSavingsGoals();
+      const localSubscriptions =
+        cur.subscriptions.length > 0 ? cur.subscriptions : storage.getSubscriptions();
 
       // 1. NON-DESTRUCTIVE TRANSACTIONS MERGE
       const txMap = new Map<string, Expense>();

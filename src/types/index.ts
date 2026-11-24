@@ -104,6 +104,41 @@ export interface SavingsSummary {
   completedCount: number;
 }
 
+export type SubscriptionCategory =
+  | "Streaming & TV"
+  | "Music & Audio"
+  | "Fitness & Health"
+  | "Connectivity & WiFi"
+  | "Software & AI"
+  | "Insurance & Finance"
+  | "Gaming & Cloud"
+  | "Other";
+
+export interface Subscription {
+  id: string;
+  name: string; // e.g. "Netflix Standard", "Showmax", "Virgin Active", "Spotify"
+  monthlyAmount: number; // monthly cost in ZAR
+  category: SubscriptionCategory;
+  billingDay: number; // 1 - 31
+  previousAmount?: number; // for price-hike detection
+  isForgotten?: boolean; // Flagged as forgotten / rarely used / candidate for cancellation
+  cancellationUrl?: string; // direct cancellation link, e.g. "https://www.netflix.com/youraccount"
+  cancellationNotes?: string; // cancellation instructions or notice period
+  notes?: string;
+  isActive: boolean;
+  createdAt?: string;
+}
+
+export interface SubscriptionSummary {
+  totalMonthly: number;
+  totalAnnual: number;
+  activeCount: number;
+  forgottenCount: number;
+  forgottenAnnualSavings: number;
+  priceHikedCount: number;
+  totalPriceHikeAnnualImpact: number;
+}
+
 export interface DebtInstalment {
   id: string;
   name: string; // e.g. "PayJustNow", "Phone Contract", "Laptop Contract", "TFG Account"
